@@ -2,6 +2,7 @@ from __future__ import annotations
 import os, time, threading
 from typing import Dict, Tuple
 from fastapi import Request, HTTPException
+from . import redis_rl
 
 # thread-safe kaydetme
 _lock = threading.Lock()
@@ -42,24 +43,32 @@ def require_api_key_and_ratelimit():
             # 401 yerine 403 => key eksik/yanlış
             raise HTTPException(status_code=403, detail="forbidden")
 
-        # --- Rate limit (sliding window + basit burst) ---
-        now = time.time()
+        # --- Rate limit (Redis → fallback in-memory) ---
         token = _token(request, api_key, rl_by)
-        with _lock:
-            start, cnt, bt = _state.get(token, (now, 0, float(burst)))
-            # burst token yenilenmesi (basit: saniyede 1)
-            bt = min(float(burst), bt + (now - start))
-            # window rollover
-            if now - start >= win:
-                start, cnt = now, 0
-            # temel limit
-            if cnt >= maxi and bt <= 1.0:
-                raise HTTPException(status_code=429, detail="rate limit")
-            # tüketim
-            cnt += 1
-            if cnt > maxi:
-                bt = max(0.0, bt - 1.0)
-            _state[token] = (start, cnt, bt)
+        
+        if redis_rl.enabled():
+            # Redis-backed distributed rate limit
+            ok, cnt, reset_at = await redis_rl.check_allow(token)
+            if not ok:
+                raise HTTPException(status_code=429, detail=f"rate limit exceeded; reset_at={reset_at}")
+        else:
+            # In-memory fallback (sliding window + burst)
+            now = time.time()
+            with _lock:
+                start, cnt, bt = _state.get(token, (now, 0, float(burst)))
+                # burst token yenilenmesi (basit: saniyede 1)
+                bt = min(float(burst), bt + (now - start))
+                # window rollover
+                if now - start >= win:
+                    start, cnt = now, 0
+                # temel limit
+                if cnt >= maxi and bt <= 1.0:
+                    raise HTTPException(status_code=429, detail="rate limit")
+                # tüketim
+                cnt += 1
+                if cnt > maxi:
+                    bt = max(0.0, bt - 1.0)
+                _state[token] = (start, cnt, bt)
 
         return await call_next(request)
     return _mw

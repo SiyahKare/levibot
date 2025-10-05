@@ -13,6 +13,8 @@ import BurstBanner from './components/BurstBanner'
 import DEXQuoteCard from './components/DEXQuoteCard'
 import NFTFloorCard from './components/NFTFloorCard'
 import L2YieldsCard from './components/L2YieldsCard'
+import DEXSparkline from './components/DEXSparkline'
+import L2YieldsBar from './components/L2YieldsBar'
 import type { Event } from './types'
 import { download } from './lib/download'
 
@@ -114,6 +116,8 @@ export default function App() {
         <DEXQuoteCard />
         <NFTFloorCard />
         <L2YieldsCard />
+        <DEXSparkline />
+        <L2YieldsBar />
       </div>
     </div>
   )

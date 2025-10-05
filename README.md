@@ -703,6 +703,63 @@ cd frontend/panel && npm i && npm run dev
 
 **Offline-safe**: API anahtarları yoksa sentetik fallback değerleri gösterir.
 
+---
+
+## Distributed Rate Limit (Redis)
+
+**Redis-backed token bucket** rate limiter for multi-instance deployments.
+
+**ENV**:
+```bash
+REDIS_URL=redis://localhost:6379/0
+RL_WINDOW_SEC=60
+RL_MAX=120
+RL_BURST=40
+```
+
+**Davranış**:
+- `REDIS_URL` varsa → Redis token-bucket (Lua script, atomic)
+- `REDIS_URL` yoksa → In-memory fallback (thread-safe, single instance)
+
+**Özellikler**:
+- ✅ **Distributed**: Çok replika arasında paylaşılan limit
+- ✅ **Atomic**: Lua script ile race condition yok
+- ✅ **Burst tolerance**: Kısa süreli spike'lara tolerans
+- ✅ **Auto-expire**: Redis TTL ile otomatik temizlik
+- ✅ **Graceful fallback**: Redis yoksa in-memory'ye düşer
+
+**Kullanım**:
+```bash
+# Redis başlat (Docker)
+docker run -d --name redis -p 6379:6379 redis:7
+
+# ENV
+export REDIS_URL=redis://localhost:6379/0
+export RL_WINDOW_SEC=60
+export RL_MAX=20
+export RL_BURST=5
+
+# API
+make run
+
+# Throttle testi (40 istek)
+for i in {1..40}; do curl -s -o /dev/null -w "%{http_code} " http://127.0.0.1:8000/status; done
+# → 200 200 200 ... 429 429 429
+```
+
+**Test**:
+```bash
+# Fallback mode (Redis yok)
+unset REDIS_URL
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/test_redis_rl.py::test_fallback_allow
+# → 1 passed
+
+# Redis mode (Redis var)
+export REDIS_URL=redis://localhost:6379/0
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/test_redis_rl.py
+# → 3 passed (veya 1 skipped if no Redis)
+```
+
 **Metrics**:
 ```bash
 cat backend/artifacts/metrics.json

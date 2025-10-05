@@ -1,4 +1,4 @@
-.PHONY: run test logs live-tg
+.PHONY: run test logs live-tg prod-up prod-logs prod-down prod-ps
 
 VENV=.venv
 
@@ -13,5 +13,18 @@ logs:
 
 live-tg:
 	$(VENV)/bin/python -m backend.src.ingest.telegram_live
+
+# Production Docker Compose targets
+prod-up:
+	docker compose -f docker-compose.prod.yml up --build -d
+
+prod-logs:
+	docker compose -f docker-compose.prod.yml logs -f --tail=200
+
+prod-down:
+	docker compose -f docker-compose.prod.yml down
+
+prod-ps:
+	docker compose -f docker-compose.prod.yml ps
 
 

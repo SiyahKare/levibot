@@ -38,3 +38,6 @@ aiohttp>=3.9.0
 pytest==8.3.3
 pytest-asyncio==0.24.0
 
+# redis (distributed rate limit)
+redis>=5.0.0
+

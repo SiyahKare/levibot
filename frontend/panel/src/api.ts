@@ -44,3 +44,14 @@ export async function getL2Yields() {
   const r = await fetch(`/l2/yields`); if (!r.ok) throw new Error("l2 yields failed"); return r.json();
 }
 
+export async function getDexQuoteSeries(sell="ETH", buy="USDC", points=20){
+  // basit client-side timeseries: ardışık 20 quote çekip timestamp'li dön
+  const out:{t:number; p:number}[]=[]
+  for(let i=0;i<points;i++){
+    const r=await fetch(`/dex/quote?sell=${sell}&buy=${buy}&amount=0.1`);
+    const j=await r.json(); out.push({t:Date.now(), p:j.price||null});
+    await new Promise(r=>setTimeout(r,150)); // kısa bekleme (demo için)
+  }
+  return out;
+}
+
