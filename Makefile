@@ -1,4 +1,4 @@
-.PHONY: run test logs live-tg prod-up prod-logs prod-down prod-ps
+.PHONY: run test logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker
 
 VENV=.venv
 
@@ -26,5 +26,15 @@ prod-down:
 
 prod-ps:
 	docker compose -f docker-compose.prod.yml ps
+
+# S3 Archiver targets
+archive-run:
+	$(VENV)/bin/python -m backend.src.ops.s3_archiver
+
+archive-dry:
+	ARCHIVE_DRY_RUN=true $(VENV)/bin/python -m backend.src.ops.s3_archiver
+
+archive-docker:
+	docker compose -f ops/docker-compose-cron.yml run --rm archive
 
 

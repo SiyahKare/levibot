@@ -8,5 +8,21 @@ services:
     entrypoint: bash -lc "pip install -r backend/requirements.txt && python -m backend.src.ml.retrain"
     # manual: docker compose -f ops/docker-compose-cron.yml run --rm retrain
 
+  archive:
+    image: python:3.12-slim
+    working_dir: /app
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION=eu-central-1
+      - S3_LOG_BUCKET
+      - S3_LOG_PREFIX=levibot/logs
+      - ARCHIVE_KEEP_DAYS=7
+      - ARCHIVE_DRY_RUN=false
+    volumes:
+      - ../:/app
+    entrypoint: bash -lc "pip install -r backend/requirements.txt && python -m backend.src.ops.s3_archiver"
+    # manual: docker compose -f ops/docker-compose-cron.yml run --rm archive
+
 
 
