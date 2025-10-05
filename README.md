@@ -7,6 +7,9 @@
   <a href="https://github.com/siyahkare/levibot/actions/workflows/ci.yml">
     <img src="https://github.com/siyahkare/levibot/actions/workflows/ci.yml/badge.svg" alt="CI Status">
   </a>
+  <a href="https://github.com/siyahkare/levibot/actions/workflows/security.yml">
+    <img src="https://github.com/siyahkare/levibot/actions/workflows/security.yml/badge.svg" alt="Security Scan">
+  </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
   </a>
