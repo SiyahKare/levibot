@@ -9,6 +9,7 @@ import NFTSniper from './pages/NFTSniper'
 import Trades from './pages/Trades'
 import Signals from './pages/Signals'
 import SignalsTimeline from './pages/SignalsTimeline'
+import Alerts from './pages/Alerts'
 import BurstBanner from './components/BurstBanner'
 import DEXQuoteCard from './components/DEXQuoteCard'
 import NFTFloorCard from './components/NFTFloorCard'
@@ -112,6 +113,9 @@ export default function App() {
         </div>
         <div className="p-4 bg-zinc-900 rounded col-span-1 md:col-span-2">
           <SignalsTimeline />
+        </div>
+        <div className="p-4 bg-zinc-900 rounded col-span-1 md:col-span-2">
+          <Alerts />
         </div>
         <DEXQuoteCard />
         <NFTFloorCard />

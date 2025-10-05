@@ -55,3 +55,42 @@ export async function getDexQuoteSeries(sell="ETH", buy="USDC", points=20){
   return out;
 }
 
+// Alert API (PR-37/38)
+export async function getAlertsHistory(params?: {
+  severity?: string;
+  source?: string;
+  days?: number;
+  limit?: number;
+}) {
+  const q = new URLSearchParams();
+  if (params?.severity) q.set("severity", params.severity);
+  if (params?.source) q.set("source", params.source);
+  if (params?.days) q.set("days", String(params.days));
+  if (params?.limit) q.set("limit", String(params.limit));
+  const url = `/alerts/history?${q.toString()}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("alerts history failed");
+  return r.json();
+}
+
+export async function triggerTestAlert(payload?: {
+  title?: string;
+  summary?: string;
+  severity?: string;
+}) {
+  const body = {
+    title: payload?.title || "Test Alert",
+    summary: payload?.summary || "This is a test alert from the panel",
+    severity: payload?.severity || "info",
+    source: "panel",
+    labels: { test: "true" },
+  };
+  const r = await fetch("/alerts/trigger", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error("trigger test alert failed");
+  return r.json();
+}
+
