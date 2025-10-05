@@ -31,10 +31,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r backend/requirements.txt
     
-    - name: Run tests
+    - name: Run unit tests
       run: |
         cd /home/runner/work/levibot/levibot
-        PYTHONPATH=/home/runner/work/levibot/levibot PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/
+        PYTHONPATH=/home/runner/work/levibot/levibot PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/ --ignore=backend/tests/e2e
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+    
+    - name: Run E2E tests (optional)
+      if: env.E2E == 'true'
+      run: |
+        cd /home/runner/work/levibot/levibot
+        PYTHONPATH=/home/runner/work/levibot/levibot PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest backend/tests/e2e -m e2e -q
       env:
         PYTHONPATH: ${{ github.workspace }}
     

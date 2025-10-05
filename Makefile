@@ -1,4 +1,4 @@
-.PHONY: run test logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker
+.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker
 
 VENV=.venv
 
@@ -6,6 +6,12 @@ run:
 	$(VENV)/bin/uvicorn backend.src.app.main:app --host 127.0.0.1 --port 8000 --reload
 
 test:
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/python -m pytest -q --ignore=backend/tests/e2e
+
+e2e:
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/python -m pytest backend/tests/e2e -m e2e -q
+
+test-all:
 	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/python -m pytest -q
 
 logs:
