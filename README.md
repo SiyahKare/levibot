@@ -118,7 +118,10 @@ make minio-down
 
 * **v1.0.0**: Core AI + Risk + Panel + Docker (initial)
 * **v1.1.0**: Redis RL + Charts + Prod Compose
-* **v1.2.0**: **S3 Archiver + E2E Tests** ✨
+* **v1.2.0**: S3 Archiver + E2E Tests
+* **v1.3.0**: **Build Info Metrics + MinIO + Lifespan** ✨
+
+**Runtime lifecycle**: FastAPI `lifespan` ile yönetilir (modern API). Eski `@app.on_event("startup")` artık yok; tüm startup/shutdown işleri `lifespan` içinde.
 
 ---
 

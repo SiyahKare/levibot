@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Request, Body
+from contextlib import asynccontextmanager
 from .schemas import ServiceStatus, StartRequest, StopRequest, SetLeverageRequest, ConfigSnapshot
 from .state import STATE
 from . import config as cfg
@@ -57,7 +58,42 @@ CONFIG_CACHE = {
 }
 
 
-app = FastAPI(title="LeviBot API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Modern FastAPI lifespan handler for startup/shutdown."""
+    # --- STARTUP ---
+    try:
+        # Load root .env
+        load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+    except Exception:
+        pass
+    
+    # 1) Build info metric (PR-26)
+    try:
+        from ..infra.version import get_build_info
+        info = get_build_info()
+        levibot_build_info.labels(
+            version=info["version"],
+            git_sha=info["git_sha"],
+            branch=info["branch"]
+        ).set(1)
+    except Exception as e:
+        print(f"[lifespan] build_info metric set failed: {e}")
+    
+    # 2) Schedule jobs (if any)
+    try:
+        schedule_jobs()
+    except Exception as e:
+        print(f"[lifespan] schedule_jobs failed: {e}")
+    
+    yield
+    
+    # --- SHUTDOWN ---
+    # Graceful cleanup (if needed)
+    pass
+
+
+app = FastAPI(title="LeviBot API", version="0.1.0", lifespan=lifespan)
 
 # CORS (panel geliştirme ve dış istemciler için yapılandırılabilir)
 _origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173")
@@ -246,23 +282,7 @@ def get_metrics() -> dict:
     }
 
 
-@app.on_event("startup")
-def _startup_jobs() -> None:
-    try:
-        # Load root .env
-        load_dotenv(Path(__file__).resolve().parents[3] / ".env")
-        schedule_jobs()
-        
-        # Set build info metric
-        from ..infra.version import get_build_info
-        info = get_build_info()
-        levibot_build_info.labels(
-            version=info["version"],
-            git_sha=info["git_sha"],
-            branch=info["branch"]
-        ).set(1)
-    except Exception:
-        pass
+# NOTE: Startup logic moved to lifespan handler (modern FastAPI pattern)
 
 
 @app.post("/paper/order", response_model=dict)

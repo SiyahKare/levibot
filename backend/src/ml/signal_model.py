@@ -18,6 +18,9 @@ MODEL_PATH = MODEL_DIR / "signal_clf.joblib"
 
 LABELS = ["BUY", "SELL", "NO-TRADE"]
 
+# Warmup cache (idempotent)
+_model_cache = {"ready": False}
+
 
 def _normalize(text: str) -> str:
     t = text.strip().lower()
@@ -88,4 +91,17 @@ def infer(text: str) -> Tuple[str, float]:
         conf = 0.5
     
     return label, conf
+
+
+def warmup():
+    """Warmup model cache (idempotent). Load artifact if exists."""
+    if _model_cache.get("ready"):
+        return
+    try:
+        if MODEL_PATH.exists():
+            joblib.load(MODEL_PATH)
+            _model_cache["ready"] = True
+    except Exception:
+        # Artifact doesn't exist or load failed; runtime will lazy load
+        pass
 
