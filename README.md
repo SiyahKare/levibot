@@ -1,6 +1,9 @@
 # LeviBot — Telegram Sinyal Botu ve On‑Chain/MEV/NFT Modülleri (MVP)
 
 <p align="right">
+  <a href="https://github.com/siyahkare/levibot/releases">
+    <img src="https://img.shields.io/github/v/tag/SiyahKare/levibot?label=release" alt="Release">
+  </a>
   <a href="https://github.com/siyahkare/levibot/actions/workflows/ci.yml">
     <img src="https://github.com/siyahkare/levibot/actions/workflows/ci.yml/badge.svg" alt="CI Status">
   </a>
