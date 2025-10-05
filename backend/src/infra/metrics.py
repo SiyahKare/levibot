@@ -27,6 +27,23 @@ TG_LAST_SCORE_OK_TS = Gauge('levibot_tg_last_score_ok_ts', 'Unix ts of last succ
 # Build info
 levibot_build_info = Gauge('levibot_build_info', 'Build information', ['version', 'git_sha', 'branch'], registry=registry)
 
+# Alert metrics
+alerts_enqueued_total = Counter(
+    "levibot_alerts_enqueued_total", "Alerts enqueued", ["target"], registry=registry
+)
+alerts_sent_total = Counter(
+    "levibot_alerts_sent_total", "Alerts successfully sent", ["target","status"], registry=registry
+)
+alerts_failed_total = Counter(
+    "levibot_alerts_failed_total", "Alerts failed after retries", ["target","status"], registry=registry
+)
+alerts_retry_total = Counter(
+    "levibot_alerts_retry_total", "Alert send retries", ["target","status"], registry=registry
+)
+alerts_queue_size_gauge = Gauge(
+    "levibot_alerts_queue_size", "Current size of alert queue", registry=registry
+)
+
 
 def inc_event(event_type: str) -> None:
     """Increment event counter; silent fail if metric unavailable."""

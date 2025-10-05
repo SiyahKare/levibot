@@ -120,6 +120,34 @@ make archive-minio
 make minio-down
 ```
 
+### Alerts — Webhook Queue (PR-35)
+
+Async, rate-limited, retry'li webhook gönderim kuyruğu.
+
+**ENV:**
+- `ALERTS_OUTBOUND_ENABLED`: Webhook queue'yu etkinleştir (default: true)
+- `WEBHOOK_RATE_LIMIT`: Hedef başına rate limit (req/sec, default: 1)
+- `WEBHOOK_RETRY_MAX`: Maksimum retry sayısı (default: 3)
+- `WEBHOOK_TIMEOUT`: HTTP timeout (saniye, default: 5)
+- `WEBHOOK_BACKOFF_BASE`, `WEBHOOK_BACKOFF_MAX`, `WEBHOOK_JITTER`: Retry backoff ayarları
+
+**Metrikler:**
+- `levibot_alerts_enqueued_total`: Kuyruğa eklenen alert sayısı
+- `levibot_alerts_sent_total`: Başarıyla gönderilen alert sayısı
+- `levibot_alerts_failed_total`: Tüm retry'lardan sonra başarısız olan alert sayısı
+- `levibot_alerts_retry_total`: Retry sayısı
+- `levibot_alerts_queue_size`: Mevcut kuyruk boyutu
+
+**Kullanım (programatik):**
+```python
+from backend.src.app.main import enqueue_alert
+enqueue_alert(
+    {"title": "High-Confidence BUY", "text": "BTC/USDT conf=0.84"},
+    target_url=os.environ["SLACK_WEBHOOK_URL"],
+    target_key="slack"
+)
+```
+
 ## Release Matrix
 
 * **v1.0.0**: Core AI + Risk + Panel + Docker (initial)

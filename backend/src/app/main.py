@@ -58,9 +58,13 @@ CONFIG_CACHE = {
 }
 
 
+WEBHOOK_QUEUE: WebhookQueue | None = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Modern FastAPI lifespan handler for startup/shutdown."""
+    global WEBHOOK_QUEUE
+    
     # --- STARTUP ---
     try:
         # Load root .env
@@ -86,11 +90,39 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[lifespan] schedule_jobs failed: {e}")
     
+    # 3) Webhook queue (PR-35)
+    enabled = (os.getenv("ALERTS_OUTBOUND_ENABLED","true").lower() == "true")
+    if enabled:
+        try:
+            cfg = QueueConfig(
+                rate_limit_per_sec=float(os.getenv("WEBHOOK_RATE_LIMIT","1")),
+                timeout_sec=float(os.getenv("WEBHOOK_TIMEOUT","5")),
+                max_retries=int(os.getenv("WEBHOOK_RETRY_MAX","3")),
+                backoff_base=float(os.getenv("WEBHOOK_BACKOFF_BASE","0.8")),
+                backoff_max=float(os.getenv("WEBHOOK_BACKOFF_MAX","8.0")),
+                jitter=float(os.getenv("WEBHOOK_JITTER","0.2")),
+            )
+            WEBHOOK_QUEUE = WebhookQueue(cfg)
+            await WEBHOOK_QUEUE.start()
+            print("[lifespan] webhook queue started")
+        except Exception as e:
+            print(f"[lifespan] webhook queue start failed: {e}")
+    
     yield
     
     # --- SHUTDOWN ---
-    # Graceful cleanup (if needed)
-    pass
+    if WEBHOOK_QUEUE:
+        try:
+            await WEBHOOK_QUEUE.stop()
+            print("[lifespan] webhook queue stopped")
+        except Exception as e:
+            print(f"[lifespan] webhook queue stop failed: {e}")
+
+
+def enqueue_alert(payload: dict, target_url: str, headers: dict | None = None, target_key: str | None = None):
+    """Helper to enqueue alert to webhook queue (PR-35)."""
+    if WEBHOOK_QUEUE:
+        WEBHOOK_QUEUE.enqueue(target_url=target_url, payload=payload, headers=headers, target_key=target_key)
 
 
 app = FastAPI(title="LeviBot API", version="0.1.0", lifespan=lifespan)
