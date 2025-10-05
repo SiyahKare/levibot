@@ -65,7 +65,7 @@ services:
     container_name: levibot-panel
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3001:80"
     environment:
       - VITE_API_URL=http://localhost:8000
     depends_on:
