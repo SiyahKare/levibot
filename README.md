@@ -24,23 +24,34 @@
   </a>
  </p>
 
-> ### ⚡ Runbook TL;DR
+> ### 🐳 Quick Start (Docker - Recommended)
+> ```bash
+> # 1. Ortam değişkenlerini ayarla
+> cp .env.docker.example .env
+> # .env dosyasını düzenle (API_KEYS, webhooks vs.)
+> 
+> # 2. Tek komutla tüm stack'i başlat
+> make docker-up
+> 
+> # Panel: http://localhost:3000
+> # API: http://localhost:8000
+> # Metrics: http://localhost:8000/metrics/prom
+> 
+> # Logları takip et
+> make docker-logs
+> 
+> # Durdur
+> make docker-down
+> ```
+>
+> ### ⚡ Manuel Dev Setup
 > ```bash
 > python3 -m venv .venv && source .venv/bin/activate
 > pip install -r backend/requirements.txt
 > cp .env.example .env || cp ENV.example .env
 > ./.venv/bin/uvicorn backend.src.app.main:app --host 127.0.0.1 --port 8000 --reload
-> # smoke
+> # smoke test
 > curl -s http://127.0.0.1:8000/status | jq
-> ```
->
-> ### 🐳 Quick Start (Docker, Prod)
-> ```bash
-> cp .env.prod.example .env.prod
-> # Edit: API_KEYS, optional ZEROX_API_KEY / RESERVOIR_API_KEY
-> make prod-up
-> open http://localhost
-> curl -s http://localhost/healthz | jq
 > ```
 
 LeviBot; Telegram kaynaklı sinyalleri toplar, puanlar ve izler; on‑chain/MEV/NFT akışlarından üretilen uyarıları tek bir izleme/logging ve panel mimarisine düşürür. Risk‑first yaklaşımı ve çok kullanıcılı yapı için tasarlanmıştır.
@@ -87,6 +98,109 @@ telegram/       # Telethon user‑bot (auto‑discover + backfill + live)
 - **Panel**: Çalışır mini panel; On‑Chain / MEV Feed / NFT Sniper sayfaları eklendi (iskele veri okur).
 - **Ödeme/abonelik/VIP**: Bulunmadı (TODO). Kullanıcı rolleri var ama ödeme entegrasyonu yok.
 - **On‑chain/MEV/NFT**: İskelet modüller mevcut; canlı fiyat/quote ve private tx için entegrasyon gereken yerler TODO.
+
+## 🐳 Docker Setup
+
+### **Architecture**
+
+```
+┌─────────────────────────────────────────┐
+│  Panel (Nginx:80 → localhost:3000)     │
+│  ├─ Static assets (/usr/share/nginx)   │
+│  └─ API proxy (/api/* → api:8000)      │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│  API (Uvicorn:8000)                     │
+│  ├─ FastAPI backend                     │
+│  ├─ Redis client (rate limiting)        │
+│  └─ Volumes: logs, configs              │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│  Redis (6379)                           │
+│  └─ Distributed rate limit + cache      │
+└─────────────────────────────────────────┘
+```
+
+### **Services**
+- 🚀 **API** — FastAPI backend (port 8000)
+- 🎨 **Panel** — React dashboard (port 3000)
+- 🗄️ **Redis** — Distributed rate limiting (port 6379)
+- 🌐 **Nginx** — Reverse proxy + static serving
+
+### **Commands**
+
+```bash
+# Build images
+make docker-build
+
+# Start all services (detached)
+make docker-up
+
+# View logs (follow mode)
+make docker-logs
+
+# List running services
+make docker-ps
+
+# Stop all services
+make docker-down
+
+# Restart services
+make docker-restart
+
+# Clean all containers/volumes/images
+make docker-clean
+
+# Shell into containers
+make docker-shell-api    # API container
+make docker-shell-redis  # Redis CLI
+```
+
+### **Health Checks**
+
+```bash
+# API health
+curl http://localhost:8000/healthz
+
+# Redis health
+docker exec levibot-redis redis-cli ping
+
+# All service statuses
+make docker-ps
+```
+
+### **Production Deploy**
+
+```bash
+# 1. Build with version tag
+BUILD_VERSION=1.5.0 BUILD_SHA=$(git rev-parse --short HEAD) make docker-build
+
+# 2. Start stack
+make docker-up
+
+# 3. Monitor logs
+make docker-logs
+
+# 4. Verify build info
+curl http://localhost:8000/metrics/prom | grep levibot_build_info
+```
+
+### **Environment Variables**
+
+Core settings in `.env`:
+- `API_KEYS` — Comma-separated API keys for authentication
+- `REDIS_URL` — Redis connection string
+- `CORS_ORIGINS` — Allowed CORS origins
+- `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL` — Alert webhooks
+- `RISK_POLICY` — Risk management policy (conservative/moderate/aggressive)
+- `AUTO_ROUTE_ENABLED` — Enable auto-routing for signals
+- `ALERT_AUTO_TRIGGER_ENABLED` — Enable auto-alerts for high-confidence signals
+
+See `.env.docker.example` for full configuration.
+
+---
 
 ## E2E Tests (Local)
 

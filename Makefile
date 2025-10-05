@@ -92,4 +92,45 @@ fix-frontend:
 	cd frontend/panel && npm run -s fmt || npx prettier -w "src/**/*.{ts,tsx,js,jsx,json,css,md}"
 	cd frontend/panel && npm run -s lint -- --fix || true
 
+# ============================================
+# Docker Commands
+# ============================================
+
+docker-build:  ## Docker image'larını build et
+	@echo "🐳 Building Docker images..."
+	docker compose build
+
+docker-up:  ## Tüm servisleri başlat (detached mode)
+	@echo "🚀 Starting LeviBot stack..."
+	docker compose up -d
+	@echo "✅ Stack başlatıldı!"
+	@echo "📊 Panel: http://localhost:3000"
+	@echo "🔌 API: http://localhost:8000"
+	@echo "📈 Metrics: http://localhost:8000/metrics/prom"
+
+docker-logs:  ## Tüm servis loglarını göster (follow mode)
+	docker compose logs -f
+
+docker-ps:  ## Çalışan servisleri listele
+	docker compose ps
+
+docker-down:  ## Tüm servisleri durdur
+	@echo "🛑 Stopping LeviBot stack..."
+	docker compose down
+
+docker-restart:  ## Tüm servisleri yeniden başlat
+	@echo "🔄 Restarting LeviBot stack..."
+	docker compose restart
+
+docker-clean:  ## Tüm container, volume ve image'ları temizle
+	@echo "🧹 Cleaning Docker resources..."
+	docker compose down -v --rmi all
+	@echo "✅ Docker kaynakları temizlendi"
+
+docker-shell-api:  ## API container'a shell aç
+	docker exec -it levibot-api /bin/bash
+
+docker-shell-redis:  ## Redis container'a shell aç
+	docker exec -it levibot-redis redis-cli
+
 

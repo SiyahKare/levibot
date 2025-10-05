@@ -1,0 +1,47 @@
+# ============================================
+# LeviBot Panel — Multi-stage Production Build
+# ============================================
+
+FROM node:20-alpine as base
+
+WORKDIR /app
+
+# ============================================
+# Stage 1: Dependencies
+# ============================================
+FROM base as deps
+
+COPY frontend/panel/package*.json ./
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# ============================================
+# Stage 2: Build
+# ============================================
+FROM base as build
+
+COPY frontend/panel/package*.json ./
+RUN npm ci
+
+COPY frontend/panel/ ./
+RUN npm run build
+
+# ============================================
+# Stage 3: Runtime (Nginx)
+# ============================================
+FROM nginx:alpine as runtime
+
+# Copy built assets
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Custom nginx config
+COPY ops/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
