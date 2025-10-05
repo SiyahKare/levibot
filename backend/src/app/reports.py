@@ -143,8 +143,12 @@ def events(
         day_list = [(end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
         files = []
         for d in sorted(day_list):
-            pattern = duckinfra._glob_for_day(d)
-            files.extend(sorted(glob.glob(pattern)))
+            # Hem klasör içindeki events-*.jsonl hem de root'taki YYYY-MM-DD.jsonl dosyalarını al
+            pattern1 = duckinfra._glob_for_day(d)  # /path/to/logs/2025-10-01/events-*.jsonl
+            pattern2 = str(duckinfra._glob_for_day(d).rsplit('/', 1)[0].rsplit('/', 1)[0] + f"/{d}.jsonl")  # /path/to/logs/2025-10-01.jsonl
+            files.extend(sorted(glob.glob(pattern1)))
+            if glob.glob(pattern2):
+                files.extend([pattern2])
         if not files:
             out = []
         else:
