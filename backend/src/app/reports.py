@@ -142,12 +142,25 @@ def events(
             end_dt = datetime.utcnow()
         day_list = [(end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
         files = []
+        
+        # Basit absolute path kullan (duck.py'deki karmaşık path resolution yerine)
+        from pathlib import Path
+        log_base = Path(__file__).resolve().parents[3] / "backend" / "data" / "logs"
+        
         for d in sorted(day_list):
-            # Hem klasör içindeki events-*.jsonl hem de root'taki YYYY-MM-DD.jsonl dosyalarını al
-            pattern1 = duckinfra._glob_for_day(d)  # /path/to/logs/2025-10-01/events-*.jsonl
-            pattern2 = str(duckinfra._glob_for_day(d).rsplit('/', 1)[0].rsplit('/', 1)[0] + f"/{d}.jsonl")  # /path/to/logs/2025-10-01.jsonl
+            # Klasör içindeki events-*.jsonl dosyaları
+            pattern1 = str(log_base / d / "events-*.jsonl")
             files.extend(sorted(glob.glob(pattern1)))
+            
+            # Root'taki YYYY-MM-DD.jsonl dosyası
+            pattern2 = str(log_base / f"{d}.jsonl")
             files.extend(sorted(glob.glob(pattern2)))
+        
+        # DEBUG
+        print(f"[/events DEBUG] day={day}, days={days}, found {len(files)} files", flush=True)
+        if files:
+            print(f"[/events DEBUG] first file: {files[0]}", flush=True)
+        
         if not files:
             out = []
         else:
@@ -190,12 +203,17 @@ def events(
                             out.append(rec)
                             if len(out) >= limit:
                                 break
-                except Exception:
+                except Exception as e:
+                    print(f"[/events DEBUG] Error reading {fp}: {e}", flush=True)
                     continue
             # Sıralama ve limit güvenliği
             out.sort(key=lambda r: r.get("ts") or "")
             out = out[:limit]
-    except Exception:
+            print(f"[/events DEBUG] returning {len(out)} events", flush=True)
+    except Exception as e:
+        import sys, traceback
+        print(f"[/events DEBUG] Outer exception: {e}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
         out = []
     if format == "jsonl":
         import json as _json
