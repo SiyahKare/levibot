@@ -1,4 +1,4 @@
-.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker minio-up minio-down minio-logs archive-minio perf perf-save perf-compare
+.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker minio-up minio-down minio-logs archive-minio perf perf-save perf-compare fmt lint clean fix-frontend
 
 VENV=.venv
 
@@ -70,5 +70,26 @@ perf-save:
 
 perf-compare:
 	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only --benchmark-compare=$${BENCH_BASE:-baseline-v1.3} -q
+
+# Developer experience helpers
+fmt:
+	@echo "→ Python format (black) + imports (ruff)…"
+	$(VENV)/bin/python -m black backend || true
+	$(VENV)/bin/ruff check backend --select I --fix || true
+
+lint:
+	@echo "→ Python lint (ruff)…"
+	$(VENV)/bin/ruff check backend
+	@echo "→ Frontend lint (eslint)…"
+	cd frontend/panel && npm run -s lint || echo "hint: run 'npm i' in frontend/panel"
+
+clean:
+	@find . -type d -name "__pycache__" -prune -exec rm -rf {} \; 2>/dev/null || true
+	@find . -type d -name ".pytest_cache" -prune -exec rm -rf {} \; 2>/dev/null || true
+	@rm -rf backend/artifacts/*.tmp 2>/dev/null || true
+
+fix-frontend:
+	cd frontend/panel && npm run -s fmt || npx prettier -w "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+	cd frontend/panel && npm run -s lint -- --fix || true
 
 

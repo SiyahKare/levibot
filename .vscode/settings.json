@@ -1,0 +1,25 @@
+{
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.organizeImports": true
+  },
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.defaultFormatter": "ms-python.python",
+    "python.testing.pytestEnabled": true,
+    "python.analysis.typeCheckingMode": "basic"
+  },
+  "[typescript][typescriptreact][javascript][javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "python.testing.pytestArgs": [
+    "backend/tests"
+  ],
+  "python.formatting.provider": "black",
+  "ruff.importStrategy": "fromEnvironment",
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "prettier.printWidth": 100
+}
