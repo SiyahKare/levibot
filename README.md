@@ -148,6 +148,22 @@ enqueue_alert(
 )
 ```
 
+## 📈 Roadmap
+
+**LeviBot v1.4.0** — Production-Ready & Demo-Ready
+
+Kapsamlı yol haritası, stratejik vizyon ve sonraki sprint planları için:
+👉 **[ROADMAP_SUMMARY.md](docs/ROADMAP_SUMMARY.md)**
+
+**Highlights:**
+- ✅ Sprint 1-7: Core Foundation + Documentation (28 PR merged)
+- 🟡 Sprint 8: Alerting & Webhooks (PR-34/35 done, 3 more to go)
+- 🔜 Sprint 9: Advanced AI Layer (Feature Store, Ensemble, MLOps)
+- 🔜 Sprint 10: SaaS & Monetization (API tiering, Token integration)
+- 🎯 Target: v2.0.0 — Autonomous AI + Tokenized SaaS platform
+
+> "Artık kod değil, zekâ deploy ediyoruz." — Baron
+
 ## Release Matrix
 
 * **v1.0.0**: Core AI + Risk + Panel + Docker (initial)
