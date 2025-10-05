@@ -1,4 +1,4 @@
-.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker minio-up minio-down minio-logs archive-minio
+.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker minio-up minio-down minio-logs archive-minio perf perf-save perf-compare
 
 VENV=.venv
 
@@ -60,5 +60,15 @@ archive-minio:
 	AWS_REGION=$${AWS_REGION:-us-east-1} \
 	S3_LOG_BUCKET=$${S3_LOG_BUCKET:-levibot-logs} \
 	$(VENV)/bin/python -m backend.src.ops.s3_archiver
+
+# Performance benchmarks
+perf:
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only -q
+
+perf-save:
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only --benchmark-save=$${BENCH_NAME:-baseline-$(shell date +%Y%m%d)} -q
+
+perf-compare:
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only --benchmark-compare=$${BENCH_BASE:-baseline-v1.3} -q
 
 
