@@ -27,6 +27,15 @@
 > # smoke
 > curl -s http://127.0.0.1:8000/status | jq
 > ```
+>
+> ### 🐳 Quick Start (Docker, Prod)
+> ```bash
+> cp .env.prod.example .env.prod
+> # Edit: API_KEYS, optional ZEROX_API_KEY / RESERVOIR_API_KEY
+> make prod-up
+> open http://localhost
+> curl -s http://localhost/healthz | jq
+> ```
 
 LeviBot; Telegram kaynaklı sinyalleri toplar, puanlar ve izler; on‑chain/MEV/NFT akışlarından üretilen uyarıları tek bir izleme/logging ve panel mimarisine düşürür. Risk‑first yaklaşımı ve çok kullanıcılı yapı için tasarlanmıştır.
 
@@ -72,6 +81,32 @@ telegram/       # Telethon user‑bot (auto‑discover + backfill + live)
 - **Panel**: Çalışır mini panel; On‑Chain / MEV Feed / NFT Sniper sayfaları eklendi (iskele veri okur).
 - **Ödeme/abonelik/VIP**: Bulunmadı (TODO). Kullanıcı rolleri var ama ödeme entegrasyonu yok.
 - **On‑chain/MEV/NFT**: İskelet modüller mevcut; canlı fiyat/quote ve private tx için entegrasyon gereken yerler TODO.
+
+## E2E Tests (Local)
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r backend/requirements.txt
+make e2e   # httpx + live uvicorn
+# → 3 passed in ~9s
+```
+
+## S3 Log Archiver (Ops)
+
+```bash
+# Dry-run
+make archive-dry
+# Docker job
+docker compose -f ops/docker-compose-cron.yml run --rm archive
+```
+
+## Release Matrix
+
+* **v1.0.0**: Core AI + Risk + Panel + Docker (initial)
+* **v1.1.0**: Redis RL + Charts + Prod Compose
+* **v1.2.0**: **S3 Archiver + E2E Tests** ✨
+
+---
 
 ## Kurulum
 1) Python venv
