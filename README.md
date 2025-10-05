@@ -100,6 +100,20 @@ make archive-dry
 docker compose -f ops/docker-compose-cron.yml run --rm archive
 ```
 
+## MinIO Local (S3-compatible)
+
+```bash
+# Start MinIO stack
+make minio-up
+# Console: http://localhost:9001 (user/pass: minioadmin/minioadmin)
+
+# Test archiver with MinIO (real upload)
+make archive-minio
+
+# Stop MinIO
+make minio-down
+```
+
 ## Release Matrix
 
 * **v1.0.0**: Core AI + Risk + Panel + Docker (initial)

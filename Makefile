@@ -1,4 +1,4 @@
-.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker
+.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker minio-up minio-down minio-logs archive-minio
 
 VENV=.venv
 
@@ -42,5 +42,23 @@ archive-dry:
 
 archive-docker:
 	docker compose -f ops/docker-compose-cron.yml run --rm archive
+
+# MinIO (local S3-compatible)
+minio-up:
+	docker compose -f ops/minio-compose.yml up -d
+
+minio-down:
+	docker compose -f ops/minio-compose.yml down -v
+
+minio-logs:
+	docker compose -f ops/minio-compose.yml logs -f --tail=200
+
+archive-minio:
+	AWS_ENDPOINT_URL=http://localhost:9000 \
+	AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID:-minioadmin} \
+	AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY:-minioadmin} \
+	AWS_REGION=$${AWS_REGION:-us-east-1} \
+	S3_LOG_BUCKET=$${S3_LOG_BUCKET:-levibot-logs} \
+	$(VENV)/bin/python -m backend.src.ops.s3_archiver
 
 
