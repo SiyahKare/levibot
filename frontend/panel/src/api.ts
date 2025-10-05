@@ -55,42 +55,46 @@ export async function getDexQuoteSeries(sell="ETH", buy="USDC", points=20){
   return out;
 }
 
-// Alert API (PR-37/38)
-export async function getAlertsHistory(params?: {
+// --- Alerts API helpers -------------------------------
+export type AlertItem = {
+  ts: number;
+  title: string;
+  severity: "info" | "low" | "medium" | "high" | "critical";
+  source?: string;
+  details?: Record<string, unknown> | null;
+};
+
+export async function getAlertsHistory(params: {
   severity?: string;
   source?: string;
   days?: number;
   limit?: number;
-}) {
-  const q = new URLSearchParams();
-  if (params?.severity) q.set("severity", params.severity);
-  if (params?.source) q.set("source", params.source);
-  if (params?.days) q.set("days", String(params.days));
-  if (params?.limit) q.set("limit", String(params.limit));
-  const url = `/alerts/history?${q.toString()}`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error("alerts history failed");
-  return r.json();
+  q?: string;
+}): Promise<AlertItem[]> {
+  const u = new URL("/alerts/history", window.location.origin);
+  if (params.severity && params.severity !== "all") u.searchParams.set("severity", params.severity);
+  if (params.source && params.source !== "all") u.searchParams.set("source", params.source);
+  u.searchParams.set("days", String(params.days ?? 3));
+  u.searchParams.set("limit", String(params.limit ?? 300));
+  if (params.q && params.q.trim()) u.searchParams.set("q", params.q.trim());
+  const r = await fetch(u.toString(), { credentials: "include" });
+  if (!r.ok) throw new Error("alerts/history failed");
+  return (await r.json()) as AlertItem[];
 }
 
-export async function triggerTestAlert(payload?: {
-  title?: string;
-  summary?: string;
-  severity?: string;
-}) {
-  const body = {
-    title: payload?.title || "Test Alert",
-    summary: payload?.summary || "This is a test alert from the panel",
-    severity: payload?.severity || "info",
-    source: "panel",
-    labels: { test: "true" },
-  };
+export async function triggerTestAlert(payload?: Partial<AlertItem> & { targets?: string[] }) {
   const r = await fetch("/alerts/trigger", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      title: payload?.title ?? "Test Alert",
+      severity: payload?.severity ?? "info",
+      source: payload?.source ?? "custom",
+      details: payload?.details ?? { note: "panel test" },
+      targets: payload?.targets ?? [],
+    }),
   });
-  if (!r.ok) throw new Error("trigger test alert failed");
+  if (!r.ok) throw new Error("trigger alert failed");
   return r.json();
 }
 
