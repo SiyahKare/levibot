@@ -32,6 +32,7 @@ from .perp_breakout_api import router as perp_breakout_router
 from .l2_farm_api import router as l2_router
 from .telegram_api import router as tg_router
 from .config_api import router as config_router
+from .routers.alerts import router as alerts_router
 from ..exec.paper import place_paper_order
 from ..exec.paper_ccxt import place_cex_paper_order
 from ..exec.types import PaperOrderRequest, PaperOrderResult
@@ -149,6 +150,7 @@ app.include_router(twap_rule_router)
 app.include_router(perp_breakout_router)
 app.include_router(l2_router)
 app.include_router(config_router)
+app.include_router(alerts_router)
 app.include_router(admin_router)
 app.include_router(tg_router)
 
@@ -430,6 +432,23 @@ def signals_ingest_and_score(text: str, source: str = "telegram", channel: str |
 
     log_event("SIGNAL_SCORED", {"source": source, "channel": channel, "text": text[:300], **res, "fe": fe})
 
+    # 3.5) Auto-trigger alert if high confidence (PR-37)
+    alert_info = None
+    try:
+        from ..alerts.autotrigger import auto_trigger_from_signal
+        event = {
+            "event_type": "SIGNAL_SCORED",
+            "symbol": fe.get("symbols", [None])[0] if fe.get("symbols") else "",
+            "payload": {
+                "label": label,
+                "confidence": conf,
+                "text": text,
+            }
+        }
+        alert_info = auto_trigger_from_signal(event, WEBHOOK_QUEUE)
+    except Exception:
+        pass  # Silent fail, don't block signal processing
+
     # 4) guards
     enabled = os.getenv("AUTO_ROUTE_ENABLED", "false").lower() == "true"
     dry_run = os.getenv("AUTO_ROUTE_DRY_RUN", "true").lower() == "true"
@@ -494,7 +513,10 @@ def signals_ingest_and_score(text: str, source: str = "telegram", channel: str |
         })
         orders.append({"exchange": exchange, "symbol": cex_symbol, "side": side, "qty": out.qty, "price": out.price})
 
-    return {"ok": True, "routed": routed_any, "score": res, "route": route_info, "orders": orders, "fe": fe}
+    result = {"ok": True, "routed": routed_any, "score": res, "route": route_info, "orders": orders, "fe": fe}
+    if alert_info:
+        result["alert"] = alert_info
+    return result
 
 
 @app.post("/ml/dataset/append", response_model=dict)

@@ -165,6 +165,54 @@ for target in route_targets():
 - **Discord**: Embeds (renk-kodlu severity, timestamp, alanlar, footer)
 - **Severity Renkleri**: info=mavi, high=turuncu, critical=kırmızı
 
+### Alerts — API & Auto-Trigger (PR-37)
+
+Alert sistemi artık API endpoint'leri ve otomatik tetikleme ile canlı!
+
+**API Endpoints:**
+
+**POST /alerts/trigger** — Manuel alert tetikleme (test/demo için)
+```bash
+curl -X POST http://localhost:8000/alerts/trigger \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "High-Confidence BUY",
+    "summary": "BTC/USDT signal @60000 (conf 0.84)",
+    "severity": "high",
+    "source": "manual",
+    "labels": {"symbol": "BTC/USDT", "side": "buy"}
+  }'
+
+# Response: {"status": "queued", "targets": ["slack", "discord"]}
+```
+
+**GET /alerts/history** — Alert geçmişi
+```bash
+curl "http://localhost:8000/alerts/history?limit=50&severity=high&days=7"
+
+# Response: {"alerts": [...], "total": 42}
+```
+
+**Auto-Trigger:**
+- Yüksek güven skorlu sinyaller otomatik olarak alert tetikler
+- `/signals/ingest-and-score` içinde rule engine ile değerlendirme
+- ENV ile eşik ve hedef konfigürasyonu
+
+**ENV:**
+- `ALERT_AUTO_TRIGGER_ENABLED`: Otomatik tetikleme (default: true)
+- `ALERT_MIN_CONF`: Minimum güven skoru eşiği (default: 0.8)
+- `ALERT_LOG_DIR`: Alert log dizini (default: backend/data/alerts)
+
+**Metrikler:**
+- `levibot_alerts_triggered_total{source="auto|manual"}`: Tetiklenen alert sayısı
+
+**Örnek Flow:**
+1. Telegram'dan signal gelir → `/signals/ingest-and-score`
+2. ML model skorlar → confidence 0.85
+3. Rule engine değerlendirir → `high_conf_buy` rule match
+4. Auto-trigger çalışır → Slack/Discord'a gönderir
+5. JSONL'e loglanır → Panel'de görünür (PR-38)
+
 ## 📈 Roadmap
 
 **LeviBot v1.4.0** — Production-Ready & Demo-Ready
