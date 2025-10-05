@@ -120,9 +120,9 @@ make archive-minio
 make minio-down
 ```
 
-### Alerts — Webhook Queue (PR-35)
+### Alerts — Webhook Queue (PR-35) & Slack/Discord (PR-36)
 
-Async, rate-limited, retry'li webhook gönderim kuyruğu.
+Async, rate-limited, retry'li webhook gönderim kuyruğu + zengin formatlı Slack/Discord entegrasyonu.
 
 **ENV:**
 - `ALERTS_OUTBOUND_ENABLED`: Webhook queue'yu etkinleştir (default: true)
@@ -130,6 +130,9 @@ Async, rate-limited, retry'li webhook gönderim kuyruğu.
 - `WEBHOOK_RETRY_MAX`: Maksimum retry sayısı (default: 3)
 - `WEBHOOK_TIMEOUT`: HTTP timeout (saniye, default: 5)
 - `WEBHOOK_BACKOFF_BASE`, `WEBHOOK_BACKOFF_MAX`, `WEBHOOK_JITTER`: Retry backoff ayarları
+- `SLACK_WEBHOOK_URL`: Slack incoming webhook URL (opsiyonel)
+- `DISCORD_WEBHOOK_URL`: Discord webhook URL (opsiyonel)
+- `ALERT_DEFAULT_TARGETS`: Virgülle ayrılmış hedefler (opsiyonel, örn: "slack,discord")
 
 **Metrikler:**
 - `levibot_alerts_enqueued_total`: Kuyruğa eklenen alert sayısı
@@ -140,13 +143,27 @@ Async, rate-limited, retry'li webhook gönderim kuyruğu.
 
 **Kullanım (programatik):**
 ```python
-from backend.src.app.main import enqueue_alert
-enqueue_alert(
-    {"title": "High-Confidence BUY", "text": "BTC/USDT conf=0.84"},
-    target_url=os.environ["SLACK_WEBHOOK_URL"],
-    target_key="slack"
-)
+from backend.src.app.main import WEBHOOK_QUEUE
+from backend.src.alerts.channels import deliver_alert_via, route_targets
+
+alert = {
+    "title": "High-Confidence BUY",
+    "summary": "BTC/USDT signal @60000 (conf 0.84)",
+    "severity": "high",  # info | low | medium | high | critical
+    "source": "signals",
+    "labels": {"symbol": "BTC/USDT", "side": "buy", "conf": "0.84"},
+    "url": "http://localhost:8000/signals"
+}
+
+# Auto-route to all configured channels
+for target in route_targets():
+    deliver_alert_via(target, alert, WEBHOOK_QUEUE)
 ```
+
+**Format Örnekleri:**
+- **Slack**: Blocks API (başlık, özet, alanlar, context footer, buton)
+- **Discord**: Embeds (renk-kodlu severity, timestamp, alanlar, footer)
+- **Severity Renkleri**: info=mavi, high=turuncu, critical=kırmızı
 
 ## 📈 Roadmap
 
