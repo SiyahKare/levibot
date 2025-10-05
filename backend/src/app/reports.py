@@ -143,9 +143,11 @@ def events(
         day_list = [(end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
         files = []
         
-        # Basit absolute path kullan (duck.py'deki karmaşık path resolution yerine)
+        # Basit absolute path kullan
+        import os
         from pathlib import Path
-        log_base = Path(__file__).resolve().parents[3] / "backend" / "data" / "logs"
+        # Docker içinde /app, local'de workspace root
+        log_base = Path(os.getenv("LOG_DIR", "/app/backend/data/logs"))
         
         for d in sorted(day_list):
             # Klasör içindeki events-*.jsonl dosyaları
@@ -155,11 +157,6 @@ def events(
             # Root'taki YYYY-MM-DD.jsonl dosyası
             pattern2 = str(log_base / f"{d}.jsonl")
             files.extend(sorted(glob.glob(pattern2)))
-        
-        # DEBUG
-        print(f"[/events DEBUG] day={day}, days={days}, found {len(files)} files", flush=True)
-        if files:
-            print(f"[/events DEBUG] first file: {files[0]}", flush=True)
         
         if not files:
             out = []
@@ -203,17 +200,12 @@ def events(
                             out.append(rec)
                             if len(out) >= limit:
                                 break
-                except Exception as e:
-                    print(f"[/events DEBUG] Error reading {fp}: {e}", flush=True)
+                except Exception:
                     continue
             # Sıralama ve limit güvenliği
             out.sort(key=lambda r: r.get("ts") or "")
             out = out[:limit]
-            print(f"[/events DEBUG] returning {len(out)} events", flush=True)
-    except Exception as e:
-        import sys, traceback
-        print(f"[/events DEBUG] Outer exception: {e}", file=sys.stderr, flush=True)
-        traceback.print_exc(file=sys.stderr)
+    except Exception:
         out = []
     if format == "jsonl":
         import json as _json
