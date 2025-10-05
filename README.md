@@ -213,6 +213,50 @@ curl "http://localhost:8000/alerts/history?limit=50&severity=high&days=7"
 4. Auto-trigger çalışır → Slack/Discord'a gönderir
 5. JSONL'e loglanır → Panel'de görünür (PR-38)
 
+### Alerts — Panel Monitor (PR-38)
+
+Frontend alert monitoring dashboard — **Sprint 8-A COMPLETE!** 🎊
+
+**Özellikler:**
+- 📊 **Live Alert Table**: timestamp, title, severity (color-coded), source, details
+- 🔴 **Unread Badge**: Shows new alerts since last view
+- 🔍 **Filters**: severity (info/low/medium/high/critical), source (signals/risk/exec), days (1/3/7)
+- 🔄 **Auto-refresh**: Polls `/alerts/history` every 5 seconds
+- 📄 **Pagination**: 25/50/100 alerts per page
+- 🧪 **Test Alert Button**: Manual trigger (hidden by default, enable with `VITE_SHOW_TEST_ALERT=true`)
+
+**Severity Colors:**
+- 🔵 **info/low**: Blue/Gray
+- 🟠 **medium/high**: Orange
+- 🔴 **critical**: Red
+
+**Usage:**
+```bash
+cd frontend/panel
+npm install
+npm run dev
+
+# Optional: Enable test alert button
+echo "VITE_SHOW_TEST_ALERT=true" >> .env.local
+
+# Visit: http://localhost:5173 → "Alerts" tab
+```
+
+**Live Demo Flow:**
+1. High-confidence signal arrives (e.g., BUY BTC confidence 0.85)
+2. Auto-trigger fires (PR-37)
+3. Alert logged to JSONL
+4. Panel polls `/alerts/history`
+5. New alert appears in table with unread badge
+6. Click "Alerts" tab → badge resets
+
+**API Integration:**
+- `GET /alerts/history?limit=300&severity=high&days=7`
+- `POST /alerts/trigger` (test button)
+
+**ENV:**
+- `VITE_SHOW_TEST_ALERT`: Show test alert button (default: false)
+
 ## 📈 Roadmap
 
 **LeviBot v1.4.0** — Production-Ready & Demo-Ready
