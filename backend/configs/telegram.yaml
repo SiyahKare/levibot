@@ -1,0 +1,38 @@
+privacy_mode: disabled
+groups:
+  - id: -1001234567890
+    name: "Crypto Alpha"
+    weight: 1.0
+  - id: -1009876543210
+    name: "Scalp Lounge"
+    weight: 0.7
+parsing:
+  allowed_symbols: [BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT, XRPUSDT, ADAUSDT, TONUSDT]
+  max_leverage: 5
+  default_timeframe_min: 60
+scoring:
+  min_confidence: 0.55
+  reputation_half_life_days: 14
+  min_group_reputation: 0.0
+
+evaluation:
+  interval: "1m"
+  horizon_min: 60
+  tp_rr: 1.2
+  sl_rr: 1.0
+  half_life_min: 120
+  min_reputation: 0.35
+  gate:
+    min_abs_bias: 0.02
+    max_age_min: 120
+    mode: "soft"
+  pulse:
+    enabled: true
+    size_multiplier: 1.20
+    decay_min: 30
+    min_rep: 0.50
+    min_count: 3
+    window_min: 15
+    hard_cap: 1.50
+
+

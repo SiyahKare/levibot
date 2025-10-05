@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  retrain:
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - ../:/app
+    entrypoint: bash -lc "pip install -r backend/requirements.txt && python -m backend.src.ml.retrain"
+    # manual: docker compose -f ops/docker-compose-cron.yml run --rm retrain
+
+
+

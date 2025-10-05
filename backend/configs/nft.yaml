@@ -1,0 +1,24 @@
+market:
+  providers: [reservoir, opensea, blur]
+filters:
+  min_floor_usd: 100
+  rare_score_min: 0.9
+  max_spread_pct: 2.0
+sniper:
+  enabled: true
+  max_notional_usd: 800
+  private_tx: true
+  wallet_label: "nft_vault_1"
+
+
+
+
+
+
+
+
+
+
+
+
+

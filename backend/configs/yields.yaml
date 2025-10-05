@@ -1,0 +1,19 @@
+chains:
+  - name: arbitrum
+    protocols:
+      - name: gmx
+        pool: "GLP"
+        apr: 12.4
+      - name: radiant
+        pool: "USDC"
+        apr: 7.8
+  - name: base
+    protocols:
+      - name: aerodrome
+        pool: "ETH/USDC"
+        apr: 18.1
+  - name: optimism
+    protocols:
+      - name: velodrome
+        pool: "USDC/USDT"
+        apr: 9.3

@@ -1,0 +1,26 @@
+# Trading universe and altseason meta-series
+
+trade_symbols:
+  - BTCUSDT
+  - ETHUSDT
+  - SOLUSDT
+  - BNBUSDT
+  - TONUSDT
+  - XRPUSDT
+  - ADAUSDT
+
+altseason_meta:
+  eth_btc_pair: ETH/BTC     # from spot, proxy for ETH-led trend
+  btc_dominance_symbol: BTC.D  # market metric feed
+  total3_symbol: TOTAL3       # total market cap excl BTC & ETH
+  funding_source: bybit
+  open_interest_source: bybit
+
+execution:
+  default_exchange: bybit
+  hedging_quote: USDT
+  timeframes:
+    fast: 1m
+    mid: 5m
+    slow: 15m
+

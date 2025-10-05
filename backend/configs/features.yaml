@@ -1,0 +1,18 @@
+# Feature engineering configuration
+
+price:
+  ema: [9,21,50,200]
+  rsi: [7,14]
+  macd: {fast:12, slow:26, signal:9}
+  zscore_returns: [5,20]
+volatility:
+  atr: [14]
+  parkinson: [20]
+derivatives:
+  funding_rate: true
+  open_interest: true
+orderbook:
+  imbalance: {levels: 10}
+calendar:
+  session_flags: true
+

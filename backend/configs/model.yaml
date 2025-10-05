@@ -1,0 +1,28 @@
+# ML model configuration (XGBoost + triple-barrier labeling)
+
+primary:
+  type: xgboost_classifier
+  window: 128
+  target: triple_barrier
+  class_weight: balanced
+eval:
+  cv: purged_kfold
+  folds: 5
+  walk_forward: {chunks: 6, step: "2w"}
+regime:
+  type: hmm_kmeans
+  states: ["trend","range","highvol"]
+ensemble:
+  mode: soft_vote
+  weights: {baseline: 0.4, ml: 0.6}
+thresholds:
+  long: 0.56
+  short: 0.44
+eth_led_altseason:
+  use: true
+  triggers:
+    ethbtc_trend_4h: true
+    btc_dominance_drop_pts: 0.8
+    total3_hh_breakout: true
+    eth_funding_oi_cooldown: true
+

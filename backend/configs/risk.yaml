@@ -1,0 +1,25 @@
+# Parametric risk configuration
+
+max_daily_loss_pct: 1.0       # günlük DD-stop
+risk_per_trade_pct: 0.4       # %0.25–0.5 arası önerilir
+max_leverage: 2               # panel/telegram ile artırılabilir (3/5)
+atr_stop_k: 1.8               # SL = k * ATR
+atr_take_k: 2.4               # TP = k * ATR
+max_concurrent_positions: 3
+correlation_bucket_cap: 1
+event_windows:
+  - FOMC: "*"
+  - ETF_DECISION: "*"
+halt_on_event_window: true
+execution:
+  use_native_algo: false
+  algo_order_type: TWAP
+  twap:
+    duration_sec: 900
+ai_twap_dca:
+  num_slices: 6
+  interval_sec: 60
+  limit_offset_bps: 5
+  max_slice_multiplier: 1.5
+  min_slice_multiplier: 0.5
+

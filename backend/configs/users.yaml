@@ -1,0 +1,63 @@
+# LeviBot users configuration (multi-user, roles, API keys via env)
+# No secrets here. Use environment variables or a secrets manager.
+
+users:
+  - id: onur
+    name: Onur
+    role: owner
+    exchanges:
+      bybit:
+        api_key_env: LEVI_ONUR_BYBIT_KEY
+        api_secret_env: LEVI_ONUR_BYBIT_SECRET
+        testnet: true
+      binance:
+        api_key_env: LEVI_ONUR_BINANCE_KEY
+        api_secret_env: LEVI_ONUR_BINANCE_SECRET
+        futures: true
+    risk_profile: owner_default
+
+  - id: taylan
+    name: Taylan
+    role: admin
+    exchanges:
+      bybit:
+        api_key_env: LEVI_TAYLAN_BYBIT_KEY
+        api_secret_env: LEVI_TAYLAN_BYBIT_SECRET
+        testnet: true
+    risk_profile: admin_default
+
+  - id: arkadas_1
+    name: Arkadaş-1
+    role: trader
+    exchanges:
+      bybit:
+        api_key_env: LEVI_ARK1_BYBIT_KEY
+        api_secret_env: LEVI_ARK1_BYBIT_SECRET
+        testnet: true
+    risk_profile: trader_default
+
+  - id: arkadas_2
+    name: Arkadaş-2
+    role: viewer
+    exchanges: {}
+    risk_profile: viewer_readonly
+
+profiles:
+  owner_default:
+    max_concurrent_positions: 6
+    notify_on: [fill, stop, take, dd_stop]
+  admin_default:
+    max_concurrent_positions: 5
+    notify_on: [fill, stop, take, dd_stop]
+  trader_default:
+    max_concurrent_positions: 4
+    notify_on: [fill, stop, take]
+  viewer_readonly:
+    max_concurrent_positions: 0
+    notify_on: [status]
+
+defaults:
+  exchange: bybit
+  quote_ccy: USDT
+  timeframes: [1m, 5m, 15m]
+

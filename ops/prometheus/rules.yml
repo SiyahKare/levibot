@@ -1,0 +1,50 @@
+groups:
+  - name: levibot-recording
+    rules:
+      # HTTP error rate (%)
+      - record: job:http_request_errors:rate5m
+        expr: |
+          100 * sum(rate(levibot_http_requests_total{status!~"2.."}[5m])) 
+            / clamp_min(sum(rate(levibot_http_requests_total[5m])), 1)
+
+      # HTTP p95 latency (per endpoint)
+      - record: job:endpoint:latency_p95_seconds
+        expr: |
+          histogram_quantile(0.95, sum(rate(levibot_http_request_latency_seconds_bucket[5m])) by (le, endpoint))
+
+      # Events per second (POSITION_CLOSED)
+      - record: job:events_position_closed_rps
+        expr: |
+          sum(rate(levibot_events_total{event_type="POSITION_CLOSED"}[5m]))
+
+  - name: levibot-alerts
+    rules:
+      - alert: HighHttpErrorRate
+        expr: job:http_request_errors:rate5m > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP error rate high (>1%)"
+          description: "Check logs and recent deploys."
+
+      - alert: HighLatencyP95
+        expr: job:endpoint:latency_p95_seconds > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency > 500ms"
+          description: "Endpoint latency elevated."
+
+      - alert: EventsGap
+        expr: job:events_position_closed_rps < 0.01
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Event gap on POSITION_CLOSED"
+          description: "Trading pipeline likely stalled."
+
+
+

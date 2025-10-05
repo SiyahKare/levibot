@@ -1,0 +1,25 @@
+perp_breakout:
+  enabled: true
+  symbols: [ETHUSDT, BTCUSDT, SOLUSDT]
+  timeframe: "1m"
+  lookback_min: 45
+  entry_offset_bps: 3
+  atr_k_stop: 1.8
+  thr_long: 0.58
+  thr_short: 0.42
+  cooldown_min: 15
+
+twap_rule_bot:
+  enabled: true
+  symbols: [ETHUSDT, BTCUSDT, SOLUSDT]
+  timeframe: "1m"
+  duration_sec: 900
+  slices: 30
+  mode: "auto"
+  min_spread_bps: 2.0
+  trend_required: true
+  thr_long: 0.58
+  thr_short: 0.42
+  cooldown_min: 10
+
+

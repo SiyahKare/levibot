@@ -1,0 +1,28 @@
+chains:
+  - name: ethereum
+    rpc_ws: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
+    rpc_http: https://mainnet.infura.io/v3/${INFURA_KEY}
+    start_block: latest
+    topics:
+      - uniswap_v3_pool_created
+      - uniswap_v3_swap
+      - erc20_transfer
+      - aave_liquidation
+cex_hot_wallets: [binance, coinbase, kraken]
+stable_symbols: [USDT, USDC, DAI]
+thresholds:
+  whale_usd: 500000
+  new_pool_min_liq_usd: 150000
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,23 @@
+defensive:
+  enable_sandwich_risk: true
+  protect_provider: flashbots
+arb:
+  enable: true
+  max_hops: 2
+  min_edge_bps: 8
+liquidations:
+  enable: true
+  protocols: [aave_v3, compound_v3]
+
+
+
+
+
+
+
+
+
+
+
+
+
