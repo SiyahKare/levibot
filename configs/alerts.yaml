@@ -1,0 +1,29 @@
+# Basit kural seti — PR-37+PR-36'da outbound'a bağlanacak.
+rules:
+  - id: high_conf_buy
+    name: "High-Confidence BUY"
+    severity: high
+    target: "slack"      # PR-36
+    enabled: true
+    all:
+      - { field: "event_type", op: "eq", value: "SIGNAL_SCORED" }
+      - { field: "payload.label", op: "eq", value: "BUY" }
+      - { field: "payload.confidence", op: "gte", value: 0.80 }
+
+  - id: risk_breach
+    name: "Risk Engine Blocked"
+    severity: medium
+    target: "discord"    # PR-36
+    enabled: true
+    any:
+      - { field: "event_type", op: "eq", value: "ORDER_BLOCKED" }
+      - { field: "payload.reason", op: "contains", value: "cooldown" }
+
+  - id: negative_pnl_close
+    name: "Position Closed with Loss"
+    severity: low
+    target: "slack"
+    enabled: true
+    all:
+      - { field: "event_type", op: "eq", value: "POSITION_CLOSED" }
+      - { field: "payload.pnl_usdt", op: "lt", value: 0 }
