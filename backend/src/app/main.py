@@ -11,6 +11,7 @@ from ..infra.metrics import (
     levibot_open_positions,
     levibot_http_requests_total,
     levibot_http_request_latency_seconds,
+    levibot_build_info,
 )
 from .schedule import schedule_jobs
 from .admin import router as admin_router
@@ -251,6 +252,15 @@ def _startup_jobs() -> None:
         # Load root .env
         load_dotenv(Path(__file__).resolve().parents[3] / ".env")
         schedule_jobs()
+        
+        # Set build info metric
+        from ..infra.version import get_build_info
+        info = get_build_info()
+        levibot_build_info.labels(
+            version=info["version"],
+            git_sha=info["git_sha"],
+            branch=info["branch"]
+        ).set(1)
     except Exception:
         pass
 

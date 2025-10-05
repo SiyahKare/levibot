@@ -226,6 +226,12 @@ Panel ve diğer istemciler için CORS açıktır. Varsayılan origin `http://loc
   curl -s http://127.0.0.1:8000/metrics/prom | head
   ```
 
+- Build info metric:
+  ```bash
+  curl -s http://127.0.0.1:8000/metrics/prom | grep levibot_build_info
+  # → levibot_build_info{version="1.2.0",git_sha="02f4b21",branch="main"} 1.0
+  ```
+
 - Prometheus scrape örneği:
   ```yaml
   scrape_configs:

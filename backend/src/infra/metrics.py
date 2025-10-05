@@ -24,6 +24,9 @@ TG_RECONNECTS_TOTAL = Counter('levibot_tg_reconnects_total', 'Total Telegram rec
 TG_LAST_MESSAGE_TS = Gauge('levibot_tg_last_message_ts', 'Unix ts of last ingested Telegram message', registry=registry)
 TG_LAST_SCORE_OK_TS = Gauge('levibot_tg_last_score_ok_ts', 'Unix ts of last successful score/route call', registry=registry)
 
+# Build info
+levibot_build_info = Gauge('levibot_build_info', 'Build information', ['version', 'git_sha', 'branch'], registry=registry)
+
 
 def inc_event(event_type: str) -> None:
     """Increment event counter; silent fail if metric unavailable."""
