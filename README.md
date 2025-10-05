@@ -1,8 +1,20 @@
 # LeviBot — Telegram Sinyal Botu ve On‑Chain/MEV/NFT Modülleri (MVP)
 
 <p align="right">
-  <a href="https://github.com/ONURMUTLU/levibot/actions/workflows/ci.yml">
-    <img src="https://github.com/ONURMUTLU/levibot/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  <a href="https://github.com/siyahkare/levibot/actions/workflows/ci.yml">
+    <img src="https://github.com/siyahkare/levibot/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+">
+  </a>
+  <a href="https://fastapi.tiangolo.com/">
+    <img src="https://img.shields.io/badge/FastAPI-0.114+-green.svg" alt="FastAPI">
+  </a>
+  <a href="https://react.dev/">
+    <img src="https://img.shields.io/badge/React-18+-blue.svg" alt="React">
   </a>
  </p>
 
