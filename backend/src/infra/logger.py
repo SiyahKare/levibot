@@ -65,6 +65,20 @@ def log_event(event_type: str, payload: Dict[str, Any], symbol: Optional[str] = 
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     # Increment event counter metric
     _inc_event_metric(event_type)
+    
+    # PR-42: Publish to WebSocket EventBus (non-blocking)
+    try:
+        import asyncio
+        from backend.src.infra.ws_bus import BUS
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(BUS.publish(rec))
+        else:
+            # If no event loop is running, skip publishing
+            pass
+    except Exception:
+        # Silently fail if EventBus is not available
+        pass
 
 
 class JsonlEventLogger:

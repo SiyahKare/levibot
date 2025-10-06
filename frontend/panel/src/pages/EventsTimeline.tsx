@@ -1,8 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ScatterChart, Scatter, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer
+    CartesianGrid, Legend, ResponsiveContainer,
+    Scatter,
+    ScatterChart,
+    Tooltip,
+    XAxis, YAxis
 } from "recharts";
-import { fetchEventsTimeline, EventFilter } from "../api";
+import { EventFilter, fetchEventsTimeline } from "../api";
+import { makeWsClient } from "../lib/ws";
 
 const EVENT_COLORS: Record<string, string> = {
   SIGNAL_INGEST: "#a0aec0",
@@ -48,6 +53,8 @@ export default function EventsTimeline() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [highlightTrace, setHighlightTrace] = useState<string | null>(null);
+  const [live, setLive] = useState<boolean>(true);
+  const [conn, setConn] = useState<'connected'|'connecting'|'disconnected'>('connecting');
 
   const typeBands = useMemo(() => {
     // deterministik band sırası
@@ -97,12 +104,64 @@ export default function EventsTimeline() {
     // eslint-disable-next-line
   }, [types, symbol, q, sinceISO]);
 
-  // Auto-refresh: 10s
+  // Auto-refresh: 10s (fallback when WS is off)
   useEffect(() => {
-    const t = setInterval(load, 10_000);
-    return () => clearInterval(t);
+    if (!live) {
+      const t = setInterval(load, 10_000);
+      return () => clearInterval(t);
+    }
     // eslint-disable-next-line
-  }, []);
+  }, [live]);
+
+  // PR-42: WebSocket real-time stream
+  useEffect(() => {
+    if (!live) {
+      setConn('disconnected');
+      return;
+    }
+    const params = new URLSearchParams();
+    if (types.length) params.set("event_type", types.join(","));
+    if (symbol) params.set("symbol", symbol);
+    if (q) params.set("q", q);
+    // not: since_iso canlı stream için tipik olarak gereksiz; sunucu yeni eventleri push'lar.
+
+    // Determine WebSocket URL (handle port mapping)
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const host = location.hostname;
+    const port = location.port === '3001' || location.port === '3000' ? '8000' : location.port;
+    const url = `${protocol}://${host}:${port}/ws/events?${params}`;
+    
+    setConn('connecting');
+    const c = makeWsClient({
+      url,
+      onOpen: () => setConn('connected'),
+      onClose: () => setConn('disconnected'),
+      onError: () => setConn('disconnected'),
+      onMessage: (e) => {
+        if (e?.kind === 'hello') return;
+        // gelen event -> satıra dönüştür
+        const r = {
+          x: new Date(e.ts || Date.now()).getTime(),
+          y: typeBands.get(e.event_type) ?? -1,
+          type: e.event_type,
+          symbol: e.symbol ?? e.payload?.symbol,
+          trace: e.trace_id ?? e.payload?.trace_id,
+          payload: e.payload,
+        };
+        if (r.y >= 0) {
+          setData(curr => {
+            const next = [...curr, r];
+            // hafif limit: 1500
+            return next.length > 1500 ? next.slice(next.length - 1500) : next;
+          });
+        }
+      },
+      reconnectDelayMs: 1000,
+      maxDelayMs: 10000,
+    });
+    return () => c.close();
+    // eslint-disable-next-line
+  }, [live, types.join(','), symbol, q]);
 
   // trace highlight seçimi
   const highlighted = new Set<string>();
@@ -119,8 +178,19 @@ export default function EventsTimeline() {
     <div className="p-4 space-y-4 bg-white rounded-2xl shadow">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold">Event Timeline</h2>
-          <p className="text-sm text-gray-500">Canlı filtrelenebilir zaman çizelgesi (auto-refresh 10s)</p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold">Event Timeline</h2>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${
+              conn==='connected'?'bg-green-100 text-green-800':conn==='connecting'?'bg-yellow-100 text-yellow-800':'bg-red-100 text-red-800'
+            }`}>
+              {conn}
+            </span>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={live} onChange={(e)=>setLive(e.target.checked)} />
+              live
+            </label>
+          </div>
+          <p className="text-sm text-gray-500">Canlı filtrelenebilir zaman çizelgesi (WebSocket real-time + 10s fallback)</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <div>

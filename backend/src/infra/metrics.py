@@ -44,6 +44,17 @@ alerts_queue_size_gauge = Gauge(
     "levibot_alerts_queue_size", "Current size of alert queue", registry=registry
 )
 
+# WebSocket metrics (PR-42)
+levibot_ws_conns = Gauge(
+    "levibot_ws_conns", "Active WebSocket connections", registry=registry
+)
+levibot_ws_msgs_out_total = Counter(
+    "levibot_ws_msgs_out_total", "WebSocket messages sent", registry=registry
+)
+levibot_ws_msgs_drop_total = Counter(
+    "levibot_ws_msgs_drop_total", "WebSocket messages dropped (backpressure)", registry=registry
+)
+
 
 def inc_event(event_type: str) -> None:
     """Increment event counter; silent fail if metric unavailable."""

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Request, Body
+from fastapi import FastAPI, HTTPException, Request, Body, WebSocket, WebSocketDisconnect, Query
 from contextlib import asynccontextmanager
 from .schemas import ServiceStatus, StartRequest, StopRequest, SetLeverageRequest, ConfigSnapshot
 from .state import STATE
@@ -258,6 +258,70 @@ def healthz() -> dict:
 @app.get("/livez")
 def livez() -> dict:
     return {"ok": True}
+
+
+# --- PR-42: WebSocket Event Stream ---
+@app.websocket("/ws/events")
+async def ws_events(
+    ws: WebSocket,
+    event_type: str | None = Query(default=None, description="CSV list of event types"),
+    symbol: str | None = None,
+    q: str | None = None,
+    since_iso: str | None = None,
+):
+    """
+    Real-time event stream over WebSocket with smart filters.
+    
+    Filters (query params):
+    - event_type: CSV list (e.g., "SIGNAL_SCORED,POSITION_CLOSED")
+    - symbol: Exact match
+    - q: Full-text search in payload
+    - since_iso: ISO timestamp (not typically used for live stream)
+    """
+    from ..infra.ws_bus import BUS
+    from ..infra.metrics import levibot_ws_conns, levibot_ws_msgs_out_total
+    import json
+    import time
+    
+    await ws.accept()
+    levibot_ws_conns.inc()
+    try:
+        # subscribe to bus
+        sid, stream = await BUS.subscribe()
+        
+        # simple filter predicate
+        types = set((event_type or "").split(",")) if event_type else None
+        def allow(e: dict) -> bool:
+            if types and e.get("event_type") not in types:
+                return False
+            if symbol:
+                evt_symbol = e.get("symbol") or e.get("payload", {}).get("symbol")
+                if evt_symbol != symbol:
+                    return False
+            if q:
+                payload_str = json.dumps(e.get("payload", {}), ensure_ascii=False).lower()
+                trace_str = (e.get("trace_id") or "").lower()
+                combined = f"{payload_str} {trace_str}"
+                if q.lower() not in combined:
+                    return False
+            return True
+
+        # send a hello frame (useful for client health)
+        await ws.send_json({"kind": "hello", "ts": int(time.time())})
+
+        async for msg in stream:
+            try:
+                e = json.loads(msg)
+                if allow(e):
+                    await ws.send_text(msg)
+                    levibot_ws_msgs_out_total.inc()
+            except WebSocketDisconnect:
+                break
+            except Exception:
+                # swallow per-message errors
+                continue
+    finally:
+        levibot_ws_conns.dec()
 
 
 @app.get("/readyz")
