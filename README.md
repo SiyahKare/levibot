@@ -44,6 +44,24 @@
 > make docker-down
 > ```
 >
+> ### 📊 Smart Event Filters (v1.6.0+)
+> ```bash
+> # Filter by event type (CSV list)
+> curl 'http://localhost:8000/events?event_type=SIGNAL_SCORED,POSITION_CLOSED&limit=10'
+> 
+> # Filter by symbol
+> curl 'http://localhost:8000/events?symbol=BTCUSDT&limit=10'
+> 
+> # Full-text search in payload
+> curl 'http://localhost:8000/events?q=confidence&limit=10'
+> 
+> # Date range filter
+> curl 'http://localhost:8000/events?since_iso=2025-10-06T00:00:00Z&limit=10'
+> 
+> # Combined filters
+> curl 'http://localhost:8000/events?event_type=SIGNAL_SCORED&symbol=ETHUSDT&q=buy&limit=10'
+> ```
+>
 > ### ⚡ Manuel Dev Setup
 > ```bash
 > python3 -m venv .venv && source .venv/bin/activate

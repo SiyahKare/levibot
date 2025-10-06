@@ -121,11 +121,27 @@ def weekly(end: Optional[str] = None, format: str = Query("json", pattern=r"^(js
 
 @router.get("/events")
 def events(
-    limit: int = 100,
+    limit: int = Query(200, ge=1, le=1000),
     format: str = Query("json", pattern=r"^(json|jsonl)$"),
     days: int = Query(1, ge=1, le=7),
+    event_type: Optional[str] = None,
+    symbol: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    since_iso: Optional[str] = None,
+    q: Optional[str] = None,
 ):
-    """Simplified events endpoint - returns recent events"""
+    """
+    Smart event filtering endpoint
+    
+    Filters (all optional):
+    - event_type: CSV list (e.g., "SIGNAL_SCORED,POSITION_CLOSED")
+    - symbol: Exact match (e.g., "BTCUSDT")
+    - trace_id: Exact match (for debugging)
+    - since_iso: ISO timestamp (e.g., "2025-10-06T00:00:00Z")
+    - q: Full-text search in payload (case-insensitive)
+    - limit: Max results (default 200, max 1000)
+    - days: Days to look back (default 1, max 7)
+    """
     try:
         # Get log base directory
         import os
@@ -150,7 +166,15 @@ def events(
                 events_files = sorted(day_dir.glob("events-*.jsonl"), reverse=True)
                 files.extend([str(f) for f in events_files])
         
-        # Read events
+        # Prepare filters
+        allowed_types = None
+        if event_type:
+            allowed_types = {t.strip() for t in event_type.split(",") if t.strip()}
+        
+        q_lower = q.lower() if q else None
+        since = since_iso or "1970-01-01T00:00:00Z"
+        
+        # Read and filter events
         out = []
         for fp in files:
             try:
@@ -158,11 +182,40 @@ def events(
                     for line in f:
                         try:
                             rec = _json.loads(line)
-                            out.append(rec)
-                            if len(out) >= limit:
-                                break
                         except:
                             continue
+                        
+                        # Apply filters
+                        if allowed_types and rec.get("event_type") not in allowed_types:
+                            continue
+                        
+                        if symbol and rec.get("symbol") != symbol:
+                            continue
+                        
+                        if trace_id and rec.get("trace_id") != trace_id:
+                            continue
+                        
+                        ts = rec.get("ts") or ""
+                        if ts < since:
+                            continue
+                        
+                        if q_lower:
+                            # Full-text search in payload
+                            try:
+                                payload_str = _json.dumps(rec.get("payload", {}), ensure_ascii=False).lower()
+                                event_type_str = (rec.get("event_type") or "").lower()
+                                symbol_str = (rec.get("symbol") or "").lower()
+                                trace_str = (rec.get("trace_id") or "").lower()
+                                combined = f"{event_type_str} {symbol_str} {trace_str} {payload_str}"
+                                if q_lower not in combined:
+                                    continue
+                            except:
+                                continue
+                        
+                        out.append(rec)
+                        if len(out) >= limit:
+                            break
+                
                 if len(out) >= limit:
                     break
             except:
