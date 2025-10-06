@@ -121,63 +121,109 @@ def weekly(end: Optional[str] = None, format: str = Query("json", pattern=r"^(js
 
 @router.get("/events")
 def events(
+    trace_id: Optional[str] = None,
+    event_type: Optional[str] = None,
+    since_iso: Optional[str] = None,
     limit: int = 100,
     format: str = Query("json", pattern=r"^(json|jsonl)$"),
+    day: Optional[str] = None,
     days: int = Query(1, ge=1, le=7),
+    q: Optional[str] = None,
+    symbol: Optional[str] = None,
 ):
-    """Simplified events endpoint - returns recent events"""
     try:
-        # Get log base directory
+        # Gün aralığı belirle
+        if day:
+            try:
+                end_dt = datetime.strptime(day, "%Y-%m-%d")
+            except Exception:
+                end_dt = datetime.utcnow()
+        else:
+            end_dt = datetime.utcnow()
+        day_list = [(end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
+        files = []
+        
+        # Basit absolute path kullan
         import os
         from pathlib import Path
+        # Docker içinde /app, local'de workspace root
         log_base = Path(os.getenv("LOG_DIR", "/app/backend/data/logs"))
         
-        # Get recent days
-        end_dt = datetime.utcnow()
-        day_list = [(end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
-        
-        # Collect files (most recent first)
-        files = []
-        for d in sorted(day_list, reverse=True):
-            # Root-level YYYY-MM-DD.jsonl files
+        for d in sorted(day_list):
+            # Klasör içindeki events-*.jsonl dosyaları
+            pattern1 = str(log_base / d / "events-*.jsonl")
+            files.extend(sorted(glob.glob(pattern1)))
+            
+            # Root'taki YYYY-MM-DD.jsonl dosyası
             root_file = log_base / f"{d}.jsonl"
             if root_file.exists():
                 files.append(str(root_file))
-            
-            # Directory-level events-*.jsonl files
-            day_dir = log_base / d
-            if day_dir.exists() and day_dir.is_dir():
-                events_files = sorted(day_dir.glob("events-*.jsonl"), reverse=True)
-                files.extend([str(f) for f in events_files])
         
-        # Read events
-        out = []
-        for fp in files:
-            try:
-                with open(fp, "r", encoding="utf-8") as f:
-                    for line in f:
-                        try:
-                            rec = _json.loads(line)
+        import sys
+        print(f"[/events] day_list={day_list}, files={len(files)}", file=sys.stderr, flush=True)
+        
+        if not files:
+            out = []
+        else:
+            since = since_iso or "1970-01-01T00:00:00Z"
+            out = []
+            # event_type CSV desteği (ör. event_type=ONCHAIN_SIGNAL,MEV_ARB_OPP)
+            allowed_types = None
+            if event_type:
+                try:
+                    allowed_types = {t.strip() for t in event_type.split(",") if t.strip()}
+                except Exception:
+                    allowed_types = None
+            q_lower = q.lower() if q else None
+            
+            read_count = 0
+            for fp in files:
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        for line in f:
+                            read_count += 1
+                            try:
+                                rec = _json.loads(line)
+                            except Exception:
+                                continue
+                            if allowed_types is not None and (rec.get("event_type") not in allowed_types):
+                                continue
+                            if trace_id and rec.get("trace_id") != trace_id:
+                                continue
+                            if symbol and (rec.get("symbol") != symbol):
+                                continue
+                            ts = rec.get("ts") or ""
+                            if ts < since:
+                                continue
+                            if q_lower:
+                                try:
+                                    payload_s = _json.dumps(rec.get("payload"), ensure_ascii=False)
+                                except Exception:
+                                    payload_s = ""
+                                # basit metin araması: event_type, symbol, trace_id ve payload string içinde ara
+                                comb = f"{rec.get('event_type') or ''} {rec.get('symbol') or ''} {rec.get('trace_id') or ''} {payload_s}"
+                                if q_lower not in comb.lower():
+                                    continue
                             out.append(rec)
                             if len(out) >= limit:
                                 break
-                        except:
-                            continue
-                if len(out) >= limit:
-                    break
-            except:
-                continue
-        
-        # Sort by timestamp (most recent first)
-        out.sort(key=lambda r: r.get("ts") or "", reverse=True)
-        out = out[:limit]
-        
+                    if len(out) >= limit:
+                        break
+                except Exception:
+                    continue
+            # Sıralama ve limit güvenliği
+            out.sort(key=lambda r: r.get("ts") or "")
+            out = out[:limit]
+            
+            import sys
+            print(f"[/events] read={read_count} lines, out={len(out)} events", file=sys.stderr, flush=True)
     except Exception as e:
-        import sys
-        print(f"[/events] ERROR: {e}", file=sys.stderr, flush=True)
+        import sys, traceback
+        print(f"[/events] Exception: {e}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
         out = []
-    
     if format == "jsonl":
+        import json as _json
         s = "\n".join(_json.dumps(o, ensure_ascii=False) for o in out) + ("\n" if out else "")
         return Response(s, media_type="application/x-ndjson")
     from fastapi.responses import JSONResponse
