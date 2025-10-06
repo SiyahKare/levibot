@@ -131,8 +131,6 @@ def events(
     q: Optional[str] = None,
     symbol: Optional[str] = None,
 ):
-    import sys
-    print(f"[/events START] day={day}, days={days}, limit={limit}", file=sys.stderr, flush=True)
     try:
         # Gün aralığı belirle
         if day:
@@ -150,7 +148,6 @@ def events(
         from pathlib import Path
         # Docker içinde /app, local'de workspace root
         log_base = Path(os.getenv("LOG_DIR", "/app/backend/data/logs"))
-        print(f"[/events] log_base={log_base}, day_list={day_list}", file=sys.stderr, flush=True)
         
         for d in sorted(day_list):
             # Klasör içindeki events-*.jsonl dosyaları
@@ -161,6 +158,9 @@ def events(
             root_file = log_base / f"{d}.jsonl"
             if root_file.exists():
                 files.append(str(root_file))
+        
+        import sys
+        print(f"[/events] day_list={day_list}, files={len(files)}", file=sys.stderr, flush=True)
         
         if not files:
             out = []
@@ -209,21 +209,17 @@ def events(
                                 break
                     if len(out) >= limit:
                         break
-                except Exception as e:
-                    import sys
-                    print(f"[/events] Error reading {fp}: {e}", file=sys.stderr, flush=True)
+                except Exception:
                     continue
             # Sıralama ve limit güvenliği
             out.sort(key=lambda r: r.get("ts") or "")
             out = out[:limit]
             
-            # DEBUG
             import sys
-            print(f"[/events] files={len(files)}, read_lines={read_count}, out={len(out)}", file=sys.stderr, flush=True)
+            print(f"[/events] read={read_count} lines, out={len(out)} events", file=sys.stderr, flush=True)
     except Exception as e:
-        import sys
-        print(f"[/events] Outer exception: {e}", file=sys.stderr, flush=True)
-        import traceback
+        import sys, traceback
+        print(f"[/events] Exception: {e}", file=sys.stderr, flush=True)
         traceback.print_exc(file=sys.stderr)
         out = []
     if format == "jsonl":
