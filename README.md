@@ -62,6 +62,18 @@
 > curl 'http://localhost:8000/events?event_type=SIGNAL_SCORED&symbol=ETHUSDT&q=buy&limit=10'
 > ```
 >
+> ### 🎯 Event Timeline UI (v1.6.0+)
+> **Panel üzerinde interaktif zaman çizelgesi:**
+> - **Recharts scatter plot** ile görselleştirme
+> - **15+ event type** için renk kodlaması
+> - **Quick filters**: 24h / 7d / 30d butonları
+> - **Smart filters**: event type, symbol, text search
+> - **Trace highlighting**: Event'e tıkla → aynı trace_id'li tüm event'ler vurgulanır
+> - **Auto-refresh**: Her 10 saniyede otomatik yenilenir
+> - **Recent events table**: Son 12 event'in JSON detayları
+>
+> 📍 **Panel'de "Event Timeline" kartını göreceksin!**
+>
 > ### ⚡ Manuel Dev Setup
 > ```bash
 > python3 -m venv .venv && source .venv/bin/activate
