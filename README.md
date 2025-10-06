@@ -93,6 +93,23 @@
 > - `levibot_ws_msgs_out_total`: Gönderilen mesaj sayısı
 > - `levibot_ws_msgs_drop_total`: Backpressure'dan düşen mesajlar
 >
+> ### 📊 Analytics Dashboard (v1.6.0+)
+> **Event verilerini görsel insights'a dönüştürür:**
+> ```bash
+> # Backend API endpoints
+> curl 'http://localhost:8000/analytics/stats?days=1'          # Event dağılımı + top symbols
+> curl 'http://localhost:8000/analytics/timeseries?interval=5m' # Time-series (1m/5m/15m/1h)
+> curl 'http://localhost:8000/analytics/traces?limit=20'       # Top active traces
+> ```
+>
+> **Panel Dashboard:**
+> - **Event Type Distribution**: Pie chart (event tipleri dağılımı)
+> - **Events Timeline**: Line chart (zaman serisi, bucket'lı)
+> - **Top Symbols**: Bar chart (en aktif 10 sembol)
+> - **Top Traces**: Table (event sayısı + süre)
+> - **Auto-refresh**: 30 saniyede bir
+> - **Filters**: days (1/7/30), interval (1m/5m/15m/1h), event_type CSV
+>
 > ### ⚡ Manuel Dev Setup
 > ```bash
 > python3 -m venv .venv && source .venv/bin/activate

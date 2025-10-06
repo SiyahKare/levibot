@@ -33,6 +33,7 @@ from .l2_farm_api import router as l2_router
 from .telegram_api import router as tg_router
 from .config_api import router as config_router
 from .routers.alerts import router as alerts_router
+from .routers import analytics as analytics_router
 from ..exec.paper import place_paper_order
 from ..exec.paper_ccxt import place_cex_paper_order
 from ..exec.types import PaperOrderRequest, PaperOrderResult
@@ -151,6 +152,7 @@ app.include_router(perp_breakout_router)
 app.include_router(l2_router)
 app.include_router(config_router)
 app.include_router(alerts_router)
+app.include_router(analytics_router.router)
 app.include_router(admin_router)
 app.include_router(tg_router)
 

@@ -129,3 +129,41 @@ export async function fetchEventsTimeline(f: EventFilter = {}): Promise<Timeline
   return (await r.json()) as TimelineEvent[];
 }
 
+// --- Analytics API helpers (PR-44) ------------------------
+export type EventStats = { total: number; event_types: Record<string, number>; symbols: Record<string, number> };
+export type TimePoint = { ts: string; count: number };
+export type TimeSeries = { interval: string; points: TimePoint[] };
+export type TraceRow = { trace_id: string; event_count: number; first_ts: string; last_ts: string; duration_sec: number };
+export type TracesResp = { total: number; rows: TraceRow[] };
+
+export async function getEventStats(params?: { days?: number; since_iso?: string; event_type?: string }) {
+  const q = new URLSearchParams();
+  if (params?.days) q.set("days", String(params.days));
+  if (params?.since_iso) q.set("since_iso", params.since_iso);
+  if (params?.event_type) q.set("event_type", params.event_type);
+  const res = await fetch(`/analytics/stats?` + q.toString());
+  if (!res.ok) throw new Error("stats failed");
+  return (await res.json()) as EventStats;
+}
+
+export async function getEventTimeseries(params?: { interval?: "1m"|"5m"|"15m"|"1h"; days?: number; since_iso?: string; event_type?: string }) {
+  const q = new URLSearchParams();
+  q.set("interval", params?.interval ?? "5m");
+  if (params?.days) q.set("days", String(params.days));
+  if (params?.since_iso) q.set("since_iso", params.since_iso);
+  if (params?.event_type) q.set("event_type", params.event_type);
+  const res = await fetch(`/analytics/timeseries?` + q.toString());
+  if (!res.ok) throw new Error("timeseries failed");
+  return (await res.json()) as TimeSeries;
+}
+
+export async function getTopTraces(params?: { days?: number; since_iso?: string; limit?: number }) {
+  const q = new URLSearchParams();
+  if (params?.days) q.set("days", String(params.days));
+  if (params?.since_iso) q.set("since_iso", params.since_iso);
+  if (params?.limit) q.set("limit", String(params.limit));
+  const res = await fetch(`/analytics/traces?` + q.toString());
+  if (!res.ok) throw new Error("traces failed");
+  return (await res.json()) as TracesResp;
+}
+

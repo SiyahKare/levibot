@@ -1,24 +1,22 @@
+import { useState } from 'react'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { useEffect, useState } from 'react'
-import TelegramSignals from './pages/TelegramSignals'
-import TelegramInsights from './pages/TelegramInsights'
-import TelegramSettings from './pages/TelegramSettings'
-import OnChain from './pages/OnChain'
-import MEVFeed from './pages/MEVFeed'
-import NFTSniper from './pages/NFTSniper'
-import Trades from './pages/Trades'
-import Signals from './pages/Signals'
-import SignalsTimeline from './pages/SignalsTimeline'
-import Alerts from './pages/Alerts'
-import EventsTimeline from './pages/EventsTimeline'
 import BurstBanner from './components/BurstBanner'
 import DEXQuoteCard from './components/DEXQuoteCard'
-import NFTFloorCard from './components/NFTFloorCard'
-import L2YieldsCard from './components/L2YieldsCard'
 import DEXSparkline from './components/DEXSparkline'
 import L2YieldsBar from './components/L2YieldsBar'
-import type { Event } from './types'
+import L2YieldsCard from './components/L2YieldsCard'
+import NFTFloorCard from './components/NFTFloorCard'
 import { download } from './lib/download'
+import Alerts from './pages/Alerts'
+import Analytics from './pages/Analytics'
+import EventsTimeline from './pages/EventsTimeline'
+import MEVFeed from './pages/MEVFeed'
+import NFTSniper from './pages/NFTSniper'
+import OnChain from './pages/OnChain'
+import Signals from './pages/Signals'
+import SignalsTimeline from './pages/SignalsTimeline'
+import Trades from './pages/Trades'
+import type { Event } from './types'
 
 const data = Array.from({ length: 30 }).map((_, i) => ({ t: i, eq: 10000 * (1 + 0.01 * Math.sin(i / 5)) }))
 
@@ -124,6 +122,12 @@ export default function App() {
         <div className="p-4 bg-zinc-900 rounded col-span-1 md:col-span-2">
           <Alerts />
         </div>
+        
+        {/* Analytics Dashboard - PR-44 */}
+        <div className="col-span-1 md:col-span-2">
+          <Analytics />
+        </div>
+        
         <DEXQuoteCard />
         <NFTFloorCard />
         <L2YieldsCard />
