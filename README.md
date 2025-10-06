@@ -74,6 +74,25 @@
 >
 > 📍 **Panel'de "Event Timeline" kartını göreceksin!**
 >
+> ### ⚡ Real-time WebSocket Stream (v1.6.0+)
+> **Canlı event akışı WebSocket ile:**
+> ```bash
+> # WebSocket endpoint (filtrelenebilir)
+> wscat -c 'ws://localhost:8000/ws/events?event_type=SIGNAL_SCORED,POSITION_CLOSED'
+> 
+> # Panel'de:
+> # - Connection status badge (connected/connecting/disconnected)
+> # - Live toggle checkbox
+> # - Real-time event updates (no refresh)
+> # - Auto-reconnect with exponential backoff
+> # - Fallback to 10s polling when disabled
+> ```
+>
+> **Metrikler:**
+> - `levibot_ws_conns`: Aktif WebSocket bağlantıları
+> - `levibot_ws_msgs_out_total`: Gönderilen mesaj sayısı
+> - `levibot_ws_msgs_drop_total`: Backpressure'dan düşen mesajlar
+>
 > ### ⚡ Manuel Dev Setup
 > ```bash
 > python3 -m venv .venv && source .venv/bin/activate
