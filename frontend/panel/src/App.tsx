@@ -10,6 +10,7 @@ import Trades from './pages/Trades'
 import Signals from './pages/Signals'
 import SignalsTimeline from './pages/SignalsTimeline'
 import Alerts from './pages/Alerts'
+import EventsTimeline from './pages/EventsTimeline'
 import BurstBanner from './components/BurstBanner'
 import DEXQuoteCard from './components/DEXQuoteCard'
 import NFTFloorCard from './components/NFTFloorCard'
@@ -105,6 +106,12 @@ export default function App() {
         <div className="p-4 bg-zinc-900 rounded">
           <NFTSniper />
         </div>
+        
+        {/* Event Timeline - PR-41 */}
+        <div className="col-span-1 md:col-span-2">
+          <EventsTimeline />
+        </div>
+        
         <div className="p-4 bg-zinc-900 rounded">
           <Trades />
         </div>

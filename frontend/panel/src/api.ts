@@ -98,3 +98,34 @@ export async function triggerTestAlert(payload?: Partial<AlertItem> & { targets?
   return r.json();
 }
 
+// --- Timeline API helpers (PR-41) ------------------------
+export type EventFilter = {
+  event_type?: string;   // CSV list
+  symbol?: string;
+  trace_id?: string;
+  since_iso?: string;
+  q?: string;
+  limit?: number;
+};
+
+export type TimelineEvent = {
+  ts: string;           // ISO timestamp from backend
+  event_type: string;
+  payload?: Record<string, any>;
+  trace_id?: string;
+  symbol?: string;
+};
+
+export async function fetchEventsTimeline(f: EventFilter = {}): Promise<TimelineEvent[]> {
+  const p = new URLSearchParams();
+  if (f.event_type) p.set("event_type", f.event_type);
+  if (f.symbol) p.set("symbol", f.symbol);
+  if (f.trace_id) p.set("trace_id", f.trace_id);
+  if (f.since_iso) p.set("since_iso", f.since_iso);
+  if (f.q) p.set("q", f.q);
+  p.set("limit", String(f.limit ?? 800));
+  const r = await fetch(`/events?${p.toString()}`);
+  if (!r.ok) throw new Error(`events ${r.status}`);
+  return (await r.json()) as TimelineEvent[];
+}
+
