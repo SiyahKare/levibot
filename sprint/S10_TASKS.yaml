@@ -236,44 +236,48 @@ epics:
   - id: "D"
     name: "Backtesting Framework"
     priority: "high"
-    status: "not_started"
+    status: "COMPLETED"
     estimated_hours: 18
+    actual_hours: 16
+    completed_date: "2025-10-14"
     tasks:
       - id: "D1"
         name: "Vectorized runner + slippage/fee"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 12
+        actual_hours: 10
         checklist:
           - task: "Minute-bar simulation engine"
-            done: false
+            done: true
           - task: "Slippage model (spread-based)"
-            done: false
+            done: true
           - task: "Fee calculation (maker/taker)"
-            done: false
+            done: true
           - task: "Position tracking + PnL"
-            done: false
+            done: true
           - task: "Seed reproducibility"
-            done: false
+            done: true
         files:
           - "backend/src/backtest/runner.py"
 
       - id: "D2"
         name: "HTML/MD reports"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 6
+        actual_hours: 6
         checklist:
           - task: "Sharpe, Sortino, Calmar calculation"
-            done: false
+            done: true
           - task: "Max Drawdown + underwater chart"
-            done: false
+            done: true
           - task: "Turnover + trade count stats"
-            done: false
+            done: true
           - task: "HTML report with Plotly charts"
             done: false
           - task: "Markdown summary export"
-            done: false
+            done: true
         files:
           - "backend/src/backtest/reporter.py"
           - "reports/backtests/"
