@@ -1,11 +1,11 @@
 {
-  "_ts": 1760459591.8336482,
+  "_ts": 1760460493.273967,
   "value": {
-    "active_wallets": 2268.0,
-    "exchange_inflow": 0.36177188484013734,
-    "exchange_outflow": 0.933301724335043,
-    "funding_rate": -0.022428594636254875,
-    "whale_txs": 18.0,
-    "ts": 1760459591.833632
+    "active_wallets": 3778.0,
+    "exchange_inflow": 0.28484142807726487,
+    "exchange_outflow": 0.5906433849526835,
+    "funding_rate": 0.04830567092637621,
+    "whale_txs": 9.0,
+    "ts": 1760460493.273955
   }
 }
