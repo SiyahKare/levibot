@@ -18,7 +18,8 @@ export function SSEStatus() {
       }
 
       // Create new connection
-      const es = new EventSource("/stream/ticks");
+      // Note: Using /stream/engines as /stream/ticks is not implemented yet
+      const es = new EventSource("http://localhost:8000/stream/engines");
       esRef.current = es;
 
       es.onopen = () => {
