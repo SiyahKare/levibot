@@ -22,8 +22,16 @@ export default function Ops() {
     { refreshInterval: 10_000 }
   );
 
+  // Sprint-10 Epic-E: New kill switch API
+  const { data: killStatus, mutate: mutateKillStatus } = useSWR(
+    "/live/status",
+    api.live.status,
+    { refreshInterval: 5_000 }
+  );
+
   const [busy, setBusy] = useState(false);
   const [adminKey, setAdminKey] = useState("");
+  const [killReason, setKillReason] = useState("");
 
   const handleCanary = async (state: "on" | "off") => {
     setBusy(true);
@@ -49,7 +57,8 @@ export default function Ops() {
     }
     setBusy(true);
     try {
-      await api.kill();
+      await api.live.kill(true, killReason || "manual");
+      await mutateKillStatus();
       mutateFlags();
       toast.error("🚨 Kill switch ACTIVATED - All trading stopped");
     } catch (error: any) {
@@ -63,7 +72,8 @@ export default function Ops() {
   const handleUnkill = async () => {
     setBusy(true);
     try {
-      await api.unkill();
+      await api.live.kill(false, "manual_reset");
+      await mutateKillStatus();
       mutateFlags();
       toast.success("✅ Kill switch deactivated - Trading can resume");
     } catch (error: any) {

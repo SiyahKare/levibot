@@ -31,6 +31,8 @@ import TelegramSettings from "@/pages/TelegramSettings";
 import TelegramSignals from "@/pages/TelegramSignals";
 import Trades from "@/pages/Trades";
 import Watchlist from "@/pages/Watchlist";
+import EnginesManager from "@/pages/EnginesManager";
+import BacktestRunner from "@/pages/BacktestRunner";
 import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -74,6 +76,8 @@ export default function App() {
                   ["NFT", "/nft"],
                   ["OnChain", "/onchain"],
                   ["Integrations", "/integrations"],
+                  ["🔧 Engines", "/engines"],
+                  ["📊 Backtest", "/backtest"],
                   ["Ops", "/ops"],
                 ].map(([label, href]) => (
                   <NavLink
@@ -130,6 +134,8 @@ export default function App() {
               <Route path="/nft" element={<NFTSniper />} />
               <Route path="/onchain" element={<OnChain />} />
               <Route path="/integrations" element={<Integrations />} />
+              <Route path="/engines" element={<EnginesManager />} />
+              <Route path="/backtest" element={<BacktestRunner />} />
               <Route path="/ops" element={<Ops />} />
             </Routes>
           </ErrorBoundary>
