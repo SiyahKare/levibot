@@ -37,10 +37,10 @@ async def live_status():
     Get live trading status.
 
     Returns:
-        Status dict with kill_switch, mode, etc.
+        Status dict with kill_switch_active (bool) for frontend compatibility.
     """
     return {
-        "kill_switch": _kill_switch_state["engaged"],
+        "kill_switch_active": _kill_switch_state["engaged"],
         "reason": _kill_switch_state["reason"],
         "mode": "paper",  # TODO: Load from config
         "active": not _kill_switch_state["engaged"],

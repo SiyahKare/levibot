@@ -7,10 +7,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from ..engine.manager import get_engine_manager, init_engine_manager
+from .routers.backtest import router as backtest_router
 from .routers.engines import router as engines_router
 from .routers.live import router as live_router
 from .routers.metrics import router as metrics_router
 from .routers.risk import router as risk_router
+from .routers.stream import router as stream_router
 
 
 def load_config() -> dict:
@@ -98,9 +100,11 @@ app = FastAPI(
 
 # Register routers
 app.include_router(engines_router)
+app.include_router(backtest_router)
 app.include_router(risk_router)
 app.include_router(metrics_router)
 app.include_router(live_router)
+app.include_router(stream_router)
 
 
 @app.get("/")

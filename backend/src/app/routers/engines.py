@@ -9,6 +9,35 @@ from ...engine.manager import get_engine_manager
 router = APIRouter(prefix="/engines", tags=["engines"])
 
 
+@router.get("")
+async def list_engines() -> list[dict]:
+    """
+    List all configured engines (for frontend table).
+    
+    Returns:
+        List of engines with their current status.
+    """
+    try:
+        manager = get_engine_manager()
+        summary = manager.get_summary()
+        
+        # Transform to array format for frontend
+        engines = []
+        for symbol, eng in manager.engines.items():
+            engines.append({
+                "symbol": symbol,
+                "status": "running" if eng._running else "stopped",
+                "inference_p95_ms": 0.0,  # TODO: collect from metrics
+                "uptime_s": 0.0,  # TODO: track uptime
+                "trades_today": 0,  # TODO: track trades
+            })
+        
+        return engines
+    except RuntimeError:
+        # Manager not initialized yet - return empty array
+        return []
+
+
 @router.get("/status")
 async def get_all_engine_status() -> dict:
     """
