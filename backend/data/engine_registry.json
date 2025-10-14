@@ -63,5 +63,44 @@
     "daily_pnl": 0.0,
     "total_pnl": 0.0,
     "trade_count": 0
+  },
+  "BTC/USDT": {
+    "symbol": "BTC/USDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  },
+  "ETH/USDT": {
+    "symbol": "ETH/USDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  },
+  "SOL/USDT": {
+    "symbol": "SOL/USDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
   }
 }
