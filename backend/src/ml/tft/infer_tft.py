@@ -27,7 +27,7 @@ class TFTProd:
         """
         with cls._lock:
             if cls._ckpt_meta is None:
-                cls._ckpt_meta = torch.load(path)
+                cls._ckpt_meta = torch.load(path, weights_only=False)
         return cls._ckpt_meta
 
     @classmethod

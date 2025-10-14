@@ -172,59 +172,64 @@ epics:
   - id: "C"
     name: "Production TFT (Lightning)"
     priority: "high"
-    status: "not_started"
+    status: "COMPLETED"
     estimated_hours: 28
+    actual_hours: 24
+    completed_date: "2025-10-14"
     tasks:
       - id: "C1"
         name: "Sequence dataset builder"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 8
+        actual_hours: 6
         checklist:
           - task: "Sliding window sequences"
-            done: false
+            done: true
           - task: "Feature scaling (MinMax/Standard)"
-            done: false
+            done: true
           - task: "Target encoding"
-            done: false
+            done: true
           - task: "PyTorch Dataset class"
-            done: false
+            done: true
         files:
           - "backend/src/ml/datasets/tft_dataset.py"
 
       - id: "C2"
         name: "Lightning trainer + ckpt"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 14
+        actual_hours: 12
         checklist:
           - task: "TFT model architecture"
-            done: false
+            done: true
           - task: "Lightning module + training loop"
-            done: false
+            done: true
           - task: "Early stopping + checkpointing"
-            done: false
+            done: true
           - task: "AMP (automatic mixed precision) option"
-            done: false
+            done: true
           - task: "TensorBoard logging"
-            done: false
+            done: true
         files:
           - "backend/src/ml/train_tft_prod.py"
 
       - id: "C3"
         name: "Inference wrapper (p95≤40ms)"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 6
+        actual_hours: 6
         checklist:
           - task: "torch.load() best checkpoint"
-            done: false
+            done: true
           - task: "Thread-safe inference"
-            done: false
+            done: true
           - task: "Batch prediction support"
-            done: false
+            done: true
           - task: "Latency profiling (p95<40ms)"
-            done: false
+            done: true
         files:
           - "backend/src/ml/models/tft_predictor.py"
 

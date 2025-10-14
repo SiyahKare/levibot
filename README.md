@@ -191,7 +191,7 @@ _Production models + Real data: ccxt/MEXC, LGBM/TFT training, Backtesting, Testn
 - **[sprint/S10_TASKS.yaml](./sprint/S10_TASKS.yaml)** - 📋 Sprint-10 Task Tracker
 - **[sprint/SPRINT9_COMPLETION_FINAL.md](./sprint/SPRINT9_COMPLETION_FINAL.md)** - 🎊 Sprint-9 Complete (100%)
 
-**Sprint-10 Progress: 1/5 Epics Complete** 🚀
+**Sprint-10 Progress: 3/5 Epics Complete** 🚀
 
 **Epic-A: Real Data Ingestion (COMPLETE ✅)**
 - **[sprint/EPIC_A_CCXT_GUIDE.md](./sprint/EPIC_A_CCXT_GUIDE.md)** - 📘 Implementation Guide
@@ -202,6 +202,20 @@ _Production models + Real data: ccxt/MEXC, LGBM/TFT training, Backtesting, Testn
 ```
 MEXC (ccxt.pro WS) → MarketFeeder (gap-fill) → Symbol-specific Engine Queue → Ensemble/Risk
 ```
+
+**Epic-B: Production LGBM (COMPLETE ✅)**
+- **[sprint/EPIC_B_LGBM_GUIDE.md](./sprint/EPIC_B_LGBM_GUIDE.md)** - 📘 Implementation Guide
+- **[sprint/EPIC_B_LGBM_COMPLETE.md](./sprint/EPIC_B_LGBM_COMPLETE.md)** - ✅ Completion Summary
+- Model: `backend/data/models/best_lgbm.pkl` (Optuna-tuned, 32 trials)
+- Model Card: `backend/data/models/2025-10-14/model_card_lgbm.json`
+- Inference: `LGBMProd.predict_proba_up(features)` (thread-safe)
+
+**Epic-C: Production TFT (COMPLETE ✅)**
+- **[sprint/EPIC_C_TFT_COMPLETE.md](./sprint/EPIC_C_TFT_COMPLETE.md)** - ✅ Completion Summary
+- Model: `backend/data/models/best_tft.pt` (PyTorch Lightning, LSTM backbone)
+- Model Card: `backend/data/models/2025-10-14/model_card_tft.json`
+- Architecture: `TinyTFT` (lookback=60, horizon=5, val_acc=50.8%)
+- Inference: `TFTProd.predict_proba_up(seq_window)` (thread-safe singleton)
 
 **Epic-1: Multi-Engine (Sprint-9 ✅)**
 

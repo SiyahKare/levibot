@@ -1,0 +1,4 @@
+hidden: 64
+in_features: 5
+lr: 0.001
+pos_weight: null
