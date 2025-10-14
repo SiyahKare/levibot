@@ -112,4 +112,4 @@ docker-compose.override.yml
 
 # Prometheus & Grafana
 ops/prometheus/data/
-ops/grafana/data/
+ops/grafana/data/.env.docker

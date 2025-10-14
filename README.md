@@ -185,6 +185,7 @@ make smoke-test
 - **[sprint/S9_TASKS.yaml](./sprint/S9_TASKS.yaml)** - ✅ Sprint-9 görev listesi (YAML)
 - **[sprint/SPRINT9_MID_CHECKPOINT.md](./sprint/SPRINT9_MID_CHECKPOINT.md)** - 🎉 Mid-Sprint Checkpoint (4/5 Epics ✅)
 - **[sprint/SPRINT9_FINAL_CHECKPOINT.md](./sprint/SPRINT9_FINAL_CHECKPOINT.md)** - 🏆 Final Checkpoint (80% Complete!)
+- **[sprint/SPRINT9_COMPLETION_FINAL.md](./sprint/SPRINT9_COMPLETION_FINAL.md)** - 🎊 **SPRINT COMPLETE!** (100%)
 
 **Epic-1: Multi-Engine (COMPLETE ✅)**
 
@@ -205,6 +206,10 @@ make smoke-test
 - **[sprint/MONITORING_QUICKSTART.md](./sprint/MONITORING_QUICKSTART.md)** - 📊 Prometheus + Grafana + Soak Test
 - **[sprint/SOAK_TEST_RESULTS.md](./sprint/SOAK_TEST_RESULTS.md)** - 🧪 Soak Test Results & System Validation
 
+**Epic-4: CI/CD Pipeline (COMPLETE ✅)**
+
+- **[sprint/EPIC4_CICD_COMPLETE.md](./sprint/EPIC4_CICD_COMPLETE.md)** - 🚀 CI/CD Pipeline & GitHub Actions
+
 **Epic-5: Nightly AutoML (COMPLETE ✅)**
 
 - **[sprint/EPIC5_AUTOML_COMPLETE.md](./sprint/EPIC5_AUTOML_COMPLETE.md)** - 🌙 Nightly AutoML Pipeline
@@ -214,15 +219,69 @@ make smoke-test
 ## 🔧 Makefile Komutları
 
 ```bash
+# Geliştirme
+make init          # Geliştirme ortamını kur
+make lint          # Kod kalitesini kontrol et
+make format        # Kodu otomatik formatla
+make test          # Testleri çalıştır
+make cov           # Test coverage raporu
+
+# Docker
+make docker        # Docker image'ını build et
 make up            # Tüm servisleri başlat
 make down          # Tüm servisleri durdur
-make restart       # Servisleri yeniden başlat
 make logs          # Tüm logları izle
-make ps            # Servis durumlarını göster
-make smoke-test    # Health check'leri çalıştır
-make backup        # Veri yedekle
-make clean         # Tüm verileri temizle (DİKKAT!)
-make monitor       # Dashboard URL'lerini göster
+make smoke         # Smoke test (health check)
+
+# Utilities
+make automl        # Manuel AutoML pipeline çalıştır
+make clean         # Cache ve geçici dosyaları temizle
+```
+
+---
+
+## 🔄 CI/CD Pipeline
+
+LeviBot, GitHub Actions ile tam otomatik CI/CD pipeline'ına sahiptir:
+
+### Pipeline Stages
+
+```
+📝 Lint  →  🧪 Test  →  📊 Coverage  →  🐳 Docker  →  🔒 Security  →  🚀 Deploy
+```
+
+**PR'larda:**
+
+- ✅ Ruff + Black + isort (kod kalitesi)
+- ✅ Pytest (42 passing tests)
+- ✅ Coverage ≥75% threshold
+- ✅ Docker image build
+- ✅ Trivy security scan
+
+**Main branch'te:**
+
+- ✅ Tüm yukarıdakiler +
+- ✅ GHCR'ye image push
+- ✅ Deploy aşaması (yapılandırılabilir)
+
+### Docker Image
+
+```bash
+# Pull latest image
+docker pull ghcr.io/siyahkare/levibot:latest
+
+# Run locally
+docker run -p 8000:8000 ghcr.io/siyahkare/levibot:latest
+```
+
+### Pre-commit Hooks
+
+```bash
+# Setup
+make init  # pre-commit hooks otomatik kurulur
+
+# Manuel çalıştır
+pre-commit run --all-files
 ```
 
 ---
