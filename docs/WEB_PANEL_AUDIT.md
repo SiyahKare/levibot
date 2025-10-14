@@ -11,6 +11,7 @@
 **Status:** ⚠️ **FUNCTIONAL BUT INCOMPLETE**
 
 The LeviBot web panel is a **working React/Vite SPA** with:
+
 - ✅ **20+ pages** covering strategies, ML, paper trading, Telegram, analytics
 - ✅ **Realtime data** via WebSocket (with auto-reconnect)
 - ✅ **Kill switch** and operational controls
@@ -27,33 +28,33 @@ The LeviBot web panel is a **working React/Vite SPA** with:
 
 ### Framework & Build
 
-| Component | Technology | Version | Notes |
-|-----------|-----------|---------|-------|
-| **Framework** | React | 18.3.1 | Functional components, hooks |
-| **Build Tool** | Vite | 5.4.8 | Fast HMR, ESM-based |
-| **Language** | TypeScript | 5.5.4 | Strict mode enabled ✅ |
-| **Routing** | React Router | 7.9.4 | Client-side SPA routing |
-| **Styling** | TailwindCSS | 3.4.10 | Utility-first, dark mode support |
+| Component      | Technology   | Version | Notes                            |
+| -------------- | ------------ | ------- | -------------------------------- |
+| **Framework**  | React        | 18.3.1  | Functional components, hooks     |
+| **Build Tool** | Vite         | 5.4.8   | Fast HMR, ESM-based              |
+| **Language**   | TypeScript   | 5.5.4   | Strict mode enabled ✅           |
+| **Routing**    | React Router | 7.9.4   | Client-side SPA routing          |
+| **Styling**    | TailwindCSS  | 3.4.10  | Utility-first, dark mode support |
 
 ### State & Data Fetching
 
-| Component | Technology | Notes |
-|-----------|-----------|-------|
-| **State Management** | React hooks | No Redux/Zustand (simple local state) |
-| **Data Fetching** | SWR | 2.3.6 - Stale-while-revalidate, auto-refresh |
-| **API Client** | Custom `http()` | `src/lib/api.ts` - fetch wrapper with types |
-| **WebSocket** | Custom `makeWsClient()` | `src/lib/ws.ts` - auto-reconnect with exp backoff |
-| **Notifications** | Sonner | 2.0.7 - Toast notifications |
+| Component            | Technology              | Notes                                             |
+| -------------------- | ----------------------- | ------------------------------------------------- |
+| **State Management** | React hooks             | No Redux/Zustand (simple local state)             |
+| **Data Fetching**    | SWR                     | 2.3.6 - Stale-while-revalidate, auto-refresh      |
+| **API Client**       | Custom `http()`         | `src/lib/api.ts` - fetch wrapper with types       |
+| **WebSocket**        | Custom `makeWsClient()` | `src/lib/ws.ts` - auto-reconnect with exp backoff |
+| **Notifications**    | Sonner                  | 2.0.7 - Toast notifications                       |
 
 ### UI Components
 
-| Component | Source | Notes |
-|-----------|--------|-------|
-| **Charts** | Recharts | 2.15.4 - Line, Bar, Area charts |
-| **Date Picker** | react-day-picker | 9.11.1 - Date range selection |
-| **Dark Mode** | Custom toggle | localStorage persistence |
-| **Error Boundary** | Custom | `src/components/ui/ErrorBoundary.tsx` |
-| **Skeleton** | Custom | `src/components/ui/Skeleton.tsx` |
+| Component          | Source           | Notes                                 |
+| ------------------ | ---------------- | ------------------------------------- |
+| **Charts**         | Recharts         | 2.15.4 - Line, Bar, Area charts       |
+| **Date Picker**    | react-day-picker | 9.11.1 - Date range selection         |
+| **Dark Mode**      | Custom toggle    | localStorage persistence              |
+| **Error Boundary** | Custom           | `src/components/ui/ErrorBoundary.tsx` |
+| **Skeleton**       | Custom           | `src/components/ui/Skeleton.tsx`      |
 
 ---
 
@@ -61,54 +62,55 @@ The LeviBot web panel is a **working React/Vite SPA** with:
 
 ### Pages & Routes (24 total)
 
-| Route | Component | Purpose | Backend Endpoints | Status |
-|-------|-----------|---------|-------------------|--------|
-| `/` | `Overview.tsx` | Dashboard, equity, AI status | `/healthz`, `/ai/predict`, `/ai/models` | ✅ Working |
-| `/ml` | `MLDashboard.tsx` | ML model controls, predictions | `/ai/*`, `/analytics/predictions` | ✅ Working |
-| `/paper` | `Paper.tsx` | Paper trading portfolio | `/paper/*` | ✅ Working |
-| `/signals` | `Signals.tsx` | Signal log, live feed | `/ops/signal_log`, WS `/ws/events` | ✅ Working |
-| `/trades` | `Trades.tsx` | Trade history, export CSV | `/analytics/trades/*` | ✅ Working |
-| `/strategies` | `Strategies.tsx` | Strategy enable/disable | `/strategy/*` | ✅ Working |
-| `/risk` | `Risk.tsx` | Risk presets, guardrails | `/risk/*` | ✅ Working |
-| `/scalp` | `Scalp.tsx` | LSE engine control | `/lse/*` | ✅ Working |
-| `/daytrade` | `Daytrade.tsx` | Day engine control | `/day/*` | ✅ Working |
-| `/swing` | `Swing.tsx` | Swing engine control | `/swing/*` | ✅ Working |
-| `/rsi-macd` | `RsiMacd.tsx` | RSI+MACD strategy | `/strategy/rsi_macd/*` | ✅ Working |
-| `/watchlist` | `Watchlist.tsx` | Symbol watchlist | N/A (local state) | ✅ Working |
-| `/analytics` | `Analytics.tsx` | PnL by strategy, deciles | `/analytics/*` | ✅ Working |
-| `/ai-brain` | `AIBrain.tsx` | AI explainer, regime detection | `/ai/*` | ✅ Working |
-| `/alerts` | `Alerts.tsx` | Alert configuration | `/alerts/*` (TODO) | ⚠️ Placeholder |
-| `/telegram` | `TelegramSignals.tsx` | Telegram signal feed | `/telegram/*` | ✅ Working |
-| `/telegram/control` | `TelegramControl.tsx` | Telegram bot control | `/telegram/status` | ✅ Working |
-| `/telegram/insights` | `TelegramInsights.tsx` | Telegram analytics | `/telegram/*` | ⚠️ Placeholder |
-| `/telegram/settings` | `TelegramSettings.tsx` | Telegram config | `/telegram/*` | ⚠️ Placeholder |
-| `/events` | `EventsTimeline.tsx` | Event timeline | WS `/ws/events` | ✅ Working |
-| `/mev` | `MEVFeed.tsx` | MEV opportunities | `/mev/*` (TODO) | ❌ Not implemented |
-| `/nft` | `NFTSniper.tsx` | NFT floor prices | `/nft/*` (TODO) | ❌ Not implemented |
-| `/onchain` | `OnChain.tsx` | On-chain metrics | `/onchain/*` (TODO) | ❌ Not implemented |
-| `/integrations` | `Integrations.tsx` | External integrations | `/integrations/*` (TODO) | ❌ Not implemented |
-| `/ops` | `Ops.tsx` | Kill switch, canary, flags | `/admin/*`, `/ops/*` | ✅ Working |
+| Route                | Component              | Purpose                        | Backend Endpoints                       | Status             |
+| -------------------- | ---------------------- | ------------------------------ | --------------------------------------- | ------------------ |
+| `/`                  | `Overview.tsx`         | Dashboard, equity, AI status   | `/healthz`, `/ai/predict`, `/ai/models` | ✅ Working         |
+| `/ml`                | `MLDashboard.tsx`      | ML model controls, predictions | `/ai/*`, `/analytics/predictions`       | ✅ Working         |
+| `/paper`             | `Paper.tsx`            | Paper trading portfolio        | `/paper/*`                              | ✅ Working         |
+| `/signals`           | `Signals.tsx`          | Signal log, live feed          | `/ops/signal_log`, WS `/ws/events`      | ✅ Working         |
+| `/trades`            | `Trades.tsx`           | Trade history, export CSV      | `/analytics/trades/*`                   | ✅ Working         |
+| `/strategies`        | `Strategies.tsx`       | Strategy enable/disable        | `/strategy/*`                           | ✅ Working         |
+| `/risk`              | `Risk.tsx`             | Risk presets, guardrails       | `/risk/*`                               | ✅ Working         |
+| `/scalp`             | `Scalp.tsx`            | LSE engine control             | `/lse/*`                                | ✅ Working         |
+| `/daytrade`          | `Daytrade.tsx`         | Day engine control             | `/day/*`                                | ✅ Working         |
+| `/swing`             | `Swing.tsx`            | Swing engine control           | `/swing/*`                              | ✅ Working         |
+| `/rsi-macd`          | `RsiMacd.tsx`          | RSI+MACD strategy              | `/strategy/rsi_macd/*`                  | ✅ Working         |
+| `/watchlist`         | `Watchlist.tsx`        | Symbol watchlist               | N/A (local state)                       | ✅ Working         |
+| `/analytics`         | `Analytics.tsx`        | PnL by strategy, deciles       | `/analytics/*`                          | ✅ Working         |
+| `/ai-brain`          | `AIBrain.tsx`          | AI explainer, regime detection | `/ai/*`                                 | ✅ Working         |
+| `/alerts`            | `Alerts.tsx`           | Alert configuration            | `/alerts/*` (TODO)                      | ⚠️ Placeholder     |
+| `/telegram`          | `TelegramSignals.tsx`  | Telegram signal feed           | `/telegram/*`                           | ✅ Working         |
+| `/telegram/control`  | `TelegramControl.tsx`  | Telegram bot control           | `/telegram/status`                      | ✅ Working         |
+| `/telegram/insights` | `TelegramInsights.tsx` | Telegram analytics             | `/telegram/*`                           | ⚠️ Placeholder     |
+| `/telegram/settings` | `TelegramSettings.tsx` | Telegram config                | `/telegram/*`                           | ⚠️ Placeholder     |
+| `/events`            | `EventsTimeline.tsx`   | Event timeline                 | WS `/ws/events`                         | ✅ Working         |
+| `/mev`               | `MEVFeed.tsx`          | MEV opportunities              | `/mev/*` (TODO)                         | ❌ Not implemented |
+| `/nft`               | `NFTSniper.tsx`        | NFT floor prices               | `/nft/*` (TODO)                         | ❌ Not implemented |
+| `/onchain`           | `OnChain.tsx`          | On-chain metrics               | `/onchain/*` (TODO)                     | ❌ Not implemented |
+| `/integrations`      | `Integrations.tsx`     | External integrations          | `/integrations/*` (TODO)                | ❌ Not implemented |
+| `/ops`               | `Ops.tsx`              | Kill switch, canary, flags     | `/admin/*`, `/ops/*`                    | ✅ Working         |
 
 ### Components (30+ files)
 
-| Component | Path | Purpose |
-|-----------|------|---------|
-| **ErrorBoundary** | `components/ui/ErrorBoundary.tsx` | Catch React errors |
-| **Skeleton** | `components/ui/Skeleton.tsx` | Loading placeholders |
-| **DarkModeToggle** | `components/DarkModeToggle.tsx` | Theme switcher |
-| **SSEStatus** | `components/SSEStatus.tsx` | SSE connection indicator |
-| **ReplayBadge** | `components/ReplayBadge.tsx` | Replay mode indicator |
-| **TradeWidget** | `components/TradeWidget.tsx` | Quick trade form |
-| **DateRange** | `components/DateRange.tsx` | Date range picker |
-| **AI Components** | `components/ai/*` | AI explainer, regime card, impact ticker |
-| **ML Components** | `components/ml/*` | Control bar, KPI cards, status banner |
-| **Chart Components** | Various | DEX sparkline, L2 yields, NFT floor |
+| Component            | Path                              | Purpose                                  |
+| -------------------- | --------------------------------- | ---------------------------------------- |
+| **ErrorBoundary**    | `components/ui/ErrorBoundary.tsx` | Catch React errors                       |
+| **Skeleton**         | `components/ui/Skeleton.tsx`      | Loading placeholders                     |
+| **DarkModeToggle**   | `components/DarkModeToggle.tsx`   | Theme switcher                           |
+| **SSEStatus**        | `components/SSEStatus.tsx`        | SSE connection indicator                 |
+| **ReplayBadge**      | `components/ReplayBadge.tsx`      | Replay mode indicator                    |
+| **TradeWidget**      | `components/TradeWidget.tsx`      | Quick trade form                         |
+| **DateRange**        | `components/DateRange.tsx`        | Date range picker                        |
+| **AI Components**    | `components/ai/*`                 | AI explainer, regime card, impact ticker |
+| **ML Components**    | `components/ml/*`                 | Control bar, KPI cards, status banner    |
+| **Chart Components** | Various                           | DEX sparkline, L2 yields, NFT floor      |
 
 ### API Client (`src/lib/api.ts`)
 
 **Total Endpoints:** 60+
 
 **Categories:**
+
 - ✅ Health & Status (2)
 - ✅ Admin & Flags (6)
 - ✅ Risk Management (7)
@@ -124,6 +126,7 @@ The LeviBot web panel is a **working React/Vite SPA** with:
 - ✅ LSE/Day/Swing Engines (15 each = 45)
 
 **Missing Sprint-10 Endpoints:**
+
 - ❌ `/engines/*` - Multi-engine manager (Epic-1)
 - ❌ `/backtest/*` - Backtesting framework (Epic-D)
 - ❌ `/live/kill` - New kill switch API (Epic-E)
@@ -139,6 +142,7 @@ The LeviBot web panel is a **working React/Vite SPA** with:
 **Location:** `src/lib/api.ts`
 
 **Features:**
+
 - ✅ Base URL from env (`VITE_API_BASE` or `http://localhost:8000`)
 - ✅ Credentials: `include` (cookies for admin auth)
 - ✅ JSON content-type
@@ -148,6 +152,7 @@ The LeviBot web panel is a **working React/Vite SPA** with:
 - ⚠️ **NO rate limiting**
 
 **Example:**
+
 ```typescript
 export async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -156,7 +161,7 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return await res.json() as T;
+  return (await res.json()) as T;
 }
 ```
 
@@ -165,6 +170,7 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
 **Location:** `src/lib/ws.ts`
 
 **Features:**
+
 - ✅ Auto-reconnect with exponential backoff (1s → 10s max)
 - ✅ JSON message parsing
 - ✅ Error handling (onError callback)
@@ -173,24 +179,27 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
 - ⚠️ **NO message queue** (drops messages if disconnected)
 
 **Backoff Logic:**
+
 ```typescript
 delay = Math.min((delay * 1.8) | 0, opts.maxDelayMs ?? 10000);
 ```
 
 **Usage Example:**
+
 ```typescript
 // src/pages/Signals.tsx
 makeWsClient({
   url: `ws://localhost:8000/ws/events?event_type=SIGNAL_SCORED`,
-  onMessage: (data) => setSignals(prev => [data, ...prev].slice(0, 50)),
+  onMessage: (data) => setSignals((prev) => [data, ...prev].slice(0, 50)),
   reconnectDelayMs: 1000,
-  maxDelayMs: 10000
+  maxDelayMs: 10000,
 });
 ```
 
 ### Data Fetching (SWR)
 
 **Features:**
+
 - ✅ Stale-while-revalidate pattern
 - ✅ Auto-refresh intervals (5s-30s)
 - ✅ Manual mutation (`mutate()`)
@@ -199,12 +208,11 @@ makeWsClient({
 - ⚠️ **NO offline detection**
 
 **Example:**
+
 ```typescript
-const { data, error, mutate } = useSWR(
-  "/ai/models",
-  api.aiModels,
-  { refreshInterval: 15_000 }
-);
+const { data, error, mutate } = useSWR("/ai/models", api.aiModels, {
+  refreshInterval: 15_000,
+});
 ```
 
 ### Authentication
@@ -212,6 +220,7 @@ const { data, error, mutate } = useSWR(
 **Current State:** ⚠️ **BASIC ADMIN KEY**
 
 **Implementation:**
+
 - Admin key stored in `localStorage` (insecure)
 - Cookie-based session after login
 - **NO JWT/refresh tokens**
@@ -219,6 +228,7 @@ const { data, error, mutate } = useSWR(
 - **NO session expiry handling**
 
 **Code:**
+
 ```typescript
 // src/pages/Ops.tsx
 const handleAdminLogin = async () => {
@@ -244,6 +254,7 @@ const handleAdminLogin = async () => {
 - **No `any` abuse** (mostly typed)
 
 **Gaps:**
+
 - Some API responses use `any` (e.g., `flags`, `guardrails`)
 - Missing types for WebSocket messages
 - No shared type definitions with backend
@@ -269,6 +280,7 @@ const handleAdminLogin = async () => {
 - **NO CI checks**
 
 **Critical Gaps:**
+
 - API client error handling untested
 - WebSocket reconnect logic untested
 - Component rendering untested
@@ -279,11 +291,13 @@ const handleAdminLogin = async () => {
 **Status:** ⚠️ **BASIC**
 
 **Good:**
+
 - ✅ Semantic HTML (`<header>`, `<main>`, `<nav>`)
 - ✅ Button labels
 - ✅ Dark mode support
 
 **Missing:**
+
 - ❌ ARIA labels for interactive elements
 - ❌ Keyboard navigation (tab order)
 - ❌ Focus management (modals, dropdowns)
@@ -295,11 +309,13 @@ const handleAdminLogin = async () => {
 **Status:** ✅ **DECENT**
 
 **Good:**
+
 - ✅ Vite fast HMR
 - ✅ Code splitting (React Router lazy loading potential)
 - ✅ SWR caching
 
 **Missing:**
+
 - ❌ No `React.memo` for expensive components
 - ❌ No `useMemo`/`useCallback` for heavy computations
 - ❌ No `Suspense` for lazy loading
@@ -311,11 +327,13 @@ const handleAdminLogin = async () => {
 **Status:** ⚠️ **PARTIAL**
 
 **Good:**
+
 - ✅ ErrorBoundary component
 - ✅ Toast notifications for user errors
 - ✅ Try-catch in async handlers
 
 **Missing:**
+
 - ❌ No global error handler
 - ❌ No error logging (Sentry/LogRocket)
 - ❌ No retry UI for failed requests
@@ -327,23 +345,23 @@ const handleAdminLogin = async () => {
 
 ### Sprint-10 Features (Missing)
 
-| Feature | Backend Status | Frontend Status | Gap |
-|---------|---------------|-----------------|-----|
-| **Multi-Engine Manager** | ✅ Epic-1 Complete | ❌ No UI | Need `/engines` page + control panel |
-| **Backtesting UI** | ✅ Epic-D Complete | ❌ No UI | Need `/backtest` page + report viewer |
-| **Kill Switch (New)** | ✅ Epic-E Complete | ⚠️ Old API | Update to `/live/kill` endpoint |
-| **Model Cards** | ✅ Epic-B/C Complete | ❌ No UI | Need model card viewer + metrics |
-| **Real Data Feed** | ✅ Epic-A Complete | ❌ No UI | Need live ticker + gap-fill status |
+| Feature                  | Backend Status       | Frontend Status | Gap                                   |
+| ------------------------ | -------------------- | --------------- | ------------------------------------- |
+| **Multi-Engine Manager** | ✅ Epic-1 Complete   | ❌ No UI        | Need `/engines` page + control panel  |
+| **Backtesting UI**       | ✅ Epic-D Complete   | ❌ No UI        | Need `/backtest` page + report viewer |
+| **Kill Switch (New)**    | ✅ Epic-E Complete   | ⚠️ Old API      | Update to `/live/kill` endpoint       |
+| **Model Cards**          | ✅ Epic-B/C Complete | ❌ No UI        | Need model card viewer + metrics      |
+| **Real Data Feed**       | ✅ Epic-A Complete   | ❌ No UI        | Need live ticker + gap-fill status    |
 
 ### Sprint-11 Targets (Planned)
 
-| Feature | Priority | Effort | Notes |
-|---------|----------|--------|-------|
-| **Usage Tracking** | High | 3 days | API key tiering, usage meters |
-| **Billing UI** | High | 5 days | Stripe integration, invoices |
-| **User Management** | High | 3 days | RBAC, team invites |
-| **Model Marketplace** | Medium | 7 days | Browse/buy custom models |
-| **Webhook Config** | Low | 2 days | Webhook endpoints UI |
+| Feature               | Priority | Effort | Notes                         |
+| --------------------- | -------- | ------ | ----------------------------- |
+| **Usage Tracking**    | High     | 3 days | API key tiering, usage meters |
+| **Billing UI**        | High     | 5 days | Stripe integration, invoices  |
+| **User Management**   | High     | 3 days | RBAC, team invites            |
+| **Model Marketplace** | Medium   | 7 days | Browse/buy custom models      |
+| **Webhook Config**    | Low      | 2 days | Webhook endpoints UI          |
 
 ---
 
@@ -368,7 +386,7 @@ backtest: {
 },
 live: {
   killStatus: () => http<any>("/live/status"),
-  killToggle: (on: boolean, reason: string) => 
+  killToggle: (on: boolean, reason: string) =>
     http<any>(`/live/kill?on=${on}&reason=${reason}`, { method: "POST" }),
 },
 ```
@@ -428,6 +446,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 ### Day 1-2: Sprint-10 Integration
 
 **Tasks:**
+
 1. ✅ Add `/engines`, `/backtest`, `/live` API endpoints
 2. ✅ Create `/engines` page (engine list + start/stop controls)
 3. ✅ Create `/backtest` page (run form + report list)
@@ -435,6 +454,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 5. ✅ Add model card viewer modal
 
 **Files to Create:**
+
 - `src/pages/Engines.tsx`
 - `src/pages/Backtest.tsx`
 - `src/components/ModelCard.tsx`
@@ -443,6 +463,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 ### Day 3-4: Testing Infrastructure
 
 **Tasks:**
+
 1. ✅ Setup Vitest + Testing Library
 2. ✅ Write API client tests (10+ cases)
 3. ✅ Write WebSocket reconnect tests
@@ -450,6 +471,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 5. ✅ Add CI workflow (GitHub Actions)
 
 **Files to Create:**
+
 - `vitest.config.ts`
 - `src/lib/__tests__/api.test.ts`
 - `src/lib/__tests__/ws.test.ts`
@@ -459,6 +481,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 ### Day 5: Authentication Upgrade
 
 **Tasks:**
+
 1. ✅ Add JWT/refresh token flow
 2. ✅ Add auth context provider
 3. ✅ Add protected route wrapper
@@ -466,6 +489,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 5. ✅ Add logout on 401
 
 **Files to Create:**
+
 - `src/contexts/AuthContext.tsx`
 - `src/components/ProtectedRoute.tsx`
 - `src/lib/auth.ts`
@@ -473,6 +497,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 ### Day 6-7: Polish & Documentation
 
 **Tasks:**
+
 1. ✅ Add ESLint + Prettier
 2. ✅ Fix all linter errors
 3. ✅ Add loading skeletons to all pages
@@ -481,6 +506,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 6. ✅ Add Storybook (optional)
 
 **Files to Create:**
+
 - `frontend/panel/README.md`
 - `frontend/panel/.eslintrc.json`
 - `frontend/panel/.prettierrc.json`
@@ -491,13 +517,13 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 
 ### Critical Risks
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **No tests** | High | Block production until 50% coverage |
-| **Weak auth** | High | Implement JWT + RBAC before public beta |
-| **No error logging** | Medium | Add Sentry/LogRocket for production |
+| Risk                     | Impact | Mitigation                                 |
+| ------------------------ | ------ | ------------------------------------------ |
+| **No tests**             | High   | Block production until 50% coverage        |
+| **Weak auth**            | High   | Implement JWT + RBAC before public beta    |
+| **No error logging**     | Medium | Add Sentry/LogRocket for production        |
 | **Missing Sprint-10 UI** | Medium | 2-day sprint to add engines/backtest pages |
-| **No CI/CD** | Medium | Add GitHub Actions for lint + test + build |
+| **No CI/CD**             | Medium | Add GitHub Actions for lint + test + build |
 
 ### Recommendations
 
@@ -555,6 +581,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 **Current State:** The LeviBot web panel is a **functional prototype** with good architecture (React + Vite + TypeScript + SWR) but **lacks production readiness** (no tests, weak auth, missing Sprint-10 features).
 
 **Recommendation:** Allocate **1 week** to:
+
 1. Add Sprint-10 UI (engines, backtest, kill switch)
 2. Setup testing (50% coverage target)
 3. Add linting + CI
@@ -568,4 +595,3 @@ npm install -D prettier eslint-config-prettier eslint-plugin-react-hooks
 
 **Audit Complete** ✅  
 **Next Steps:** Review with team → Prioritize action items → Execute 1-week plan
-
