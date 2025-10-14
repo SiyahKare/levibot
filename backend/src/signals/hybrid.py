@@ -96,15 +96,11 @@ def combine_signals(
         )
         min_abs = float(gate_cfg.get("min_abs_bias", 0.02))
         max_age = int(gate_cfg.get("max_age_min", half_life_min))
-        gate_reason = None
         if latest_age_min is None:
-            gate_reason = "no_signal"
             tel_bias = 0.0
         elif latest_age_min > max_age:
-            gate_reason = "stale"
             tel_bias = 0.0
         elif abs(tel_bias) < min_abs:
-            gate_reason = "bias_too_small"
             tel_bias = 0.0
         total = base_score + ml_component + news_bias + tel_bias
     else:

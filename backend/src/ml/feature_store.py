@@ -297,7 +297,6 @@ def detect_regime(returns: np.ndarray, volatility: float) -> int:
 
     # Volatility threshold
     vol_threshold_high = 0.03
-    vol_threshold_low = 0.01
 
     if volatility > vol_threshold_high:
         return 2  # Volatile

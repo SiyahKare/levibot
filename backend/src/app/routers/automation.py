@@ -78,7 +78,7 @@ async def get_automation_status():
 
         # Risk parameters from flags
         max_positions = flags.get("max_open_positions", 5)
-        max_trade_usd = flags.get("guardrails_max_trade_usd", 500.0)
+        flags.get("guardrails_max_trade_usd", 500.0)
         confidence_threshold = flags.get("guardrails_confidence_threshold", 0.6)
 
         # Calculate stop loss and take profit from risk config

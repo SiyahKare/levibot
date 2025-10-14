@@ -146,9 +146,7 @@ def run_tick(user_id: str = "default") -> None:
 
         try:
             # place entry post-only ve OCO kolları
-            order = ex.client.create_order(
-                cc, "limit", side, qty, entry, {"timeInForce": "PO"}
-            )
+            ex.client.create_order(cc, "limit", side, qty, entry, {"timeInForce": "PO"})
             rr = 1.2
             if side == "buy":
                 tp = quantize_price(entry + rr * (entry - stop), meta)

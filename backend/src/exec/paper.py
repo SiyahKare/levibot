@@ -19,7 +19,7 @@ def place_paper_order(req: PaperOrderRequest) -> PaperOrderResult:
     mark = float(req.price) if req.price is not None else _synthetic_mark(req.symbol)
     qty = max(1e-6, req.notional_usd / max(mark, 1e-9))
 
-    risk_enabled = os.getenv("PAPER_RISK_DISABLE", "false").lower() != "true"
+    os.getenv("PAPER_RISK_DISABLE", "false").lower() != "true"
 
     log_event(
         "ORDER_NEW",

@@ -85,7 +85,7 @@ def _load_features_sync(symbol: str, lookback: int) -> list[float] | None:
 
         # Extract price series
         prices = np.array([float(r["last"]) for r in rows], dtype=np.float64)
-        volumes = np.array([float(r["vol"] or 0) for r in rows], dtype=np.float64)
+        np.array([float(r["vol"] or 0) for r in rows], dtype=np.float64)
 
         # Compute features
         ret_1m = _pct_change(prices, 60) if len(prices) >= 61 else 0.0

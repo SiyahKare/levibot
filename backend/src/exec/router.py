@@ -130,10 +130,10 @@ class ExchangeRouter:
                 time.sleep(1.0)
         pos_side = "long" if side.lower() == "buy" else "short"
         hedge_side = "sell" if pos_side == "long" else "buy"
-        tp_order = self.client.create_order(
+        self.client.create_order(
             symbol, "limit", hedge_side, qa, tp, {"reduceOnly": True}
         )
-        sl_order = self.client.create_order(
+        self.client.create_order(
             symbol, "stop", hedge_side, qa, None, {"stopPrice": sl, "reduceOnly": True}
         )
         self.logger.write(

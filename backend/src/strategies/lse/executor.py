@@ -44,7 +44,7 @@ class LSEExecutor:
         """
         if self.mode == "paper" and self._portfolio:
             notional = price * qty
-            result = self._portfolio.open_position(
+            self._portfolio.open_position(
                 symbol=self.symbol, side="long", qty=qty, entry_price=price
             )
             return {

@@ -280,7 +280,7 @@ class RsiMacdEngine:
           - Timeout (bars held)
         """
         side = self._position["side"]
-        entry_price = self._position["entry_price"]
+        self._position["entry_price"]
         bars_held = current_bar - self._position["entry_bar"]
 
         # Timeout
