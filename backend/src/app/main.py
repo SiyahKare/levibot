@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from ..engine.manager import get_engine_manager, init_engine_manager
 from .routers.engines import router as engines_router
+from .routers.live import router as live_router
 from .routers.metrics import router as metrics_router
 from .routers.risk import router as risk_router
 
@@ -99,6 +100,7 @@ app = FastAPI(
 app.include_router(engines_router)
 app.include_router(risk_router)
 app.include_router(metrics_router)
+app.include_router(live_router)
 
 
 @app.get("/")

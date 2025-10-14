@@ -191,7 +191,7 @@ _Production models + Real data: ccxt/MEXC, LGBM/TFT training, Backtesting, Testn
 - **[sprint/S10_TASKS.yaml](./sprint/S10_TASKS.yaml)** - 📋 Sprint-10 Task Tracker
 - **[sprint/SPRINT9_COMPLETION_FINAL.md](./sprint/SPRINT9_COMPLETION_FINAL.md)** - 🎊 Sprint-9 Complete (100%)
 
-**Sprint-10 Progress: 4/5 Epics Complete** 🚀
+**Sprint-10 Progress: 5/5 Epics Complete** ✅ 🎉
 
 **Epic-A: Real Data Ingestion (COMPLETE ✅)**
 
@@ -229,6 +229,15 @@ MEXC (ccxt.pro WS) → MarketFeeder (gap-fill) → Symbol-specific Engine Queue 
 - Metrics: Sharpe, Sortino, Max Drawdown, Hit Rate, Turnover
 - Reports: Markdown + JSON + NPY artifacts (`reports/backtests/`)
 - Tests: 2/2 smoke tests passing ✅
+
+**Epic-E: Live Trading Prep (COMPLETE ✅)**
+
+- **[sprint/EPIC_E_LIVE_PREP_GUIDE.md](./sprint/EPIC_E_LIVE_PREP_GUIDE.md)** - 📘 Implementation Guide
+- **[sprint/EPIC_E_LIVE_PREP_COMPLETE.md](./sprint/EPIC_E_LIVE_PREP_COMPLETE.md)** - ✅ Completion Summary
+- Order adapter: Idempotent clientOrderId (SHA1 hash) + rate limiting (5 rps)
+- Kill switch: Manual (`/live/kill`) + Auto (global stop, exposure limit)
+- Portfolio: Balance & position tracking with exposure monitoring
+- Tests: 8/8 passing ✅ (idempotency, rate limit, kill switch, risk integration)
 
 **Epic-1: Multi-Engine (Sprint-9 ✅)**
 
