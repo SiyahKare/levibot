@@ -1,0 +1,103 @@
+version: "3.9"
+
+services:
+  # Backend API
+  api:
+    build:
+      context: ./backend
+      dockerfile: ../docker/app.Dockerfile
+    image: levibot/api:dev
+    container_name: levibot-api
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DISABLE_ML=true  # Smoke test için ML devre dışı
+      - LIVE_MODE=paper
+      - TZ=Europe/Istanbul
+      - LEVI_API_HOST=0.0.0.0
+      - LEVI_API_PORT=8000
+    ports:
+      - "8000:8000"
+    command: uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./backend/data:/app/data            # Models, reports, cache
+      - ./backend/config:/app/config        # Risk policies, configs
+      - ./backend/src:/app/src              # Hot reload for development
+    networks:
+      - levibot
+
+  # Frontend Panel
+  panel:
+    build:
+      context: ./frontend/panel
+      dockerfile: ../../docker/panel.Dockerfile
+    image: levibot/panel:dev
+    container_name: levibot-panel
+    environment:
+      - VITE_API_BASE=http://localhost:8000
+      - VITE_ENABLE_BACKTEST=true
+      - VITE_ENABLE_KILL=true
+      - VITE_DEBUG=false
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    command: pnpm dev --host 0.0.0.0 --port 5173
+    restart: unless-stopped
+    volumes:
+      - ./frontend/panel/src:/app/src       # Hot reload for development
+    networks:
+      - levibot
+
+  # Prometheus (Metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: levibot-prom
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+    networks:
+      - levibot
+
+  # Grafana (Dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: levibot-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+    volumes:
+      - ./ops/grafana:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - levibot
+
+networks:
+  levibot:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
+

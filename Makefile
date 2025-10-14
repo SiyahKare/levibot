@@ -52,20 +52,29 @@ docker:  ## Docker image'ını build et
 	docker build -f docker/app.Dockerfile -t levibot:local .
 	@echo "✅ Image built: levibot:local"
 
-up:  ## Servisleri başlat (docker-compose)
-	@echo "🚀 Starting services..."
-	docker-compose up -d
+up:  ## Servisleri başlat (docker-compose dev)
+	@echo "🚀 Starting development services..."
+	docker compose -f docker-compose.dev.yml up -d --build
 	@echo "✅ Services started!"
-	@echo "   API: http://localhost:8000"
-	@echo "   Panel: http://localhost:3000"
+	@echo "   Panel:    http://localhost:5173"
+	@echo "   Engines:  http://localhost:5173/engines"
+	@echo "   Backtest: http://localhost:5173/backtest"
+	@echo "   Ops:      http://localhost:5173/ops"
+	@echo "   API Docs: http://localhost:8000/docs"
+	@echo "   Grafana:  http://localhost:3000 (admin/admin)"
 
 down:  ## Servisleri durdur
 	@echo "🛑 Stopping services..."
-	docker-compose down
+	docker compose -f docker-compose.dev.yml down
 	@echo "✅ Services stopped!"
 
 logs:  ## Servis loglarını izle
-	docker-compose logs -f --tail=100
+	docker compose -f docker-compose.dev.yml logs -f --tail=200
+
+restart:  ## Servisleri yeniden başlat
+	@echo "🔄 Restarting services..."
+	docker compose -f docker-compose.dev.yml restart
+	@echo "✅ Services restarted!"
 
 clean:  ## Cache ve geçici dosyaları temizle
 	@echo "🧹 Cleaning up..."
@@ -77,11 +86,29 @@ clean:  ## Cache ve geçici dosyaları temizle
 	find . -type f -name ".coverage" -delete 2>/dev/null || true
 	@echo "✅ Cleanup complete!"
 
-smoke:  ## Smoke test (API health check)
-	@echo "🔥 Running smoke test..."
-	@curl -f http://localhost:8000/healthz || echo "❌ API not responding"
-	@curl -f http://localhost:8000/engines/status || echo "❌ Engines endpoint failed"
-	@echo "✅ Smoke test complete!"
+smoke:  ## Smoke test URLs
+	@echo "🔎 Smoke Test URLs:"
+	@echo ""
+	@echo "  Frontend:"
+	@echo "    Panel:    http://localhost:5173"
+	@echo "    Engines:  http://localhost:5173/engines"
+	@echo "    Backtest: http://localhost:5173/backtest"
+	@echo "    Ops:      http://localhost:5173/ops"
+	@echo ""
+	@echo "  Backend:"
+	@echo "    Health:   http://localhost:8000/health"
+	@echo "    Docs:     http://localhost:8000/docs"
+	@echo "    Engines:  http://localhost:8000/engines"
+	@echo "    Stream:   http://localhost:8000/stream/engines"
+	@echo ""
+	@echo "  Monitoring:"
+	@echo "    Prometheus: http://localhost:9090"
+	@echo "    Grafana:    http://localhost:3000 (admin/admin)"
+	@echo ""
+	@echo "Quick Tests:"
+	@curl -sf http://localhost:8000/health | jq '.' 2>/dev/null || echo "  ❌ API not responding"
+	@curl -sf http://localhost:8000/engines 2>/dev/null && echo "  ✅ /engines OK" || echo "  ❌ /engines failed"
+	@curl -sf http://localhost:8000/live/status | jq '.' 2>/dev/null && echo "  ✅ /live/status OK" || echo "  ❌ /live/status failed"
 
 automl:  ## Manuel AutoML pipeline çalıştır
 	@echo "🌙 Running nightly AutoML..."
