@@ -181,11 +181,15 @@ make smoke-test
 
 ### Aktif Sprint 🏃
 
-- **[sprint/S9_GEMMA_FUSION_PLAN.md](./sprint/S9_GEMMA_FUSION_PLAN.md)** - 🧠 Sprint-9: AI Fusion & Engine Upgrade
-- **[sprint/S9_TASKS.yaml](./sprint/S9_TASKS.yaml)** - ✅ Sprint-9 görev listesi (YAML)
-- **[sprint/SPRINT9_MID_CHECKPOINT.md](./sprint/SPRINT9_MID_CHECKPOINT.md)** - 🎉 Mid-Sprint Checkpoint (4/5 Epics ✅)
-- **[sprint/SPRINT9_FINAL_CHECKPOINT.md](./sprint/SPRINT9_FINAL_CHECKPOINT.md)** - 🏆 Final Checkpoint (80% Complete!)
-- **[sprint/SPRINT9_COMPLETION_FINAL.md](./sprint/SPRINT9_COMPLETION_FINAL.md)** - 🎊 **SPRINT COMPLETE!** (100%)
+**✅ Sprint-9: "Gemma Fusion"** → **TAMAMLANDI!**  
+_Multi-engine stabilization, AI Fusion, Risk Manager v2, CI/CD Pipeline, Nightly AutoML_
+
+**🔥 Sprint-10: "The Real Deal"** (15-31 Ekim 2025)  
+_Production models + Real data: ccxt/MEXC, LGBM/TFT training, Backtesting, Testnet live prep_
+
+- **[sprint/S10_THE_REAL_DEAL_PLAN.md](./sprint/S10_THE_REAL_DEAL_PLAN.md)** - 🚀 Sprint-10 Master Plan
+- **[sprint/S10_TASKS.yaml](./sprint/S10_TASKS.yaml)** - 📋 Sprint-10 Task Tracker
+- **[sprint/SPRINT9_COMPLETION_FINAL.md](./sprint/SPRINT9_COMPLETION_FINAL.md)** - 🎊 Sprint-9 Complete (100%)
 
 **Epic-1: Multi-Engine (COMPLETE ✅)**
 

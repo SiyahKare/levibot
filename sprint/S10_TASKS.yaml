@@ -1,0 +1,373 @@
+# Sprint-10: The Real Deal - Task List
+# Production models + Real data transition
+
+sprint:
+  id: S10
+  name: "The Real Deal"
+  start_date: "2025-10-15"
+  end_date: "2025-10-31"
+  owner: "@siyahkare"
+  status: "planned"
+
+kpis:
+  accuracy_val:
+    target: 0.65
+    current: null
+    unit: "percent"
+  sharpe_90d:
+    target: 2.0
+    current: null
+    unit: "ratio"
+  max_drawdown:
+    target: 0.12
+    current: null
+    unit: "percent"
+  inference_p95_cpu:
+    target: 0.040
+    current: null
+    unit: "seconds"
+  uptime_48h:
+    target: 0.99
+    current: null
+    unit: "percent"
+
+epics:
+  - id: "A"
+    name: "Real Data Ingestion (ccxt + Stream)"
+    priority: "critical"
+    status: "not_started"
+    estimated_hours: 34
+    tasks:
+      - id: "A1"
+        name: "REST OHLCV + orderbook snapshot"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 10
+        checklist:
+          - task: "ccxt.mexc() client setup"
+            done: false
+          - task: "fetch_ohlcv() for multiple symbols"
+            done: false
+          - task: "orderbook snapshot with retry logic"
+            done: false
+          - task: "Rate limiting (requests/sec)"
+            done: false
+        files:
+          - "backend/src/adapters/mexc_ccxt.py"
+
+      - id: "A2"
+        name: "WebSocket ticker/trades + reconnect"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 12
+        checklist:
+          - task: "ccxtpro.mexc() WebSocket setup"
+            done: false
+          - task: "watch_trades() stream"
+            done: false
+          - task: "Exponential backoff on disconnect"
+            done: false
+          - task: "Message queue + async iterator"
+            done: false
+        files:
+          - "backend/src/adapters/mexc_ccxt.py"
+
+      - id: "A3"
+        name: "Feeder → engine md mapping"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 6
+        checklist:
+          - task: "price/spread/vol extraction"
+            done: false
+          - task: "funding + OI placeholders"
+            done: false
+          - task: "texts field (news placeholder)"
+            done: false
+          - task: "Engine.md dict integration"
+            done: false
+        files:
+          - "backend/src/adapters/market_feeder.py"
+
+      - id: "A4"
+        name: "Gap-fill + time-sync"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 6
+        checklist:
+          - task: "Detect missing minute bars"
+            done: false
+          - task: "Backfill from REST API"
+            done: false
+          - task: "NTP time sync check"
+            done: false
+          - task: "Dropped message metrics"
+            done: false
+        files:
+          - "backend/src/adapters/gap_filler.py"
+
+  - id: "B"
+    name: "Production LGBM (Optuna + joblib)"
+    priority: "high"
+    status: "not_started"
+    estimated_hours: 28
+    tasks:
+      - id: "B1"
+        name: "Feature store (Parquet/DuckDB)"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 8
+        checklist:
+          - task: "Time-based train/val split (leak-safe)"
+            done: false
+          - task: "Feature lag validation"
+            done: false
+          - task: "Parquet export with schema"
+            done: false
+          - task: "DuckDB query interface"
+            done: false
+        files:
+          - "backend/src/data/feature_store.py"
+
+      - id: "B2"
+        name: "Optuna study (≥200 trials)"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 16
+        checklist:
+          - task: "Objective function (cross-val accuracy)"
+            done: false
+          - task: "Hyperparameter search space"
+            done: false
+          - task: "≥200 trials with pruning"
+            done: false
+          - task: "Early stopping callback"
+            done: false
+          - task: "Best params export"
+            done: false
+        files:
+          - "backend/src/ml/train_lgbm_prod.py"
+
+      - id: "B3"
+        name: "joblib load → EnsemblePredictor"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 4
+        checklist:
+          - task: "LGBMPredictor.load() with joblib"
+            done: false
+          - task: "Model versioning metadata"
+            done: false
+          - task: "Inference performance test"
+            done: false
+        files:
+          - "backend/src/ml/models/ensemble_predictor.py"
+
+  - id: "C"
+    name: "Production TFT (Lightning)"
+    priority: "high"
+    status: "not_started"
+    estimated_hours: 28
+    tasks:
+      - id: "C1"
+        name: "Sequence dataset builder"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 8
+        checklist:
+          - task: "Sliding window sequences"
+            done: false
+          - task: "Feature scaling (MinMax/Standard)"
+            done: false
+          - task: "Target encoding"
+            done: false
+          - task: "PyTorch Dataset class"
+            done: false
+        files:
+          - "backend/src/ml/datasets/tft_dataset.py"
+
+      - id: "C2"
+        name: "Lightning trainer + ckpt"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 14
+        checklist:
+          - task: "TFT model architecture"
+            done: false
+          - task: "Lightning module + training loop"
+            done: false
+          - task: "Early stopping + checkpointing"
+            done: false
+          - task: "AMP (automatic mixed precision) option"
+            done: false
+          - task: "TensorBoard logging"
+            done: false
+        files:
+          - "backend/src/ml/train_tft_prod.py"
+
+      - id: "C3"
+        name: "Inference wrapper (p95≤40ms)"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 6
+        checklist:
+          - task: "torch.load() best checkpoint"
+            done: false
+          - task: "Thread-safe inference"
+            done: false
+          - task: "Batch prediction support"
+            done: false
+          - task: "Latency profiling (p95<40ms)"
+            done: false
+        files:
+          - "backend/src/ml/models/tft_predictor.py"
+
+  - id: "D"
+    name: "Backtesting Framework"
+    priority: "high"
+    status: "not_started"
+    estimated_hours: 18
+    tasks:
+      - id: "D1"
+        name: "Vectorized runner + slippage/fee"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 12
+        checklist:
+          - task: "Minute-bar simulation engine"
+            done: false
+          - task: "Slippage model (spread-based)"
+            done: false
+          - task: "Fee calculation (maker/taker)"
+            done: false
+          - task: "Position tracking + PnL"
+            done: false
+          - task: "Seed reproducibility"
+            done: false
+        files:
+          - "backend/src/backtest/runner.py"
+
+      - id: "D2"
+        name: "HTML/MD reports"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 6
+        checklist:
+          - task: "Sharpe, Sortino, Calmar calculation"
+            done: false
+          - task: "Max Drawdown + underwater chart"
+            done: false
+          - task: "Turnover + trade count stats"
+            done: false
+          - task: "HTML report with Plotly charts"
+            done: false
+          - task: "Markdown summary export"
+            done: false
+        files:
+          - "backend/src/backtest/reporter.py"
+          - "reports/backtests/"
+
+  - id: "E"
+    name: "Live Trading Prep (testnet)"
+    priority: "high"
+    status: "not_started"
+    estimated_hours: 22
+    tasks:
+      - id: "E1"
+        name: "Order adapter + idempotent clientOrderId"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 8
+        checklist:
+          - task: "ccxt create_order() wrapper"
+            done: false
+          - task: "UUID-based clientOrderId"
+            done: false
+          - task: "Rate limiting (orders/sec)"
+            done: false
+          - task: "Retry logic with idempotency"
+            done: false
+        files:
+          - "backend/src/adapters/order_adapter.py"
+
+      - id: "E2"
+        name: "Circuit breaker & kill switch"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 4
+        checklist:
+          - task: "Global stop integration"
+            done: false
+          - task: "Emergency halt endpoint"
+            done: false
+          - task: "Position liquidation on kill"
+            done: false
+          - task: "Alert notification"
+            done: false
+        files:
+          - "backend/src/risk/circuit_breaker.py"
+
+      - id: "E3"
+        name: "Testnet/paper 48h run"
+        status: "not_started"
+        assignee: "@siyahkare"
+        estimated_hours: 10
+        checklist:
+          - task: "Feature flag: paper/testnet/live"
+            done: false
+          - task: "Staging environment setup"
+            done: false
+          - task: "48h continuous monitoring"
+            done: false
+          - task: "Zero failed orders validation"
+            done: false
+        files:
+          - "backend/src/app/staging.py"
+
+progress:
+  total_tasks: 18
+  completed: 0
+  in_progress: 0
+  not_started: 18
+  blocked: 0
+
+estimates:
+  total_hours: 130
+  completed_hours: 0
+  remaining_hours: 130
+  velocity: "TBD (Sprint-9: 9x faster)"
+
+ci_gates:
+  coverage_min: 0.80
+  backtest_regression:
+    metric: "sharpe_90d"
+    threshold_drop_pct: 10
+    action: "fail_build"
+
+risks:
+  - id: "R1"
+    description: "WebSocket instability on MEXC"
+    probability: "medium"
+    impact: "high"
+    mitigation: "Robust reconnection + snapshot fallback"
+  - id: "R2"
+    description: "Feature leakage in time-series split"
+    probability: "low"
+    impact: "critical"
+    mitigation: "Strict lag validation + manual audit"
+  - id: "R3"
+    description: "TFT training time > 12h"
+    probability: "medium"
+    impact: "medium"
+    mitigation: "AMP + smaller architecture + early stopping"
+
+notes:
+  - "Sprint starts immediately after Sprint-9 CI/CD validation"
+  - "Epic-A is blocking for B/C/D/E (need real data)"
+  - "CI regression gate: backtest Sharpe drop >10% fails build"
+  - "Demo target: Live backtesting dashboard for Taylan"
+
+links:
+  plan: "sprint/S10_THE_REAL_DEAL_PLAN.md"
+  epic_a_guide: "TBD: sprint/EPIC_A_CCXT_GUIDE.md"
+
