@@ -18,44 +18,31 @@ class LGBMPredictor:
     TODO: Load real trained model
     """
 
-    def __init__(self, model_path: str = "data/models/lgbm.pkl"):
+    def __init__(self, model_path: str = "backend/data/models/best_lgbm.pkl"):
         self.model_path = model_path
         self.loaded = False
-        self.model = None
 
     def load(self) -> None:
-        """
-        Load model from disk.
+        """Load production LightGBM model."""
+        if not self.loaded:
+            from ..infer_lgbm import LGBMProd
 
-        TODO: Implement real model loading:
-        ```python
-        import joblib
-        self.model = joblib.load(self.model_path)
-        self.loaded = True
-        ```
-        """
-        # Mock: Pretend model is loaded
-        self.loaded = True
+            LGBMProd.load(self.model_path)
+            self.loaded = True
 
     def predict_proba(self, features: dict[str, float]) -> float:
         """
-        Predict probability of price increase.
+        Predict probability of price increase using production LGBM.
 
         Args:
-            features: Feature dictionary
+            features: Feature dictionary {close, ret1, sma20_gap, sma50_gap, vol_z}
 
         Returns:
             Probability of upward movement (0.0 to 1.0)
-
-        TODO: Implement real prediction:
-        ```python
-        feature_vector = self._extract_features(features)
-        proba = self.model.predict_proba([feature_vector])[0][1]
-        return float(proba)
-        ```
         """
-        # Mock: Return fixed probability
-        return 0.55
+        from ..infer_lgbm import LGBMProd
+
+        return LGBMProd.predict_proba_up(features)
 
 
 class TFTPredictor:
