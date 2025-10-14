@@ -77,25 +77,25 @@
 
 ## 📈 KPI Hedefleri
 
-| Metrik                      | Hedef     |
-| --------------------------- | --------- |
-| Accuracy (val)              | ≥ %65     |
-| Sharpe (90g backtest)       | ≥ 2.0     |
-| Max Drawdown                | ≤ %12     |
-| Inference p95 (CPU)         | ≤ 40ms    |
-| Uptime (paper/testnet 48h)  | ≥ %99     |
+| Metrik                     | Hedef  |
+| -------------------------- | ------ |
+| Accuracy (val)             | ≥ %65  |
+| Sharpe (90g backtest)      | ≥ 2.0  |
+| Max Drawdown               | ≤ %12  |
+| Inference p95 (CPU)        | ≤ 40ms |
+| Uptime (paper/testnet 48h) | ≥ %99  |
 
 ---
 
 ## 📅 Takvim
 
-| Gün         | Epic | Çıktı                        |
-| ----------- | ---- | ---------------------------- |
-| 15–17 Eki   | A    | REST+WS akış, feeder stabilize |
-| 18–21 Eki   | B    | LGBM eğitim + load           |
-| 22–24 Eki   | C    | TFT eğitim + inference       |
-| 25–27 Eki   | D    | Backtest + rapor             |
-| 28–31 Eki   | E    | Testnet run + kill switch    |
+| Gün       | Epic | Çıktı                          |
+| --------- | ---- | ------------------------------ |
+| 15–17 Eki | A    | REST+WS akış, feeder stabilize |
+| 18–21 Eki | B    | LGBM eğitim + load             |
+| 22–24 Eki | C    | TFT eğitim + inference         |
+| 25–27 Eki | D    | Backtest + rapor               |
+| 28–31 Eki | E    | Testnet run + kill switch      |
 
 ---
 
@@ -134,4 +134,3 @@ reports/backtests/90d_{SYMBOL}.html
 **Prepared by:** @siyahkare  
 **Sprint:** S10 — The Real Deal  
 **Status:** 🚀 **KICKOFF!**
-
