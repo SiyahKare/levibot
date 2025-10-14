@@ -3,7 +3,10 @@ Engine manager orchestrates multiple trading engines.
 """
 
 import asyncio
+import contextlib
+from typing import Any, Optional
 
+from ..data.market_feeder import MarketFeeder
 from .engine import TradingEngine
 from .health_monitor import HealthMonitor
 from .recovery import RecoveryPolicy
@@ -30,22 +33,39 @@ class EngineManager:
         self.recovery_policy = RecoveryPolicy()
         self.health_monitor = HealthMonitor(self)
 
-        self._monitor_task: asyncio.Task | None = None
+        # Market data feeder
+        self._feeder: Optional[MarketFeeder] = None
+        self._feeder_task: Optional[asyncio.Task] = None
+        self._monitor_task: Optional[asyncio.Task] = None
 
     async def start_all(self, symbols: list[str]) -> None:
-        """Start engines for all symbols."""
+        """Start engines for all symbols and market data feeder."""
         print(f"🚀 Starting {len(symbols)} engines...")
 
+        # Start engines first
         for symbol in symbols:
             try:
                 await self.start_engine(symbol)
             except Exception as e:
                 print(f"❌ Failed to start engine {symbol}: {e}")
 
+        # Start market data feeder with symbol-specific injection
+        print(f"📡 Starting market data feeder for {len(symbols)} symbols...")
+        self._feeder = MarketFeeder(symbols)
+
+        async def on_md(md: dict[str, Any]):
+            """Route market data to appropriate engine."""
+            sym = md.get("symbol")
+            eng = self.engines.get(sym)
+            if eng:
+                await eng.push_md(md)
+
+        self._feeder_task = asyncio.create_task(self._feeder.run(on_md))
+
         # Start health monitor
         self._monitor_task = asyncio.create_task(self.health_monitor.run())
 
-        print(f"✅ Started {len(self.engines)}/{len(symbols)} engines")
+        print(f"✅ Started {len(self.engines)}/{len(symbols)} engines + feeder")
 
     async def start_engine(self, symbol: str) -> None:
         """Start a single engine."""
@@ -85,16 +105,25 @@ class EngineManager:
         print(f"🛑 Engine {symbol} stopped")
 
     async def stop_all(self, timeout: float = 10.0) -> None:
-        """Stop all engines."""
+        """Stop all engines, feeder, and monitor."""
         print(f"🛑 Stopping {len(self.engines)} engines...")
 
         # Stop health monitor
         if self._monitor_task:
             self._monitor_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._monitor_task
-            except asyncio.CancelledError:
-                pass
+
+        # Stop market data feeder
+        if self._feeder_task:
+            print("📡 Stopping market data feeder...")
+            self._feeder_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._feeder_task
+        
+        # Close feeder WebSocket connections
+        if self._feeder:
+            await self._feeder.close()
 
         # Stop all engines concurrently
         await asyncio.gather(

@@ -26,11 +26,12 @@ def load_config() -> dict:
             "cycle_interval": 1.0,  # seconds
             "equity_base": 10000.0,  # base equity for risk calc
             "vol_ann": 0.6,  # default annual volatility
+            "md_queue_max": 256,  # market data queue size
         },
         "symbols_to_trade": [
-            "BTCUSDT",
-            "ETHUSDT",
-            "SOLUSDT",
+            "BTC/USDT",  # ccxt format
+            "ETH/USDT",
+            "SOL/USDT",
         ],
         "symbols": {
             # Symbol-specific overrides

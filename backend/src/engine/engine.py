@@ -4,6 +4,7 @@ Trading engine for a single symbol.
 
 import asyncio
 import time
+from asyncio import Queue, QueueFull
 from enum import Enum
 from typing import Any
 
@@ -58,6 +59,10 @@ class TradingEngine:
         # Error tracking
         self.error_count = 0
         self.last_error: str | None = None
+
+        # Market data queue (symbol-specific injection)
+        md_queue_max = int(self.config.get("md_queue_max", 256))
+        self._md_queue: Queue = Queue(maxsize=md_queue_max)
 
         # Trading state
         self.position: float | None = None
@@ -134,8 +139,15 @@ class TradingEngine:
                 self.last_heartbeat = time.time()
 
                 try:
+                    # Get market data from queue (injected by MarketFeeder)
+                    market_data = await self._get_md()
+                    
+                    # Skip cycle if no data available
+                    if market_data.get("price") is None:
+                        await asyncio.sleep(self.config.get("cycle_interval", 1.0))
+                        continue
+                    
                     # Trading cycle
-                    market_data = await self._get_market_data()
                     signal = await self._generate_signal(market_data)
 
                     if self._check_risk(signal) and signal:
@@ -220,6 +232,30 @@ class TradingEngine:
         """Get latest market data."""
         # TODO: Implement
         return {}
+
+    # ========== Market Data Queue ==========
+
+    async def push_md(self, md: dict[str, Any]) -> None:
+        """
+        Push market data to engine's queue (called by MarketFeeder).
+        Implements backpressure: drops oldest if queue is full.
+        """
+        try:
+            if self._md_queue.full():
+                # Drop oldest to prioritize latest data
+                _ = self._md_queue.get_nowait()
+            await self._md_queue.put(md)
+        except Exception as e:
+            self.logger.error(f"[{self.symbol}] push_md failed: {e}")
+
+    async def _get_md(self) -> dict[str, Any]:
+        """Get market data from queue with timeout."""
+        try:
+            md = await asyncio.wait_for(self._md_queue.get(), timeout=1.0)
+            return md
+        except TimeoutError:
+            # Return empty MD on timeout (no data available)
+            return {"price": None, "spread": None, "vol": 0.0, "texts": []}
 
     # ========== Trading Logic Hooks (to be implemented) ==========
 
