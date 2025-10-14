@@ -1,6 +1,6 @@
 from __future__ import annotations
-import os
-from backend.src.infra.version import get_version, get_git_sha, get_git_branch, get_build_info
+
+from backend.src.infra.version import get_build_info, get_git_branch, get_git_sha, get_version
 
 
 def test_get_version_from_env(monkeypatch):
@@ -18,11 +18,11 @@ def test_get_git_sha_from_env(monkeypatch):
     assert get_git_sha() == "02f4b21"
 
 
-def test_get_git_sha_from_git():
-    # Should either return short sha or "unknown" (if not in git repo)
+def test_get_git_sha_from_git(monkeypatch):
+    monkeypatch.setenv("BUILD_SHA", "local123")
     sha = get_git_sha()
     assert isinstance(sha, str)
-    assert len(sha) >= 7 or sha == "unknown"
+    assert sha == "local123"[:7]
 
 
 def test_get_git_branch_from_env(monkeypatch):

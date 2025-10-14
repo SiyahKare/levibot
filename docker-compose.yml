@@ -2,7 +2,31 @@ version: '3.9'
 
 services:
   # ============================================
-  # Redis — Distributed Rate Limiting
+  # TimescaleDB — Time-series Database
+  # ============================================
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: levibot-timescaledb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=levibot
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./backend/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - levibot
+
+  # ============================================
+  # Redis — Distributed Rate Limiting & Streams
   # ============================================
   redis:
     image: redis:7-alpine
@@ -36,6 +60,12 @@ services:
       - .env.docker
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - PG_DSN=postgresql://postgres:postgres@timescaledb:5432/levibot
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+      - DB_NAME=levibot
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
       - PYTHONUNBUFFERED=1
       - BUILD_VERSION=${BUILD_VERSION:-1.5.0-dev}
       - BUILD_SHA=${BUILD_SHA:-local}
@@ -43,8 +73,11 @@ services:
     volumes:
       - ./backend/data:/app/backend/data
       - ./configs:/app/configs
+      - ./ops:/app/ops
     depends_on:
       redis:
+        condition: service_healthy
+      timescaledb:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/healthz" ]
@@ -65,17 +98,36 @@ services:
     container_name: levibot-panel
     restart: unless-stopped
     ports:
-      - "3001:80"
+      - "3000:80"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_BASE=http://localhost:8000
     depends_on:
       - api
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/index.html" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - levibot
+
+  # ============================================
+  # Cron — Nightly AutoML (03:00 UTC)
+  # ============================================
+  cron:
+    build:
+      context: .
+      dockerfile: docker/cron.Dockerfile
+    container_name: levibot-cron
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app
+      - SYMBOLS=BTCUSDT,ETHUSDT,SOLUSDT,ATOMUSDT,AVAXUSDT
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./backend/src:/app/backend/src
+      - ./scripts:/app/scripts
     networks:
       - levibot
 
@@ -85,4 +137,6 @@ networks:
 
 volumes:
   redis_data:
+    driver: local
+  timescale_data:
     driver: local

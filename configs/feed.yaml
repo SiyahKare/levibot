@@ -1,0 +1,111 @@
+# Feed Configuration
+# ──────────────────────────────────────────────────────────
+# MEXC WebSocket feed for multi-symbol real-time data
+
+feed:
+  provider: mexc
+
+  # WebSocket connection
+  websocket:
+    url: wss://wbs.mexc.com/raw
+
+    # Connection management
+    heartbeat_sec: 25
+    ping_interval_sec: 20
+    pong_timeout_sec: 10
+
+    # Reconnection
+    reconnect:
+      enabled: true
+      max_attempts: 10
+      backoff_ms: [500, 1000, 2000, 5000, 10000]
+      exponential: true
+
+    # Message handling
+    max_queue_size: 10000
+    batch_size: 100
+    flush_interval_ms: 50
+
+  # Topics to subscribe
+  topics:
+    deals: true # Trade executions (price, size, timestamp)
+    book_ticker: true # Best bid/ask (spread calculation)
+    kline: false # Candlesticks (use CA instead)
+    depth: false # Full orderbook (not needed)
+
+  # Symbol management
+  symbols:
+    source: universe.yaml # Load from universe config
+    batch_subscribe: 50 # Subscribe 50 topics per request
+
+    # Auto-subscribe on universe changes
+    auto_subscribe: true
+    subscribe_delay_ms: 100 # Delay between batches
+
+  # Data processing
+  processing:
+    # Outlier filter (prevent bad ticks from entering system)
+    outlier_filter:
+      enabled: true
+      method: median_band
+      window_sec: 300 # 5 minutes
+      threshold_pct: 10 # ±10% from median
+
+    # Duplicate detection
+    dedup:
+      enabled: true
+      window_ms: 1000 # 1 second window
+
+    # Latency tracking
+    latency:
+      track: true
+      alert_threshold_ms: 500 # Alert if >500ms latency
+
+  # Persistence (to TimescaleDB)
+  persistence:
+    enabled: true
+    table: market_ticks
+
+    # Batch insert for performance
+    batch_insert: true
+    batch_size: 1000
+    flush_interval_ms: 1000
+
+    # Fields to store
+    fields:
+      - ts
+      - symbol
+      - price
+      - bid
+      - ask
+      - size
+      - source
+      - latency_ms
+
+  # Metrics & monitoring
+  metrics:
+    enabled: true
+    interval_sec: 10
+
+    # Track these per symbol
+    track:
+      - msg_recv_rate # Messages per second
+      - tick_rate # Ticks per second (after dedup)
+      - latency_p50 # Median latency
+      - latency_p95 # 95th percentile latency
+      - outlier_count # Filtered outliers
+
+  # Logging
+  logging:
+    level: info
+    log_ticks: false # Don't log every tick (too verbose)
+    log_errors: true
+    log_reconnects: true
+    log_subscriptions: true
+
+# Fallback (if MEXC fails)
+fallback:
+  enabled: false # Disable mock fallback in production
+  provider: mock
+  tick_rate_hz: 4
+

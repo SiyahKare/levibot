@@ -1,0 +1,55 @@
+{
+  "starting_balance": 10000.0,
+  "cash_balance": 9778.830196488878,
+  "positions": [
+    {
+      "symbol": "ETHUSDT",
+      "side": "long",
+      "qty": 0.01282051282051282,
+      "entry_price": 3900.0,
+      "current_price": 3900.0,
+      "entry_time": "2025-10-11T13:11:44.445906+00:00",
+      "pnl_usd": 0.0,
+      "pnl_pct": 0.0
+    },
+    {
+      "symbol": "BTCUSDT",
+      "side": "long",
+      "qty": 0.0008928571428571428,
+      "entry_price": 112000.0,
+      "current_price": 112000.0,
+      "entry_time": "2025-10-11T16:28:28.945247+00:00",
+      "pnl_usd": 0.0,
+      "pnl_pct": 0.0
+    }
+  ],
+  "trades": [
+    {
+      "trade_id": "BTCUSDT_1760194501",
+      "symbol": "BTCUSDT",
+      "side": "long",
+      "qty": 0.0002232142857142857,
+      "entry_price": 112000.0,
+      "exit_price": 49823.42948168439,
+      "entry_time": "2025-10-11T13:11:30.385054+00:00",
+      "exit_time": "2025-10-11T14:55:01.037608+00:00",
+      "pnl_usd": -13.878698776409735,
+      "pnl_pct": -55.51479510563894,
+      "duration_sec": 6210.652554
+    },
+    {
+      "trade_id": "BTCUSDT_1760200098",
+      "symbol": "BTCUSDT",
+      "side": "long",
+      "qty": 0.0008928571428571428,
+      "entry_price": 112000.0,
+      "exit_price": 47833.962697122406,
+      "entry_time": "2025-10-11T16:28:18.745280+00:00",
+      "exit_time": "2025-10-11T16:28:18.821530+00:00",
+      "pnl_usd": -57.291104734712135,
+      "pnl_pct": -57.29110473471214,
+      "duration_sec": 0.07625
+    }
+  ],
+  "last_updated": "2025-10-11T16:28:28.946882+00:00"
+}

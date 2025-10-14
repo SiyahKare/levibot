@@ -1,16 +1,24 @@
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-from backend.src.app.main import app
-from datetime import datetime
-from pathlib import Path
-import glob
 import json
+from datetime import UTC, datetime
+
+from fastapi.testclient import TestClient
+
+from backend.src.app.main import app
 
 
-def test_cex_paper_order_creates_events():
+def test_cex_paper_order_creates_events(tmp_path, monkeypatch):
+    log_dir = tmp_path / "logs"
+    data_dir = tmp_path / "data"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("LOG_DIR", str(log_dir))
+    monkeypatch.setenv("DATA_DIR", str(data_dir))
+    monkeypatch.setenv("SECURITY_ENABLED", "false")
+
     c = TestClient(app)
-    trace = f"test-{datetime.utcnow().timestamp()}"
+    trace = f"test-{datetime.now(UTC).timestamp()}"
     r = c.post(
         "/exec/cex/paper-order",
         params={
@@ -23,15 +31,14 @@ def test_cex_paper_order_creates_events():
     )
     assert r.status_code == 200 and r.json().get("ok") is True
 
-    # JSONL taraması (son gün)
-    day = datetime.utcnow().strftime("%Y-%m-%d")
-    base = Path(__file__).resolve().parents[2] / "backend" / "data" / "logs" / day
-    files = sorted(glob.glob(str(base / "events-*.jsonl")))
+    day = datetime.now(UTC).strftime("%Y-%m-%d")
+    base = log_dir / day
+    files = sorted(base.glob("events-*.jsonl"))
     assert files, "no log files created"
 
     seen = set()
     for fp in files:
-        with open(fp, "r", encoding="utf-8") as f:
+        with fp.open(encoding="utf-8") as f:
             for line in f:
                 try:
                     rec = json.loads(line)

@@ -1,0 +1,251 @@
+{
+  "dashboard": {
+    "title": "ML Production Dashboard",
+    "tags": ["ml", "production", "levibot"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Model ECE (Calibration)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_ml_model_ece",
+            "legendFormat": "ECE"
+          }
+        ],
+        "alert": {
+          "name": "High ECE",
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [0.06],
+                "type": "gt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "30m", "now"]
+              },
+              "reducer": {
+                "params": [],
+                "type": "avg"
+              },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "Model calibration degraded! ECE > 0.06",
+          "name": "High ECE",
+          "noDataState": "no_data",
+          "notifications": []
+        },
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 2,
+        "title": "Feature Staleness",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_ml_feature_staleness_seconds",
+            "legendFormat": "{{symbol}}"
+          }
+        ],
+        "alert": {
+          "name": "Feature Staleness",
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [1800],
+                "type": "gt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "5m", "now"]
+              },
+              "reducer": {
+                "params": [],
+                "type": "last"
+              },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "Features stale! > 30 minutes",
+          "name": "Feature Staleness Critical",
+          "noDataState": "alerting",
+          "notifications": []
+        },
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 3,
+        "title": "Drift PSI (Top Features)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "topk(5, levibot_ml_drift_psi)",
+            "legendFormat": "{{feature}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+      },
+      {
+        "id": 4,
+        "title": "Drift Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(levibot_ml_drift_events_total[1h])",
+            "legendFormat": "{{severity}}"
+          }
+        ],
+        "alert": {
+          "name": "Critical Drift",
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [1],
+                "type": "gt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "15m", "now"]
+              },
+              "reducer": {
+                "params": [],
+                "type": "sum"
+              },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "Critical drift detected! Retrain immediately!",
+          "name": "Critical Drift Alert",
+          "noDataState": "no_data",
+          "notifications": []
+        },
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+      },
+      {
+        "id": 5,
+        "title": "Ensemble Weights",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_ensemble_weight",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8}
+      },
+      {
+        "id": 6,
+        "title": "Model Uncertainty",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_ml_uncertainty",
+            "legendFormat": "{{symbol}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8}
+      },
+      {
+        "id": 7,
+        "title": "Paper Trading PnL (1D)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_paper_pnl{window=\"1d\"}",
+            "legendFormat": "1D PnL"
+          }
+        ],
+        "alert": {
+          "name": "Negative PnL",
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [-1.5],
+                "type": "lt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "1h", "now"]
+              },
+              "reducer": {
+                "params": [],
+                "type": "last"
+              },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "5m",
+          "handler": 1,
+          "message": "Paper PnL < -1.5%! Investigate!",
+          "name": "Negative Paper PnL",
+          "noDataState": "no_data",
+          "notifications": []
+        },
+        "gridPos": {"x": 0, "y": 24, "w": 24, "h": 8}
+      },
+      {
+        "id": 8,
+        "title": "Model Sharpe Ratio",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "levibot_ml_model_sharpe",
+            "legendFormat": "Sharpe"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 32, "w": 6, "h": 4}
+      },
+      {
+        "id": 9,
+        "title": "Model Max DD",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "levibot_ml_model_max_dd",
+            "legendFormat": "MaxDD"
+          }
+        ],
+        "gridPos": {"x": 6, "y": 32, "w": 6, "h": 4}
+      },
+      {
+        "id": 10,
+        "title": "Prediction Confidence",
+        "type": "histogram",
+        "targets": [
+          {
+            "expr": "levibot_ml_prediction_confidence",
+            "legendFormat": "{{symbol}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 32, "w": 12, "h": 8}
+      }
+    ],
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    }
+  }
+}
+

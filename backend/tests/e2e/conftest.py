@@ -1,8 +1,13 @@
 from __future__ import annotations
-import os, socket, shutil, threading, time
-from pathlib import Path
+
+import os
+import socket
+import threading
+import time
+
 import pytest
 from uvicorn import Config, Server
+
 
 def _free_port() -> int:
     s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close(); return port
@@ -11,8 +16,12 @@ def _free_port() -> int:
 def e2e_tmpdir(tmp_path_factory):
     p = tmp_path_factory.mktemp("e2e")
     # redirect logs -> tmp
-    target = p / "backend" / "data" / "logs"
-    target.mkdir(parents=True, exist_ok=True)
+    log_dir = p / "logs"
+    data_dir = p / "data"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    os.environ["LOG_DIR"] = str(log_dir)
+    os.environ["DATA_DIR"] = str(data_dir)
     os.environ["PYTHONUNBUFFERED"] = "1"
     os.environ["TZ"] = "Europe/Istanbul"
     os.environ["ENV"] = "test"

@@ -1,0 +1,20 @@
+{
+  "version": "v1.0.0",
+  "trained_at": "2025-10-10T18:14:36.563246",
+  "symbol": "BTCUSDT",
+  "features": [
+    "ret_1m",
+    "ret_5m",
+    "vol_1m",
+    "vol_5m",
+    "rsi_14",
+    "zscore_60"
+  ],
+  "horizon": "60s",
+  "model_type": "LogisticRegression",
+  "metrics": {
+    "train_acc": 0.5122710622710622,
+    "test_acc": 0.4816983894582723
+  },
+  "notes": "Production model trained on real market data"
+}

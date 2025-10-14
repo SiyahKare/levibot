@@ -1,0 +1,17 @@
+# Prometheus Configuration for LeviBot
+
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  external_labels:
+    cluster: "levibot"
+    environment: "dev"
+
+# Scrape configurations
+scrape_configs:
+  - job_name: "levibot"
+    static_configs:
+      - targets: ["localhost:8000"] # Change to host.docker.internal:8000 if running in Docker
+    metrics_path: /metrics/prom
+    scrape_interval: 5s
+    scrape_timeout: 4s

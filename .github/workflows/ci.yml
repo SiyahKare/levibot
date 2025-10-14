@@ -1,53 +1,216 @@
-name: CI
+name: LeviBot CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
 
 jobs:
-  test:
+  # ─────────────────────────────────────────────────────────────
+  # Python Backend Tests
+  # ─────────────────────────────────────────────────────────────
+
+  backend-test:
     runs-on: ubuntu-latest
-    
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-    
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
-    
-    - name: Run unit tests
-      run: |
-        cd /home/runner/work/levibot/levibot
-        PYTHONPATH=/home/runner/work/levibot/levibot PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/ --ignore=backend/tests/e2e
-      env:
-        PYTHONPATH: ${{ github.workspace }}
-    
-    - name: Run E2E tests (optional)
-      if: env.E2E == 'true'
-      run: |
-        cd /home/runner/work/levibot/levibot
-        PYTHONPATH=/home/runner/work/levibot/levibot PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest backend/tests/e2e -m e2e -q
-      env:
-        PYTHONPATH: ${{ github.workspace }}
-    
-    - name: Check code quality
-      run: |
-        pip install ruff
-        ruff check backend/src/ --select E,F,W --ignore E501
-      continue-on-error: true
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio mypy ruff
+
+      - name: Run linters
+        run: |
+          cd backend
+          ruff check src/ tests/ --output-format=github
+          mypy src/ --ignore-missing-imports
+
+      - name: Run tests
+        env:
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd backend
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+
+  # ─────────────────────────────────────────────────────────────
+  # Frontend Tests
+  # ─────────────────────────────────────────────────────────────
+
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: apps/miniapp/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd apps/miniapp
+          npm ci
+
+      - name: Run linter
+        run: |
+          cd apps/miniapp
+          npm run lint
+
+      - name: Build
+        run: |
+          cd apps/miniapp
+          npm run build
+
+  # ─────────────────────────────────────────────────────────────
+  # Docker Build & Push
+  # ─────────────────────────────────────────────────────────────
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Panel image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/panel.Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/levibot-panel:latest
+            ${{ secrets.DOCKER_USERNAME }}/levibot-panel:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-panel:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-panel:buildcache,mode=max
+
+      - name: Build and push App image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/app.Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/levibot-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/levibot-app:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-app:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-app:buildcache,mode=max
+
+      - name: Build and push Bot image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/bot.Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/levibot-bot:latest
+            ${{ secrets.DOCKER_USERNAME }}/levibot-bot:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-bot:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-bot:buildcache,mode=max
+
+      - name: Build and push MiniApp image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/miniapp
+          file: apps/miniapp/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/levibot-miniapp:latest
+            ${{ secrets.DOCKER_USERNAME }}/levibot-miniapp:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-miniapp:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/levibot-miniapp:buildcache,mode=max
+
+  # ─────────────────────────────────────────────────────────────
+  # Security Scanning
+  # ─────────────────────────────────────────────────────────────
+
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  # ─────────────────────────────────────────────────────────────
+  # Deploy to Staging
+  # ─────────────────────────────────────────────────────────────
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: staging
+
+    steps:
+      - name: Deploy to staging
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/levibot
+            docker compose -f docker-compose.enterprise.yml pull
+            docker compose -f docker-compose.enterprise.yml up -d
+            docker compose -f docker-compose.enterprise.yml ps

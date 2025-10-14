@@ -1,0 +1,21 @@
+# Risk Management Policy Configuration
+
+# Maximum daily loss as percentage (e.g., 3.0 = 3%)
+max_daily_loss_pct: 3.0
+
+# Maximum risk per symbol as fraction of equity (e.g., 0.20 = 20%)
+max_symbol_risk_pct: 0.20
+
+# Kelly criterion fraction (e.g., 0.25 = quarter Kelly)
+# Lower values are more conservative
+kelly_fraction: 0.25
+
+# Target annual volatility (e.g., 0.15 = 15%)
+# Used for volatility-based position scaling
+vol_target_ann: 0.15
+
+# Maximum number of concurrent positions
+max_concurrent_positions: 5
+
+# Rebalance frequency
+rebalance: weekly

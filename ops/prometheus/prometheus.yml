@@ -1,16 +1,80 @@
+# ═══════════════════════════════════════════════════════════════
+# LeviBot Enterprise - Prometheus Configuration
+# ═══════════════════════════════════════════════════════════════
+
 global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "levibot-paper"
+    environment: "paper"
 
-scrape_configs:
-  - job_name: "levibot"
-    static_configs:
-      - targets: ["host.docker.internal:8000"]
-    metrics_path: /metrics/prom
-    scheme: http
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
 
+# Load rules once and periodically evaluate them
 rule_files:
-  - "rules.yml"
+  - "alerts.yml"
 
+# Scrape configurations
+scrape_configs:
+  # Panel API metrics
+  - job_name: "panel"
+    static_configs:
+      - targets: ["panel:8080"]
+        labels:
+          service: "panel"
+          component: "api"
+    metrics_path: "/metrics"
+    scrape_interval: 10s
 
+  # Signal Engine metrics
+  - job_name: "signal_engine"
+    static_configs:
+      - targets: ["signal_engine:9100"]
+        labels:
+          service: "signal_engine"
+          component: "ml"
+    metrics_path: "/metrics"
+    scrape_interval: 10s
 
+  # Executor metrics
+  - job_name: "executor"
+    static_configs:
+      - targets: ["executor:9101"]
+        labels:
+          service: "executor"
+          component: "execution"
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+
+  # Redis metrics (if redis_exporter is added)
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis:6379"]
+        labels:
+          service: "redis"
+          component: "cache"
+    scrape_interval: 30s
+
+  # ClickHouse metrics
+  - job_name: "clickhouse"
+    static_configs:
+      - targets: ["clickhouse:8123"]
+        labels:
+          service: "clickhouse"
+          component: "database"
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: "prometheus"
+          component: "monitoring"

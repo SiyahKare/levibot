@@ -1,10 +1,13 @@
-from backend.src.core.risk import derive_sl_tp, current_policy
-import os
+
+from backend.src.core.risk import _reset, current_policy, derive_sl_tp
+
 
 def test_policy_names(monkeypatch):
     monkeypatch.setenv("RISK_POLICY","aggressive")
+    _reset()
     assert current_policy().name == "aggressive"
     monkeypatch.setenv("RISK_POLICY","conservative")
+    _reset()
     assert current_policy().name == "conservative"
 
 def test_derive_from_atr_buy():

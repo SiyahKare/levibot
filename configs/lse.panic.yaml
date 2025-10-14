@@ -1,0 +1,40 @@
+# LSE Panic Mode — Düşüş/Şok Anlarında Sıkı Risk Profili
+# Bu preset, volatil ve stresli market koşullarında daha temkinli trading için tasarlandı.
+
+symbol: BTCUSDT
+mode: paper
+leverage: 2 # Düşük leverage (normal 3'ten indirildi)
+quote_budget: 200 # Küçük pozisyon boyutu ($500'den indirildi)
+
+# Kısa pencereler (hızlı tepki)
+windows: [3, 9, 30]
+
+# ATR — Momentum için daha yüksek bariyer
+atr:
+  period: 14
+  k_enter: 1.0 # Normal 0.8'den yüksek (sadece güçlü momentumlar)
+
+# Z-Score — Sadece ekstrem sapmalar
+zscore:
+  lookback: 90 # Normal 120'den kısa (son hareket odaklı)
+  z_enter: 2.0 # Normal 1.5'ten yüksek (güçlü reversal)
+
+# Risk Management — Çok sıkı
+risk:
+  max_daily_dd: 0.015 # %1.5 günlük max kayıp (normal %2)
+  max_open_trades: 1 # Tek pozisyon (fokus)
+  slippage_bps: 1.0 # Düşük slippage tolerance (normal 1.5)
+  fee_bps: 7 # Standart MEXC fee
+  hard_stop_bps: 25 # Hızlı stop -0.25% (normal -15)
+  take_profit_bps: 15 # Kısa hedef +0.15% (normal +25)
+
+# Filters — Çok seçici
+filters:
+  min_vol_bps: 10 # Min %0.10 volatilite (flat market'te durur)
+  max_spread_bps: 0.6 # Çok dar spread (normal 1.0)
+  max_latency_ms: 80 # Çok düşük latency (normal 120)
+
+# Recording — Panic dönem verisi
+recording:
+  parquet: true
+  path: "data/lse/panic/"

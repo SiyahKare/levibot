@@ -1,0 +1,235 @@
+version: '3.8'
+
+# ═══════════════════════════════════════════════════════════════
+# LeviBot Enterprise AI Signals Platform - Docker Compose
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # Infrastructure Layer
+  # ─────────────────────────────────────────────────────────────
+  
+  redis:
+    image: redis:7-alpine
+    container_name: levibot-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - levibot-net
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: levibot-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./backend/sql:/docker-entrypoint-initdb.d
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-levibot}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - levibot-net
+
+  # ─────────────────────────────────────────────────────────────
+  # Application Layer
+  # ─────────────────────────────────────────────────────────────
+
+  panel:
+    build:
+      context: .
+      dockerfile: docker/panel.Dockerfile
+    container_name: levibot-panel
+    restart: unless-stopped
+    ports:
+      - "${PANEL_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CLICKHOUSE_HOST=clickhouse
+      - PANEL_HOST=0.0.0.0
+      - PANEL_PORT=8080
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./backend/configs:/app/backend/configs
+    depends_on:
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/healthz')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - levibot-net
+
+  signal_engine:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    container_name: levibot-signal-engine
+    restart: unless-stopped
+    ports:
+      - "${PROM_PORT_SIGNAL:-9100}:9100"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CLICKHOUSE_HOST=clickhouse
+      - SERVICE_NAME=signal_engine
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./backend/configs:/app/backend/configs
+    depends_on:
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      panel:
+        condition: service_healthy
+    command: ["python", "-m", "backend.src.orchestrator.strategy_orchestrator"]
+    networks:
+      - levibot-net
+
+  executor:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    container_name: levibot-executor
+    restart: unless-stopped
+    ports:
+      - "${PROM_PORT_EXEC:-9101}:9101"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CLICKHOUSE_HOST=clickhouse
+      - SERVICE_NAME=executor
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./backend/configs:/app/backend/configs
+    depends_on:
+      redis:
+        condition: service_healthy
+      signal_engine:
+        condition: service_started
+    command: ["python", "-m", "backend.src.execution.executor"]
+    networks:
+      - levibot-net
+
+  telegram_bot:
+    build:
+      context: .
+      dockerfile: docker/bot.Dockerfile
+    container_name: levibot-telegram-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CLICKHOUSE_HOST=clickhouse
+    volumes:
+      - ./backend/data:/app/backend/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      panel:
+        condition: service_healthy
+    networks:
+      - levibot-net
+
+  miniapp:
+    build:
+      context: ./apps/miniapp
+      dockerfile: Dockerfile
+    container_name: levibot-miniapp
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE=${MINIAPP_PUBLIC_URL:-http://localhost:8080}
+    depends_on:
+      - panel
+    networks:
+      - levibot-net
+
+  # ─────────────────────────────────────────────────────────────
+  # Observability Layer
+  # ─────────────────────────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: levibot-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./ops/prometheus/alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - levibot-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: levibot-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    depends_on:
+      - prometheus
+    networks:
+      - levibot-net
+
+# ─────────────────────────────────────────────────────────────
+# Networks & Volumes
+# ─────────────────────────────────────────────────────────────
+
+networks:
+  levibot-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  clickhouse_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+

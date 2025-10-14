@@ -1,136 +1,154 @@
-.PHONY: run test e2e test-all logs live-tg prod-up prod-logs prod-down prod-ps archive-run archive-dry archive-docker minio-up minio-down minio-logs archive-minio perf perf-save perf-compare fmt lint clean fix-frontend
+# ═══════════════════════════════════════════════════════════════
+# LeviBot Enterprise AI Signals Platform - Makefile
+# ═══════════════════════════════════════════════════════════════
 
-VENV=.venv
+.PHONY: help up down restart logs ps clean test lint format check-env init-db smoke-test
 
-run:
-	$(VENV)/bin/uvicorn backend.src.app.main:app --host 127.0.0.1 --port 8000 --reload
+# Default target
+.DEFAULT_GOAL := help
 
-test:
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/python -m pytest -q --ignore=backend/tests/e2e
+# Colors for output
+BLUE := \033[0;34m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
 
-e2e:
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/python -m pytest backend/tests/e2e -m e2e -q
+help: ## Show this help message
+	@echo "$(BLUE)LeviBot Enterprise AI Signals Platform$(NC)"
+	@echo "$(YELLOW)Available commands:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 
-test-all:
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/python -m pytest -q
+check-env: ## Check if .env file exists
+	@if [ ! -f .env ]; then \
+		echo "$(RED)Error: .env file not found!$(NC)"; \
+		echo "$(YELLOW)Copy ENV.levibot.example to .env and configure it:$(NC)"; \
+		echo "  cp ENV.levibot.example .env"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✓ .env file found$(NC)"
 
-logs:
-	@ls -1 backend/data/logs/*/events-*.jsonl 2>/dev/null || echo "no logs yet"
+up: check-env ## Start all services
+	@echo "$(BLUE)Starting LeviBot Enterprise Platform...$(NC)"
+	docker compose -f docker-compose.enterprise.yml up -d
+	@echo "$(GREEN)✓ All services started$(NC)"
+	@echo "$(YELLOW)Run 'make logs' to view logs$(NC)"
 
-live-tg:
-	$(VENV)/bin/python -m backend.src.ingest.telegram_live
+down: ## Stop all services
+	@echo "$(BLUE)Stopping LeviBot Enterprise Platform...$(NC)"
+	docker compose -f docker-compose.enterprise.yml down
+	@echo "$(GREEN)✓ All services stopped$(NC)"
 
-# Production Docker Compose targets
-prod-up:
-	docker compose -f docker-compose.prod.yml up --build -d
+restart: ## Restart all services
+	@echo "$(BLUE)Restarting LeviBot Enterprise Platform...$(NC)"
+	docker compose -f docker-compose.enterprise.yml restart
+	@echo "$(GREEN)✓ All services restarted$(NC)"
 
-prod-logs:
-	docker compose -f docker-compose.prod.yml logs -f --tail=200
+logs: ## View logs from all services
+	docker compose -f docker-compose.enterprise.yml logs -f
 
-prod-down:
-	docker compose -f docker-compose.prod.yml down
+logs-panel: ## View panel API logs
+	docker compose -f docker-compose.enterprise.yml logs -f panel
 
-prod-ps:
-	docker compose -f docker-compose.prod.yml ps
+logs-signal: ## View signal engine logs
+	docker compose -f docker-compose.enterprise.yml logs -f signal_engine
 
-# S3 Archiver targets
-archive-run:
-	$(VENV)/bin/python -m backend.src.ops.s3_archiver
+logs-executor: ## View executor logs
+	docker compose -f docker-compose.enterprise.yml logs -f executor
 
-archive-dry:
-	ARCHIVE_DRY_RUN=true $(VENV)/bin/python -m backend.src.ops.s3_archiver
+logs-bot: ## View Telegram bot logs
+	docker compose -f docker-compose.enterprise.yml logs -f telegram_bot
 
-archive-docker:
-	docker compose -f ops/docker-compose-cron.yml run --rm archive
+ps: ## Show status of all services
+	@echo "$(BLUE)Service Status:$(NC)"
+	@docker compose -f docker-compose.enterprise.yml ps
 
-# MinIO (local S3-compatible)
-minio-up:
-	docker compose -f ops/minio-compose.yml up -d
+clean: ## Stop and remove all containers, networks, and volumes
+	@echo "$(RED)Warning: This will remove all data!$(NC)"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker compose -f docker-compose.enterprise.yml down -v; \
+		echo "$(GREEN)✓ Cleaned up$(NC)"; \
+	fi
 
-minio-down:
-	docker compose -f ops/minio-compose.yml down -v
+init-db: ## Initialize ClickHouse database schema
+	@echo "$(BLUE)Initializing ClickHouse database...$(NC)"
+	@docker compose -f docker-compose.enterprise.yml exec clickhouse clickhouse-client --query "CREATE DATABASE IF NOT EXISTS levibot"
+	@docker compose -f docker-compose.enterprise.yml exec clickhouse clickhouse-client --database levibot < backend/sql/001_timescale_init.sql || true
+	@echo "$(GREEN)✓ Database initialized$(NC)"
 
-minio-logs:
-	docker compose -f ops/minio-compose.yml logs -f --tail=200
+smoke-test: ## Run comprehensive smoke tests
+	@bash scripts/smoke_test.sh
 
-archive-minio:
-	AWS_ENDPOINT_URL=http://localhost:9000 \
-	AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID:-minioadmin} \
-	AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY:-minioadmin} \
-	AWS_REGION=$${AWS_REGION:-us-east-1} \
-	S3_LOG_BUCKET=$${S3_LOG_BUCKET:-levibot-logs} \
-	$(VENV)/bin/python -m backend.src.ops.s3_archiver
+test: ## Run Python tests
+	@echo "$(BLUE)Running tests...$(NC)"
+	cd backend && python -m pytest tests/ -v
 
-# Performance benchmarks
-perf:
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only -q
+lint: ## Run linters
+	@echo "$(BLUE)Running linters...$(NC)"
+	cd backend && python -m ruff check src/ tests/
+	cd backend && python -m mypy src/
 
-perf-save:
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only --benchmark-save=$${BENCH_NAME:-baseline-$(shell date +%Y%m%d)} -q
+format: ## Format code
+	@echo "$(BLUE)Formatting code...$(NC)"
+	cd backend && python -m ruff format src/ tests/
+	cd backend && python -m isort src/ tests/
 
-perf-compare:
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(VENV)/bin/pytest backend/tests/test_performance.py --benchmark-only --benchmark-compare=$${BENCH_BASE:-baseline-v1.3} -q
+build: ## Build Docker images
+	@echo "$(BLUE)Building Docker images...$(NC)"
+	docker compose -f docker-compose.enterprise.yml build
 
-# Developer experience helpers
-fmt:
-	@echo "→ Python format (black) + imports (ruff)…"
-	$(VENV)/bin/python -m black backend || true
-	$(VENV)/bin/ruff check backend --select I --fix || true
+pull: ## Pull latest Docker images
+	@echo "$(BLUE)Pulling latest images...$(NC)"
+	docker compose -f docker-compose.enterprise.yml pull
 
-lint:
-	@echo "→ Python lint (ruff)…"
-	$(VENV)/bin/ruff check backend
-	@echo "→ Frontend lint (eslint)…"
-	cd frontend/panel && npm run -s lint || echo "hint: run 'npm i' in frontend/panel"
+backup: ## Backup data volumes
+	@echo "$(BLUE)Creating backup...$(NC)"
+	@mkdir -p backups
+	@docker run --rm -v levibot_clickhouse_data:/data -v $(PWD)/backups:/backup alpine tar czf /backup/clickhouse-$(shell date +%Y%m%d-%H%M%S).tar.gz -C /data .
+	@docker run --rm -v levibot_redis_data:/data -v $(PWD)/backups:/backup alpine tar czf /backup/redis-$(shell date +%Y%m%d-%H%M%S).tar.gz -C /data .
+	@echo "$(GREEN)✓ Backup created in ./backups/$(NC)"
 
-clean:
-	@find . -type d -name "__pycache__" -prune -exec rm -rf {} \; 2>/dev/null || true
-	@find . -type d -name ".pytest_cache" -prune -exec rm -rf {} \; 2>/dev/null || true
-	@rm -rf backend/artifacts/*.tmp 2>/dev/null || true
+monitor: ## Open monitoring dashboards
+	@echo "$(BLUE)Opening monitoring dashboards...$(NC)"
+	@echo "$(YELLOW)Grafana: http://localhost:3000$(NC)"
+	@echo "$(YELLOW)Prometheus: http://localhost:9090$(NC)"
+	@echo "$(YELLOW)Panel API: http://localhost:8080$(NC)"
 
-fix-frontend:
-	cd frontend/panel && npm run -s fmt || npx prettier -w "src/**/*.{ts,tsx,js,jsx,json,css,md}"
-	cd frontend/panel && npm run -s lint -- --fix || true
+shell-panel: ## Open shell in panel container
+	docker compose -f docker-compose.enterprise.yml exec panel /bin/bash
 
-# ============================================
-# Docker Commands
-# ============================================
+shell-signal: ## Open shell in signal engine container
+	docker compose -f docker-compose.enterprise.yml exec signal_engine /bin/bash
 
-docker-build:  ## Docker image'larını build et
-	@echo "🐳 Building Docker images..."
-	docker compose build
+shell-redis: ## Open Redis CLI
+	docker compose -f docker-compose.enterprise.yml exec redis redis-cli
 
-docker-up:  ## Tüm servisleri başlat (detached mode)
-	@echo "🚀 Starting LeviBot stack..."
-	docker compose up -d
-	@echo "✅ Stack başlatıldı!"
-	@echo "📊 Panel: http://localhost:3000"
-	@echo "🔌 API: http://localhost:8000"
-	@echo "📈 Metrics: http://localhost:8000/metrics/prom"
+shell-clickhouse: ## Open ClickHouse CLI
+	docker compose -f docker-compose.enterprise.yml exec clickhouse clickhouse-client
 
-docker-logs:  ## Tüm servis loglarını göster (follow mode)
-	docker compose logs -f
+stats: ## Show Docker stats
+	docker stats $(shell docker compose -f docker-compose.enterprise.yml ps -q)
 
-docker-ps:  ## Çalışan servisleri listele
-	docker compose ps
+# Development targets
+dev-up: ## Start services in development mode
+	@echo "$(BLUE)Starting in development mode...$(NC)"
+	docker compose -f docker-compose.yml up -d
+	@echo "$(GREEN)✓ Development environment started$(NC)"
 
-docker-down:  ## Tüm servisleri durdur
-	@echo "🛑 Stopping LeviBot stack..."
-	docker compose down
+dev-down: ## Stop development services
+	docker compose -f docker-compose.yml down
 
-docker-restart:  ## Tüm servisleri yeniden başlat
-	@echo "🔄 Restarting LeviBot stack..."
-	docker compose restart
+# Production targets
+prod-deploy: check-env build ## Deploy to production
+	@echo "$(BLUE)Deploying to production...$(NC)"
+	@echo "$(YELLOW)This will restart all services$(NC)"
+	docker compose -f docker-compose.enterprise.yml up -d --build
+	@echo "$(GREEN)✓ Production deployment complete$(NC)"
 
-docker-clean:  ## Tüm container, volume ve image'ları temizle
-	@echo "🧹 Cleaning Docker resources..."
-	docker compose down -v --rmi all
-	@echo "✅ Docker kaynakları temizlendi"
-
-docker-shell-api:  ## API container'a shell aç
-	docker exec -it levibot-api /bin/bash
-
-docker-shell-redis:  ## Redis container'a shell aç
-	docker exec -it levibot-redis redis-cli
-
-
+prod-rollback: ## Rollback to previous version
+	@echo "$(RED)Rolling back...$(NC)"
+	docker compose -f docker-compose.enterprise.yml down
+	docker compose -f docker-compose.enterprise.yml up -d
+	@echo "$(GREEN)✓ Rollback complete$(NC)"

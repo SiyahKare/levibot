@@ -1,0 +1,7 @@
+{
+  "asset": "BTC",
+  "event_type": "regulation",
+  "impact": 0.8,
+  "horizon": "daily",
+  "confidence": 0.9
+}

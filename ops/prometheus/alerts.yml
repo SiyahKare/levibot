@@ -1,0 +1,146 @@
+# ═══════════════════════════════════════════════════════════════
+# LeviBot Enterprise - Prometheus Alert Rules
+# ═══════════════════════════════════════════════════════════════
+
+groups:
+  - name: levibot_critical
+    interval: 30s
+    rules:
+      # Service Health
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 2 minutes"
+
+      # Daily Drawdown Exceeded
+      - alert: DailyDrawdownExceeded
+        expr: levibot_daily_pnl_pct < -3.0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Daily drawdown limit exceeded"
+          description: "Daily PnL is {{ $value }}%, exceeding -3% limit"
+
+      # Kill Switch Activated
+      - alert: KillSwitchActivated
+        expr: levibot_kill_switch_active == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kill switch has been activated"
+          description: "Trading has been halted via kill switch"
+
+  - name: levibot_performance
+    interval: 1m
+    rules:
+      # High Signal Latency
+      - alert: HighSignalLatency
+        expr: histogram_quantile(0.95, levibot_signal_latency_seconds_bucket) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High signal processing latency"
+          description: "95th percentile signal latency is {{ $value }}s"
+
+      # Low Fill Ratio
+      - alert: LowFillRatio
+        expr: rate(levibot_orders_filled_total[5m]) / rate(levibot_orders_submitted_total[5m]) < 0.7
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low order fill ratio"
+          description: "Fill ratio is {{ $value | humanizePercentage }}"
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(levibot_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec"
+
+  - name: levibot_infrastructure
+    interval: 1m
+    rules:
+      # Redis Connection Issues
+      - alert: RedisConnectionFailed
+        expr: redis_connected_clients < 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis has no connected clients"
+          description: "Redis connection pool may be exhausted"
+
+      # ClickHouse Query Latency
+      - alert: HighClickHouseLatency
+        expr: histogram_quantile(0.95, clickhouse_query_duration_seconds_bucket) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High ClickHouse query latency"
+          description: "95th percentile query latency is {{ $value }}s"
+
+      # Memory Usage High
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.container_label_com_docker_compose_service }}"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+  - name: levibot_trading
+    interval: 1m
+    rules:
+      # No Signals Generated
+      - alert: NoSignalsGenerated
+        expr: rate(levibot_signals_total[10m]) == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No trading signals generated"
+          description: "Signal engine has not produced signals for 30 minutes"
+
+      # Excessive Daily Trades
+      - alert: ExcessiveDailyTrades
+        expr: levibot_daily_trades_count > 45
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Approaching daily trade limit"
+          description: "Daily trades: {{ $value }}/50"
+
+      # Position Size Anomaly
+      - alert: PositionSizeAnomaly
+        expr: abs(levibot_position_size_usd) > 5000
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unusually large position detected"
+          description: "Position size is ${{ $value }} for {{ $labels.symbol }}"
+
+      # Low Confidence Signals
+      - alert: LowConfidenceSignals
+        expr: avg_over_time(levibot_signal_confidence[10m]) < 0.55
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "Average signal confidence is low"
+          description: "Average confidence over 10m: {{ $value }}"

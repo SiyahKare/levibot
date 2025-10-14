@@ -1,6 +1,7 @@
 from __future__ import annotations
-import os, time
-from typing import Tuple
+
+import os
+import time
 
 try:
     import redis.asyncio as redis
@@ -42,7 +43,7 @@ local reset_at = (slot + 1) * window
 return {allowed, cnt, reset_at}
 """
 
-async def check_allow(bucket_key: str) -> Tuple[bool,int,int]:
+async def check_allow(bucket_key: str) -> tuple[bool, int, int]:
     """
     Redis-backed token bucket rate limiter.
     Returns: (allowed, count, reset_at)
@@ -52,9 +53,22 @@ async def check_allow(bucket_key: str) -> Tuple[bool,int,int]:
         now = int(time.time())
         return True, 1, now + _cfg()["window"]
     cfg = _cfg()
-    cli = await get_client()
-    res = await cli.eval(LUA_SCRIPT, 1, bucket_key, int(time.time()), cfg["window"], cfg["max"], cfg["burst"])
-    allowed = (int(res[0]) == 1)
-    cnt = int(res[1]); reset_at = int(res[2])
-    await cli.close()
-    return allowed, cnt, reset_at
+    try:
+        cli = await get_client()
+        res = await cli.eval(
+            LUA_SCRIPT,
+            1,
+            bucket_key,
+            int(time.time()),
+            cfg["window"],
+            cfg["max"],
+            cfg["burst"],
+        )
+        allowed = int(res[0]) == 1
+        cnt = int(res[1])
+        reset_at = int(res[2])
+        await cli.close()
+        return allowed, cnt, reset_at
+    except Exception:
+        now = int(time.time())
+        return True, 1, now + cfg["window"]

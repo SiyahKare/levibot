@@ -1,0 +1,111 @@
+# Universe Configuration
+# ──────────────────────────────────────────────────────────
+# 20-30 coin selection for LSE/Day/Swing strategies
+# Core: Always active, high liquidity
+# Tier2: Rotation based on volatility + volume
+
+universe:
+  # Core symbols (10) - Always active
+  core:
+    - BTCUSDT
+    - ETHUSDT
+    - SOLUSDT
+    - BNBUSDT
+    - XRPUSDT
+    - DOGEUSDT
+    - TONUSDT
+    - TRXUSDT
+    - AVAXUSDT
+    - LINKUSDT
+
+  # Tier 2 symbols (14) - Rotated based on metrics
+  tier2:
+    - ADAUSDT
+    - MATICUSDT
+    - DOTUSDT
+    - NEARUSDT
+    - ATOMUSDT
+    - ARBUSDT
+    - OPUSDT
+    - APTUSDT
+    - SUIUSDT
+    - INJUSDT
+    - IMXUSDT
+    - AAVEUSDT
+    - UNIUSDT
+    - RUNEUSDT
+
+  # Active management
+  max_active: 24 # Maximum symbols to track simultaneously
+
+  # Rotation settings
+  rotation:
+    enabled: true
+    interval_sec: 900 # 15 minutes
+
+    # Filters for tier2 rotation
+    min_trades_per_min: 10
+    min_24h_vol_usd: 2000000 # $2M minimum 24h volume
+    min_realized_vol_1h: 0.005 # 0.5% minimum 1h volatility
+
+    # Ranking weights
+    weights:
+      vol_1h: 0.4 # 40% weight on 1h realized volatility
+      volume_24h: 0.3 # 30% weight on 24h volume
+      trades_count: 0.2 # 20% weight on trade frequency
+      spread_quality: 0.1 # 10% weight on spread tightness
+
+  # Global filters (applied to all symbols)
+  filters:
+    max_spread_bps: 20 # Maximum 20 bps spread
+    min_price_usd: 0.01 # Minimum $0.01 price
+    max_price_usd: 100000 # Maximum $100k price (sanity check)
+
+  # Per-symbol settings
+  symbol_overrides:
+    BTCUSDT:
+      max_spread_bps: 5
+      min_vol_bps_60s: 3
+    ETHUSDT:
+      max_spread_bps: 8
+      min_vol_bps_60s: 4
+    SOLUSDT:
+      max_spread_bps: 12
+      min_vol_bps_60s: 5
+
+# Strategy allocation per symbol
+allocation:
+  lse:
+    # LSE runs on core symbols
+    symbols: core
+    max_concurrent: 8 # Max 8 symbols at once
+    per_symbol_budget_usd: 150
+
+  day:
+    # Day runs on all active symbols
+    symbols: all_active
+    per_symbol_budget_usd: 300
+
+  swing:
+    # Swing runs on all active symbols
+    symbols: all_active
+    per_symbol_budget_usd: 500
+
+# Risk management (global)
+risk_global:
+  max_daily_dd_pct: -2.0 # -2% global daily drawdown limit
+  max_open_positions: 12 # Maximum 12 positions across all symbols
+  max_position_per_symbol: 1 # Max 1 position per symbol
+
+  # Circuit breaker
+  circuit_breaker:
+    enabled: true
+    triggers:
+      - type: daily_dd
+        threshold: -1.5 # -1.5% DD triggers warning
+      - type: consecutive_losses
+        threshold: 5 # 5 consecutive losses
+      - type: spread_anomaly
+        threshold_bps: 50 # Spread > 50 bps on any symbol
+
+

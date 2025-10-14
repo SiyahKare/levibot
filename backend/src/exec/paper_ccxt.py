@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import Optional
+
+import os
 
 try:
     import ccxt  # type: ignore
 except Exception:
     ccxt = None  # offline fallback
 
-from .types import PaperOrderResult
+from ..core.risk import RiskConfig, RiskEngine, clamp_notional, derive_sl_tp
 from ..infra.logger import log_event
-from ..core.risk import RiskEngine, RiskConfig, derive_sl_tp, clamp_notional
+from .types import PaperOrderResult
 
 _risk = RiskEngine(RiskConfig())
 
@@ -19,7 +20,7 @@ def _synthetic_mark(symbol: str) -> float:
     return 50.0 + float(base)
 
 
-def _fetch_ticker_mark(exchange: str, symbol: str) -> Optional[float]:
+def _fetch_ticker_mark(exchange: str, symbol: str) -> float | None:
     """ccxt ile ticker fiyatını al; hata olursa None döndür."""
     if ccxt is None:
         return None
@@ -40,17 +41,17 @@ def place_cex_paper_order(
     symbol: str,  # ör: "ETH/USDT"
     side: str,  # "buy" | "sell"
     notional_usd: float,
-    price: Optional[float] = None,
-    trace_id: Optional[str] = None,
-    fe: Optional[dict] = None,
+    price: float | None = None,
+    trace_id: str | None = None,
+    fe: dict | None = None,
 ) -> PaperOrderResult:
     base_sym = symbol.replace("/", "")
     
     # Notional clamp
     notional = clamp_notional(notional_usd)
     
-    # Risk kontrolü: cooldown + max notional
-    ok, reason = _risk.allow(symbol, notional)
+    risk_enabled = os.getenv("PAPER_RISK_DISABLE", "false").lower() != "true"
+    ok, reason = (True, "ok") if not risk_enabled else _risk.allow(symbol, notional)
     if not ok:
         log_event(
             "ORDER_BLOCKED",
@@ -114,7 +115,8 @@ def place_cex_paper_order(
         trace_id=trace_id,
     )
     
-    _risk.record(symbol)
+    if risk_enabled:
+        _risk.record(symbol)
 
     return PaperOrderResult(ok=True, symbol=symbol, side=side, qty=qty, price=mark, filled=True, pnl_usd=0.0)
 

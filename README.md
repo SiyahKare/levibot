@@ -1,14 +1,15 @@
-# LeviBot — Telegram Sinyal Botu ve On‑Chain/MEV/NFT Modülleri (MVP)
+# 🚀 LeviBot Enterprise — AI-Powered Signals Platform
 
-<p align="right">
+<p align="center">
+  <strong>Enterprise-grade AI Signals Platform with 24/7 Data Collection, ML/AI Decision Engine, Telegram Bot & Mini App</strong>
+</p>
+
+<p align="center">
   <a href="https://github.com/siyahkare/levibot/releases">
     <img src="https://img.shields.io/github/v/tag/SiyahKare/levibot?label=release" alt="Release">
   </a>
   <a href="https://github.com/siyahkare/levibot/actions/workflows/ci.yml">
     <img src="https://github.com/siyahkare/levibot/actions/workflows/ci.yml/badge.svg" alt="CI Status">
-  </a>
-  <a href="https://github.com/siyahkare/levibot/actions/workflows/security.yml">
-    <img src="https://github.com/siyahkare/levibot/actions/workflows/security.yml/badge.svg" alt="Security Scan">
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
@@ -22,27 +23,313 @@
   <a href="https://react.dev/">
     <img src="https://img.shields.io/badge/React-18+-blue.svg" alt="React">
   </a>
- </p>
+</p>
 
-> ### 🐳 Quick Start (Docker - Recommended)
-> ```bash
-> # 1. Ortam değişkenlerini ayarla
-> cp .env.docker.example .env
-> # .env dosyasını düzenle (API_KEYS, webhooks vs.)
-> 
-> # 2. Tek komutla tüm stack'i başlat
-> make docker-up
-> 
-> # Panel: http://localhost:3000
-> # API: http://localhost:8000
-> # Metrics: http://localhost:8000/metrics/prom
-> 
-> # Logları takip et
-> make docker-logs
-> 
-> # Durdur
-> make docker-down
-> ```
+---
+
+## ⚡ Hızlı Başlangıç (5 Dakika)
+
+```bash
+# 1. Environment dosyasını kopyala ve düzenle
+cp ENV.levibot.example .env
+nano .env  # TG_BOT_TOKEN, BINANCE_KEY, vb. ekle
+
+# 2. Sistemi başlat (Docker gerekli)
+make up
+
+# 3. Durum kontrolü
+make ps
+
+# 4. Smoke test çalıştır
+make smoke-test
+
+# 5. Telegram bot'una /start gönder
+# Mini App panelini aç ve canlı PnL'i izle!
+```
+
+**Detaylı kurulum için:** [docs/QUICKSTART.md](./docs/QUICKSTART.md)
+
+---
+
+## 🎯 Özellikler
+
+### 🤖 AI/ML Signals Engine
+
+- **LightGBM** tabanlı ML pipeline
+- Real-time feature engineering (z-score, VWAP, ATR, OFI)
+- Multi-strategy orchestration (ML + Rule-based)
+- Confidence scoring & policy filtering
+
+### 📊 Event-Driven Architecture
+
+- **Redis Streams** event bus
+- Asynchronous signal → decision → execution flow
+- Circuit breakers & retry logic
+- Hot feature cache
+
+### 💾 Enterprise Storage
+
+- **ClickHouse** for time-series data
+- **Redis** for hot state & queues
+- **DuckDB/Parquet** for research
+- Automated backups & TTL policies
+
+### 📱 Telegram Integration
+
+- **Telegram Bot** for commands & alerts
+- **Mini App (WebApp)** for live dashboard
+- Real-time PnL, equity curve, signal history
+- Kill-switch & trading controls
+
+### 📈 Observability
+
+- **Prometheus** metrics collection
+- **Grafana** dashboards (PnL, latency, hit-rate)
+- Audit logging to ClickHouse
+- Health checks & alerting
+
+### 🔒 Production-Ready
+
+- HMAC authentication for Mini App
+- Role-based access control
+- Rate limiting & exponential backoff
+- Config checksums & canary deployments
+
+---
+
+## 📦 Mimari
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Telegram Bot + Mini App                  │
+│              (Commands, Alerts, Live Dashboard)             │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                      Panel API (FastAPI)                    │
+│         /policy/status, /signals/recent, /analytics         │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+         ┌───────────────┼───────────────┐
+         │               │               │
+┌────────▼────────┐ ┌───▼────────┐ ┌───▼──────────┐
+│ Signal Engine   │ │  Executor  │ │ Feature      │
+│ (ML + Rules)    │ │  (Orders)  │ │ Builder      │
+└────────┬────────┘ └───┬────────┘ └───┬──────────┘
+         │              │              │
+         └──────────────┼──────────────┘
+                        │
+         ┌──────────────▼──────────────┐
+         │   Redis Streams (Event Bus) │
+         │  signals.*, orders.*, etc.  │
+         └──────────────┬──────────────┘
+                        │
+         ┌──────────────┼──────────────┐
+         │              │              │
+┌────────▼────────┐ ┌──▼───────────┐ ┌▼──────────────┐
+│  ClickHouse     │ │    Redis     │ │  Prometheus   │
+│  (Time-Series)  │ │  (Hot Cache) │ │   (Metrics)   │
+└─────────────────┘ └──────────────┘ └───────────────┘
+```
+
+---
+
+## 🛠️ Teknoloji Stack
+
+**Backend:**
+
+- Python 3.11+, FastAPI, Uvicorn
+- LightGBM, NumPy, Pandas
+- CCXT (exchange integration)
+- Redis (aioredis), ClickHouse
+- Prometheus client
+
+**Frontend:**
+
+- React 18, TypeScript
+- Telegram WebApp SDK
+- Recharts, SWR, TailwindCSS
+
+**Infrastructure:**
+
+- Docker & Docker Compose
+- Prometheus & Grafana
+- GitHub Actions (CI/CD)
+
+---
+
+## 📚 Dokümantasyon
+
+### Kullanıcı Dokümanları
+
+- **[docs/QUICKSTART.md](./docs/QUICKSTART.md)** - 5 dakikada başla
+- **[docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md)** - Detaylı deployment
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Sistem mimarisi
+- **[docs/ML_SPRINT3_GUIDE.md](./docs/ML_SPRINT3_GUIDE.md)** - ML pipeline
+- **[docs/RUNBOOK_PROD.md](./docs/RUNBOOK_PROD.md)** - Production runbook
+- **[docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)** - Katkıda bulunma kılavuzu
+- **[docs/SECURITY.md](./docs/SECURITY.md)** - Güvenlik politikası
+
+### Planlama & Yol Haritası 🗺️
+
+- **[docs/PLANNING_INDEX.md](./docs/PLANNING_INDEX.md)** - 📚 Planlama dokümanları index
+- **[docs/ROADMAP.md](./docs/ROADMAP.md)** - 🗺️ Public roadmap (GitHub-friendly)
+- **[docs/DEVELOPMENT_PLAN_SUMMARY.md](./docs/DEVELOPMENT_PLAN_SUMMARY.md)** - 📊 Yönetici özeti (5 dk)
+- **[docs/DEVELOPMENT_ROADMAP.md](./docs/DEVELOPMENT_ROADMAP.md)** - 📋 12 aylık detaylı plan (30 dk)
+- **[docs/SPRINT_PLANNING.md](./docs/SPRINT_PLANNING.md)** - ⚙️ Sprint execution guide (15 dk)
+- **[docs/TECHNICAL_EVOLUTION.md](./docs/TECHNICAL_EVOLUTION.md)** - 🔧 Teknik mimari evrim planı (20 dk)
+
+### Aktif Sprint 🏃
+
+- **[sprint/S9_GEMMA_FUSION_PLAN.md](./sprint/S9_GEMMA_FUSION_PLAN.md)** - 🧠 Sprint-9: AI Fusion & Engine Upgrade
+- **[sprint/S9_TASKS.yaml](./sprint/S9_TASKS.yaml)** - ✅ Sprint-9 görev listesi (YAML)
+- **[sprint/SPRINT9_MID_CHECKPOINT.md](./sprint/SPRINT9_MID_CHECKPOINT.md)** - 🎉 Mid-Sprint Checkpoint (4/5 Epics ✅)
+- **[sprint/SPRINT9_FINAL_CHECKPOINT.md](./sprint/SPRINT9_FINAL_CHECKPOINT.md)** - 🏆 Final Checkpoint (80% Complete!)
+
+**Epic-1: Multi-Engine (COMPLETE ✅)**
+
+- **[sprint/EPIC1_ENGINE_MANAGER_GUIDE.md](./sprint/EPIC1_ENGINE_MANAGER_GUIDE.md)** - 🔥 Implementation Guide
+- **[sprint/EPIC1_QUICKSTART.md](./sprint/EPIC1_QUICKSTART.md)** - ⚡ Quick Start
+- **[sprint/EPIC1_COMPLETION_SUMMARY.md](./sprint/EPIC1_COMPLETION_SUMMARY.md)** - 📊 Summary
+
+**Epic-2: AI Fusion (COMPLETE ✅)**
+
+- **[sprint/EPIC2_AI_FUSION_COMPLETE.md](./sprint/EPIC2_AI_FUSION_COMPLETE.md)** - 🧠 AI Fusion Summary
+
+**Epic-3: Risk Manager (COMPLETE ✅)**
+
+- **[sprint/EPIC3_RISK_MANAGER_COMPLETE.md](./sprint/EPIC3_RISK_MANAGER_COMPLETE.md)** - 🛡️ Risk Management Summary
+
+**Monitoring & Observability (COMPLETE ✅)**
+
+- **[sprint/MONITORING_QUICKSTART.md](./sprint/MONITORING_QUICKSTART.md)** - 📊 Prometheus + Grafana + Soak Test
+- **[sprint/SOAK_TEST_RESULTS.md](./sprint/SOAK_TEST_RESULTS.md)** - 🧪 Soak Test Results & System Validation
+
+**Epic-5: Nightly AutoML (COMPLETE ✅)**
+
+- **[sprint/EPIC5_AUTOML_COMPLETE.md](./sprint/EPIC5_AUTOML_COMPLETE.md)** - 🌙 Nightly AutoML Pipeline
+
+---
+
+## 🔧 Makefile Komutları
+
+```bash
+make up            # Tüm servisleri başlat
+make down          # Tüm servisleri durdur
+make restart       # Servisleri yeniden başlat
+make logs          # Tüm logları izle
+make ps            # Servis durumlarını göster
+make smoke-test    # Health check'leri çalıştır
+make backup        # Veri yedekle
+make clean         # Tüm verileri temizle (DİKKAT!)
+make monitor       # Dashboard URL'lerini göster
+```
+
+---
+
+## 🎮 Kullanım Örnekleri
+
+### Telegram Bot Komutları
+
+```
+/start       - Bot'u başlat ve Mini App'i aç
+/status      - Sistem durumunu göster
+/killswitch  - Acil durdurma (toggle)
+```
+
+### Mini App Özellikleri
+
+- 📊 **Live Equity Curve** (son 24 saat)
+- 💰 **Real-time PnL** (günlük, toplam)
+- 🎯 **Recent Signals** (son 10 sinyal)
+- 🔴 **Kill Switch** (tek tıkla durdur)
+- ⚙️ **Trading Toggle** (aç/kapat)
+
+### API Endpoints
+
+```bash
+# Sistem durumu
+curl http://localhost:8080/policy/status
+
+# Son sinyaller
+curl http://localhost:8080/signals/recent?limit=10
+
+# Equity curve
+curl http://localhost:8080/analytics/equity?hours=24
+
+# Günlük istatistikler sıfırla
+curl -X POST http://localhost:8080/policy/reset_daily
+```
+
+---
+
+## 🐛 Sorun Giderme
+
+**Servis ayağa kalkmıyor:**
+
+```bash
+make logs-[service_name]  # Logları kontrol et
+docker compose -f docker-compose.enterprise.yml restart [service_name]
+```
+
+**Telegram bot yanıt vermiyor:**
+
+```bash
+make logs-bot
+# .env dosyasında TG_BOT_TOKEN'ı kontrol et
+```
+
+**ClickHouse bağlantı hatası:**
+
+```bash
+make init-db  # Veritabanını yeniden başlat
+```
+
+Daha fazla bilgi için: [QUICKSTART.md](./QUICKSTART.md)
+
+---
+
+## 📊 Monitoring & Dashboards
+
+- **Grafana:** http://localhost:3000 (admin/admin)
+- **Prometheus:** http://localhost:9090
+- **Panel API:** http://localhost:8080
+- **Mini App:** http://localhost:5173
+
+---
+
+## 🤝 Katkıda Bulunma
+
+1. Fork'la
+2. Feature branch oluştur (`git checkout -b feature/amazing`)
+3. Commit'le (`git commit -m 'Add amazing feature'`)
+4. Push'la (`git push origin feature/amazing`)
+5. Pull Request aç
+
+---
+
+## 📄 Lisans
+
+MIT License - Detaylar için [LICENSE](./LICENSE) dosyasına bakın.
+
+---
+
+## 🙏 Teşekkürler
+
+Bu proje aşağıdaki harika açık kaynak projelerden yararlanmaktadır:
+
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [LightGBM](https://lightgbm.readthedocs.io/)
+- [CCXT](https://github.com/ccxt/ccxt)
+- [ClickHouse](https://clickhouse.com/)
+- [Telegram Bot API](https://core.telegram.org/bots/api)
+
+---
+
+<p align="center">
+  <strong>🚀 LeviBot Enterprise - AI-Powered Trading Signals Platform</strong><br>
+  Made with ❤️ by the LeviBot Team
+</p>
 >
 > ### 📊 Smart Event Filters (v1.6.0+)
 > ```bash
@@ -123,6 +410,7 @@
 LeviBot; Telegram kaynaklı sinyalleri toplar, puanlar ve izler; on‑chain/MEV/NFT akışlarından üretilen uyarıları tek bir izleme/logging ve panel mimarisine düşürür. Risk‑first yaklaşımı ve çok kullanıcılı yapı için tasarlanmıştır.
 
 ## Özellikler (Checklist)
+
 - [x] FastAPI backend (`/status`, `/start`, `/stop`, `/config`, `/events`)
 - [x] JSONL logging + DuckDB raporlama (`backend/src/infra/logger.py`, `app/reports.py`)
 - [x] Telegram ingest
@@ -141,6 +429,7 @@ LeviBot; Telegram kaynaklı sinyalleri toplar, puanlar ve izler; on‑chain/MEV/
 - [ ] Canlı DEX quoter/pricer ve MEV‑Share entegrasyonu (yok)
 
 ## Klasör Yapısı (özet)
+
 ```
 backend/
   configs/      # users, risk, symbols, features, model, telegram + onchain/mev/nft
@@ -156,6 +445,7 @@ telegram/       # Telethon user‑bot (auto‑discover + backfill + live)
 ```
 
 ## Mevcut Durum (Kısa Özet)
+
 - **Logging**: Çalışır (JSONL saatlik shard). `/events` endpoint’i `event_type` filtresi ile hazır.
 - **Sinyal alma**: Bot API ve Telethon user‑bot aktif. Regex parser mevcut.
 - **Sinyal gönderme/notify**: `backend/src/alerts/notify.py` ile Telegram’a bildirim gönderimi var (ENV gerekli).
@@ -190,6 +480,7 @@ telegram/       # Telethon user‑bot (auto‑discover + backfill + live)
 ```
 
 ### **Services**
+
 - 🚀 **API** — FastAPI backend (port 8000)
 - 🎨 **Panel** — React dashboard (port 3000)
 - 🗄️ **Redis** — Distributed rate limiting (port 6379)
@@ -256,6 +547,7 @@ curl http://localhost:8000/metrics/prom | grep levibot_build_info
 ### **Environment Variables**
 
 Core settings in `.env`:
+
 - `API_KEYS` — Comma-separated API keys for authentication
 - `REDIS_URL` — Redis connection string
 - `CORS_ORIGINS` — Allowed CORS origins
@@ -305,6 +597,7 @@ make minio-down
 Async, rate-limited, retry'li webhook gönderim kuyruğu + zengin formatlı Slack/Discord entegrasyonu.
 
 **ENV:**
+
 - `ALERTS_OUTBOUND_ENABLED`: Webhook queue'yu etkinleştir (default: true)
 - `WEBHOOK_RATE_LIMIT`: Hedef başına rate limit (req/sec, default: 1)
 - `WEBHOOK_RETRY_MAX`: Maksimum retry sayısı (default: 3)
@@ -315,6 +608,7 @@ Async, rate-limited, retry'li webhook gönderim kuyruğu + zengin formatlı Slac
 - `ALERT_DEFAULT_TARGETS`: Virgülle ayrılmış hedefler (opsiyonel, örn: "slack,discord")
 
 **Metrikler:**
+
 - `levibot_alerts_enqueued_total`: Kuyruğa eklenen alert sayısı
 - `levibot_alerts_sent_total`: Başarıyla gönderilen alert sayısı
 - `levibot_alerts_failed_total`: Tüm retry'lardan sonra başarısız olan alert sayısı
@@ -322,6 +616,7 @@ Async, rate-limited, retry'li webhook gönderim kuyruğu + zengin formatlı Slac
 - `levibot_alerts_queue_size`: Mevcut kuyruk boyutu
 
 **Kullanım (programatik):**
+
 ```python
 from backend.src.app.main import WEBHOOK_QUEUE
 from backend.src.alerts.channels import deliver_alert_via, route_targets
@@ -341,6 +636,7 @@ for target in route_targets():
 ```
 
 **Format Örnekleri:**
+
 - **Slack**: Blocks API (başlık, özet, alanlar, context footer, buton)
 - **Discord**: Embeds (renk-kodlu severity, timestamp, alanlar, footer)
 - **Severity Renkleri**: info=mavi, high=turuncu, critical=kırmızı
@@ -352,6 +648,7 @@ Alert sistemi artık API endpoint'leri ve otomatik tetikleme ile canlı!
 **API Endpoints:**
 
 **POST /alerts/trigger** — Manuel alert tetikleme (test/demo için)
+
 ```bash
 curl -X POST http://localhost:8000/alerts/trigger \
   -H "Content-Type: application/json" \
@@ -367,6 +664,7 @@ curl -X POST http://localhost:8000/alerts/trigger \
 ```
 
 **GET /alerts/history** — Alert geçmişi
+
 ```bash
 curl "http://localhost:8000/alerts/history?limit=50&severity=high&days=7"
 
@@ -374,19 +672,23 @@ curl "http://localhost:8000/alerts/history?limit=50&severity=high&days=7"
 ```
 
 **Auto-Trigger:**
+
 - Yüksek güven skorlu sinyaller otomatik olarak alert tetikler
 - `/signals/ingest-and-score` içinde rule engine ile değerlendirme
 - ENV ile eşik ve hedef konfigürasyonu
 
 **ENV:**
+
 - `ALERT_AUTO_TRIGGER_ENABLED`: Otomatik tetikleme (default: true)
 - `ALERT_MIN_CONF`: Minimum güven skoru eşiği (default: 0.8)
 - `ALERT_LOG_DIR`: Alert log dizini (default: backend/data/alerts)
 
 **Metrikler:**
+
 - `levibot_alerts_triggered_total{source="auto|manual"}`: Tetiklenen alert sayısı
 
 **Örnek Flow:**
+
 1. Telegram'dan signal gelir → `/signals/ingest-and-score`
 2. ML model skorlar → confidence 0.85
 3. Rule engine değerlendirir → `high_conf_buy` rule match
@@ -398,6 +700,7 @@ curl "http://localhost:8000/alerts/history?limit=50&severity=high&days=7"
 Frontend alert monitoring dashboard — **Sprint 8-A COMPLETE!** 🎊
 
 **Özellikler:**
+
 - 📊 **Live Alert Table**: timestamp, title, severity (color-coded), source, details
 - 🔴 **Unread Badge**: Shows new alerts since last view
 - 🔍 **Filters**: severity (info/low/medium/high/critical), source (signals/risk/exec), days (1/3/7)
@@ -406,11 +709,13 @@ Frontend alert monitoring dashboard — **Sprint 8-A COMPLETE!** 🎊
 - 🧪 **Test Alert Button**: Manual trigger (hidden by default, enable with `VITE_SHOW_TEST_ALERT=true`)
 
 **Severity Colors:**
+
 - 🔵 **info/low**: Blue/Gray
 - 🟠 **medium/high**: Orange
 - 🔴 **critical**: Red
 
 **Usage:**
+
 ```bash
 cd frontend/panel
 npm install
@@ -423,6 +728,7 @@ echo "VITE_SHOW_TEST_ALERT=true" >> .env.local
 ```
 
 **Live Demo Flow:**
+
 1. High-confidence signal arrives (e.g., BUY BTC confidence 0.85)
 2. Auto-trigger fires (PR-37)
 3. Alert logged to JSONL
@@ -431,10 +737,12 @@ echo "VITE_SHOW_TEST_ALERT=true" >> .env.local
 6. Click "Alerts" tab → badge resets
 
 **API Integration:**
+
 - `GET /alerts/history?limit=300&severity=high&days=7`
 - `POST /alerts/trigger` (test button)
 
 **ENV:**
+
 - `VITE_SHOW_TEST_ALERT`: Show test alert button (default: false)
 
 ## 📈 Roadmap
@@ -445,6 +753,7 @@ Kapsamlı yol haritası, stratejik vizyon ve sonraki sprint planları için:
 👉 **[ROADMAP_SUMMARY.md](docs/ROADMAP_SUMMARY.md)**
 
 **Highlights:**
+
 - ✅ Sprint 1-7: Core Foundation + Documentation (28 PR merged)
 - 🟡 Sprint 8: Alerting & Webhooks (PR-34/35 done, 3 more to go)
 - 🔜 Sprint 9: Advanced AI Layer (Feature Store, Ensemble, MLOps)
@@ -455,18 +764,20 @@ Kapsamlı yol haritası, stratejik vizyon ve sonraki sprint planları için:
 
 ## Release Matrix
 
-* **v1.0.0**: Core AI + Risk + Panel + Docker (initial)
-* **v1.1.0**: Redis RL + Charts + Prod Compose
-* **v1.2.0**: S3 Archiver + E2E Tests
-* **v1.3.0**: Build Info Metrics + MinIO + Lifespan
-* **v1.4.0**: **Docs & Developer Experience** ✨
+- **v1.0.0**: Core AI + Risk + Panel + Docker (initial)
+- **v1.1.0**: Redis RL + Charts + Prod Compose
+- **v1.2.0**: S3 Archiver + E2E Tests
+- **v1.3.0**: Build Info Metrics + MinIO + Lifespan
+- **v1.4.0**: **Docs & Developer Experience** ✨
 
 **Runtime lifecycle**: FastAPI `lifespan` ile yönetilir (modern API). Eski `@app.on_event("startup")` artık yok; tüm startup/shutdown işleri `lifespan` içinde.
 
 ---
 
 ## Kurulum
-1) Python venv
+
+1. Python venv
+
 ```
 python3 -m venv .venv && source .venv/bin/activate
 python3 -m pip install --upgrade pip
@@ -474,21 +785,26 @@ python3 -m pip install -r backend/requirements.txt
 # Raporlar için gerekenler (opsiyonel):
 python3 -m pip install pandas pyarrow fastparquet
 ```
-2) ENV ayarları
-- Örnekler: `docs/ENV.md` (API host/port, Telegram Bot ve Telethon API kimlikleri, borsa anahtar ENV isimleri)
- - Hızlı başlangıç: `cp ENV.example .env` (dosyadaki değerleri kendi ortamınıza göre düzenleyin)
 
-3) Backend API
+2. ENV ayarları
+
+- Örnekler: `docs/ENV.md` (API host/port, Telegram Bot ve Telethon API kimlikleri, borsa anahtar ENV isimleri)
+- Hızlı başlangıç: `cp ENV.example .env` (dosyadaki değerleri kendi ortamınıza göre düzenleyin)
+
+3. Backend API
+
 ```
 cd backend && uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Alternatif (PATH sorunlarını önlemek için tam yol):
+
 ```
 ./.venv/bin/uvicorn backend.src.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-4) Telegram ingest (seçenekler)
+4. Telegram ingest (seçenekler)
+
 ```
 # Bot API ile (aiogram)
 python3 -m backend.src.ingest.telegram_signals
@@ -497,12 +813,14 @@ python3 -m backend.src.ingest.telegram_signals
 python3 -m telegram.user_client
 ```
 
-5) Panel (ayrı terminal)
+5. Panel (ayrı terminal)
+
 ```
 cd frontend/panel && npm i && npm run dev
 ```
 
-6) Dark‑Data Modüllerini Dene (iskele)
+6. Dark‑Data Modüllerini Dene (iskele)
+
 ```
 # On‑chain WS (ENV: ETH_WS veya INFURA_KEY)
 python3 -m backend.src.onchain.listener
@@ -515,6 +833,7 @@ python3 -c "from backend.src.nft.sniper import scan_collection; scan_collection(
 ```
 
 ## Kullanım Örnekleri (HTTP)
+
 ```
 curl -s http://localhost:8000/status | jq
 curl -s "http://localhost:8000/events?event_type=SIGNAL_EXT_TELEGRAM" | jq
@@ -542,6 +861,7 @@ curl -s -X POST http://localhost:8000/stop -H 'Content-Type: application/json' -
 ```
 
 ## Yol Haritası (TODO)
+
 - VIP/abonelik: ödeme sağlayıcı entegrasyonu (Stripe/Iyzico) + erişim katmanı
 - Telegram reputation → ensemble skorlama ile trade gate’e bağlama
 - On‑chain pricing: Uniswap v3 Quoter + token decimals/price cache
@@ -551,6 +871,7 @@ curl -s -X POST http://localhost:8000/stop -H 'Content-Type: application/json' -
 - CI/CD ve Docker compose; prod konfig ve gizli yönetimi
 
 ## Geliştirici Notu
+
 - Proje henüz üretimde değil; modüller MVP iskelet seviyesinde. Logging/rapor/panel altyapısı hazır ve genişlemeye uygun.
 - MacOS (arm64) ve Python 3.11+/3.12+ uyumu iyi; 3.13’te bazı paketler için pin gerekebilir. Raporlar için `pandas/pyarrow` kurmayı unutmayın.
 - Borsa anahtarları, Telegram kimlikleri ve RPC detaylarını .env üzerinden verin; repoya sır koymayın.
@@ -558,6 +879,7 @@ curl -s -X POST http://localhost:8000/stop -H 'Content-Type: application/json' -
 ---
 
 ## API Uçları (özet)
+
 - GET `/status`: servis durumu
 - POST `/start`, `/stop`: bot başlat/durdur
 - GET `/config`, POST `/config/reload`, PUT `/config`: konfig okuma/güncelleme
@@ -565,8 +887,11 @@ curl -s -X POST http://localhost:8000/stop -H 'Content-Type: application/json' -
   - Parametreler: `event_type` (CSV), `since_iso`, `limit`, `trace_id`, `day` (YYYY-MM-DD), `days` (1-7), `q` (metin araması), `symbol`
   - Örnek: `/events?days=2&q=ONCHAIN&event_type=ONCHAIN_SIGNAL,MEV_ARB_OPP`
 - Telegram: GET `/telegram/signals`, `/telegram/reputation`
+
 ## CORS
+
 Panel ve diğer istemciler için CORS açıktır. Varsayılan origin `http://localhost:5173` olup `CORS_ORIGINS` ortam değişkeni ile CSV (ör. `http://localhost:5173,https://panel.example.com`) olarak yapılandırılabilir.
+
 - Strategy: POST `/strategy/twap-rule/start|stop`, GET `/strategy/twap-rule/status`
 - Strategy: POST `/strategy/perp-breakout/start|stop`, GET `/strategy/perp-breakout/status`
 - GET `/metrics`, `/metrics/prom`: basit metrikler + Prometheus
@@ -574,16 +899,19 @@ Panel ve diğer istemciler için CORS açıktır. Varsayılan origin `http://loc
 ### Health & Metrics
 
 - Health check:
+
   ```bash
   curl -s http://127.0.0.1:8000/healthz | jq
   ```
 
 - Prometheus metrics (plaintext):
+
   ```bash
   curl -s http://127.0.0.1:8000/metrics/prom | head
   ```
 
 - Build info metric:
+
   ```bash
   curl -s http://127.0.0.1:8000/metrics/prom | grep levibot_build_info
   # → levibot_build_info{version="1.2.0",git_sha="02f4b21",branch="main"} 1.0
@@ -601,13 +929,16 @@ Panel ve diğer istemciler için CORS açıktır. Varsayılan origin `http://loc
   ```
 
 ### Liveness & Readiness
+
 ```bash
 curl -s http://127.0.0.1:8000/livez | jq
 curl -s http://127.0.0.1:8000/readyz | jq
 ```
+
 `ETH_HTTP` set'liyse `readyz.ok` JSON‑RPC `eth_blockNumber` ile doğrulanır; yoksa local geliştirmede `ok=true` döner.
 
 ### Risk Preview (SL/TP)
+
 ```bash
 curl -s -X POST "http://127.0.0.1:8000/risk/preview?side=buy&price=100" | jq
 # ATR varsa:
@@ -615,11 +946,13 @@ curl -s -X POST "http://127.0.0.1:8000/risk/preview?side=buy&price=100&atr=1.2" 
 ```
 
 ### Panel — Trades Filters
+
 - Symbol autocomplete, side filtresi (`all|buy|sell`), PnL sütunu, sayfalama (25/50/100/200)
 - 5 sn'de bir `/events?event_type=POSITION_CLOSED` poll eder (client-side filtre)
 - Çalıştırma: `cd frontend/panel && npm i && npm run dev` → `http://localhost:5173`
 
 ### Panel — Signals
+
 - **Signals** sayfasında Telegram mesajı gir → skor al (label + confidence + reasons)
 - **Auto-route threshold slider**: sadece önizleme (gerçek emir tetikleme backend'de guard'lı)
 - **Recent (10)**: son 10 skorlama kayıt tablosu
@@ -627,6 +960,7 @@ curl -s -X POST "http://127.0.0.1:8000/risk/preview?side=buy&price=100&atr=1.2" 
 - Panel → `http://localhost:5173` (API `http://localhost:8000` üzerinden proxy)
 
 ### Panel — Signals Timeline
+
 - **Geçmiş SIGNAL_SCORED** kayıtlarını listeler (800 kayıt, 5 sn poll)
 - **Filtreler**: `label` (all/BUY/SELL/NO-TRADE), `min confidence` (slider 0–0.99), `search` (text contains)
 - **Routed badge**: `AUTO_ROUTE_EXECUTED` veya `AUTO_ROUTE_DRYRUN` ile ±120 sn içinde aynı metin başlığı eşleşirse rozet gösterilir:
@@ -638,6 +972,7 @@ curl -s -X POST "http://127.0.0.1:8000/risk/preview?side=buy&price=100&atr=1.2" 
 - **Real-time**: canlı Telegram + live-tg çalışıyorsa tablo 5 sn'de bir güncellenir
 
 ### Monitoring & Alerts (local)
+
 ```bash
 # API yerelde 8000'de açıkken:
 cd ops
@@ -657,6 +992,7 @@ curl -s http://127.0.0.1:8000/metrics/prom | grep levibot_events_total | head
 ```
 
 ### Signal Scoring (ML)
+
 ```bash
 # 1) İlk eğitim (TF-IDF + LinearSVC)
 source .venv/bin/activate
@@ -686,6 +1022,7 @@ python -c "from backend.src.ml.signal_model import train_and_save; train_and_sav
 ```
 
 **Yol Haritası (Signal)**:
+
 - **Dataset büyütme**: Günlük 20–50 örnek etiketle → haftalık retrain cron job.
 - **Confidence kalibrasyonu**: ✅ `CalibratedClassifierCV` ile 0–1 olasılık kalibrasyonu aktif.
 - **Feature Engineering**: ✅ TP/SL/size parsing + multi-symbol + channel trust scores.
@@ -728,12 +1065,14 @@ rg "AUTO_ROUTE_EXECUTED|ORDER_NEW|ORDER_FILLED|POSITION_CLOSED" backend/data/log
 ```
 
 **Guard'lar**:
+
 - `AUTO_ROUTE_ENABLED=false` → hiç tetikleme yapılmaz, sadece skor döner.
 - `AUTO_ROUTE_DRY_RUN=true` → eşik geçse bile emir gönderilmez, `AUTO_ROUTE_DRYRUN` event'i loglanır.
 - `AUTO_ROUTE_MIN_CONF` → confidence bu değerin altındaysa skip edilir.
 - `AUTO_ROUTE_SYMBOL_MAP` → sembol dönüşüm haritası (ör. BTC → BTC/USDT).
 
 **Event Akışı** (dry-run=false + eligible):
+
 1. `SIGNAL_INGEST` → metin alındı
 2. `SIGNAL_SCORED` → skor + label + confidence
 3. `AUTO_ROUTE_EXECUTED` → tetikleme onayı
@@ -772,6 +1111,7 @@ export AUTO_ROUTE_DRY_RUN=false
 ```
 
 **Özellikler**:
+
 - ✅ **Telethon** ile belirlenen kanalları dinler (user client, bot token gerekmez)
 - ✅ Mesaj alınır → `/signals/ingest-and-score` API'sine POST
 - ✅ Guard'lar aktifse (enabled + threshold) → auto-route tetiklenir
@@ -779,10 +1119,12 @@ export AUTO_ROUTE_DRY_RUN=false
 - ✅ Async + aiohttp: non-blocking, düşük latency
 
 **İlk Çalıştırma** (session yoksa):
+
 - `make live-tg` → telefon numarası ister → SMS kodu gir → session kaydedilir
 - Sonraki çalıştırmalarda otomatik bağlanır
 
 **JSONL Event Akışı** (örnek):
+
 ```
 SIGNAL_INGEST → source:telegram, text:"BUY BTCUSDT @ 60000"
 SIGNAL_SCORED → label:BUY, confidence:0.82
@@ -797,12 +1139,14 @@ POSITION_CLOSED → pnl_usdt:0.0
 ### Feature Engineering (TP/SL/Size + Multi-Symbol)
 
 **Parser**: `backend/src/signals/fe.py`
+
 - Semboller: BTC, ETH, SOL (BTCUSDT, ETH/USDT dahil)
 - TP/SL: `tp 62000`, `t/p: 62000`, `take-profit=1.25`, `sl 58500`, `s/l 180`, `stop-loss 29800`
 - Size: `size 25`, `qty 0.5`, `notional 100`, `risk 20usd`
 - Çoklu sembol: `BUY BTC ETH SOL` → her biri için ayrı değerlendirme
 
 **Autoroute akışı**:
+
 1. `/signals/ingest-and-score` → FE parser çalışır
 2. `symbols` varsa FE'den, yoksa eski `parse_symbol()` fallback
 3. `size` varsa notional = size, yoksa `AUTO_ROUTE_DEFAULT_NOTIONAL` (25)
@@ -810,6 +1154,7 @@ POSITION_CLOSED → pnl_usdt:0.0
 5. `AUTO_ROUTE_EXECUTED` event'lerde tp/sl/notional loglanır
 
 **Örnek**:
+
 ```bash
 # Çoklu sembol + TP/SL/size
 curl -s -X POST "http://127.0.0.1:8000/signals/ingest-and-score?text=BUY%20BTC%20ETH%20tp%2062000%20sl%2058500%20size%2030" | jq
@@ -821,6 +1166,7 @@ rg "AUTO_ROUTE_EXECUTED|RISK_SLTP" backend/data/logs -n | tail -10
 ```
 
 **Panel görünürlük**:
+
 - Signals sayfası → skor kartında: `symbols`, `tp/sl/size` gösterilir
 - Timeline → FE kolonu: sembollerin ilk ikisi, tp/sl/size özeti
 
@@ -854,6 +1200,7 @@ docker compose -f ops/docker-compose-cron.yml run --rm retrain
 ```
 
 **Özellikler**:
+
 - ✅ **`ds_tools.py`**: `append_label()`, `dump_report()` — CLI + programmatic API
 - ✅ **`retrain.py`**: otomatik eğitim + `metrics.json` kayıt
 - ✅ **Cron script**: `ops/cron/retrain.sh` — haftalık retrain
@@ -862,6 +1209,7 @@ docker compose -f ops/docker-compose-cron.yml run --rm retrain
 - ✅ **JSONL event**: `DS_APPEND` → etiketleme aktivitesi
 
 **Workflow**:
+
 1. Live Telegram'dan mesajlar geliyor → skor alıyorlar
 2. Yanlış skor alan mesajları Panel'den düzelt → "Add to dataset"
 3. Haftada 1 cron çalışıyor → model yeniden eğitiliyor (calibrated)
@@ -871,6 +1219,7 @@ docker compose -f ops/docker-compose-cron.yml run --rm retrain
 ### Security (API Key + Rate Limit)
 
 **Middleware**: `backend/src/infra/sec.py`
+
 - Header: `X-API-Key`, ENV: `API_KEYS=key1,key2` (boşsa auth kapalı)
 - Rate limit (sliding window + burst toleransı):
   - `RATE_LIMIT_BY=ip|key`
@@ -879,6 +1228,7 @@ docker compose -f ops/docker-compose-cron.yml run --rm retrain
 - Serbest: `/livez`, `/readyz`, `/healthz`, `/metrics/prom`, `/status`, `/events`
 
 **Örnek**:
+
 ```bash
 # .env
 API_KEYS=demo-key-1,demo-key-2
@@ -901,6 +1251,7 @@ for i in {1..130}; do curl -s -o /dev/null -w "%{http_code}\n" -H "X-API-Key: de
 ```
 
 **Notlar**:
+
 - ✅ In-memory rate limit (tek replika için ideal; çok replika için Redis gerekir)
 - ✅ API_KEYS plaintext (prod için Secrets Manager önerilir)
 - ✅ Prefix-bazlı whitelist (granular kota istersen path-level eklenebilir)
@@ -908,6 +1259,7 @@ for i in {1..130}; do curl -s -o /dev/null -w "%{http_code}\n" -H "X-API-Key: de
 ### Risk++ (ATR-based SL/TP + Policy)
 
 **Policies**: `conservative`, `moderate`, `aggressive`
+
 - **conservative**: SL=2.0×ATR, TP=1.0×ATR, cooldown=45s
 - **moderate**: SL=1.5×ATR, TP=1.5×ATR, cooldown=30s
 - **aggressive**: SL=1.0×ATR, TP=2.0×ATR, cooldown=20s
@@ -915,6 +1267,7 @@ for i in {1..130}; do curl -s -o /dev/null -w "%{http_code}\n" -H "X-API-Key: de
 **Öncelik**: FE hint (tp/sl metinden) > ATR türetme
 
 **ENV**:
+
 ```bash
 RISK_POLICY=moderate             # conservative | moderate | aggressive
 RISK_ATR_LOOKBACK=14             # sentetik ATR için varsayılan pencere
@@ -924,11 +1277,13 @@ RISK_MIN_NOTIONAL=5              # alt limit (usd)
 ```
 
 **Event'ler**:
+
 - `RISK_SLTP` → `{sl, tp, atr, policy, source}`
   - `source="hint"`: FE'den gelen tp/sl kullanıldı
   - `source="atr"`: Policy+ATR ile türetildi
 
 **Örnek**:
+
 ```bash
 # Policy aggressive + FE hint yoksa ATR türet
 export RISK_POLICY=aggressive
@@ -958,16 +1313,19 @@ rg "RISK_SLTP" backend/data/logs -n | tail -5
 ### Runtime Risk Policy Switch
 
 **Endpoints**:
+
 - `GET /risk/policy` → `{current, choices, multipliers, cooldown_sec}`
 - `PUT /risk/policy` body: `{"name":"aggressive"}` → anında geçerli
 
 **Panel**: Signals sayfasında **Risk Policy** selector + **Apply** button
+
 - Dropdown'dan policy seç → Apply → server'da runtime değişir
 - Process memory'de tutuluyor (restart'ta ENV'e geri döner)
 
 **Güvenlik**: `/risk` prefixini `SECURED_PATH_PREFIXES` içine ekleyebilirsin (API key + rate limit)
 
 **Örnek**:
+
 ```bash
 # GET current policy
 curl -s http://127.0.0.1:8000/risk/policy | jq
@@ -1000,12 +1358,14 @@ rg "RISK_POLICY_CHANGED" backend/data/logs -n | tail -3
 ### DEX Quote & Tri-Arb Scan
 
 **Endpoints**:
+
 - `GET /dex/quote?sell=ETH&buy=USDC&amount=0.1&chain=ethereum`
 - `GET /mev/tri-scan?a=ETH&b=USDC&c=WBTC&amount=0.1&chain=ethereum`
 
 **0x Integration**: `ZEROX_API_KEY` varsa gerçek quote; yoksa offline fallback (ETH→USDC=2000, diğer=1.0)
 
 **Örnek**:
+
 ```bash
 # DEX quote
 curl -s "http://127.0.0.1:8000/dex/quote?sell=ETH&buy=USDC&amount=0.1" | jq
@@ -1024,12 +1384,14 @@ rg "DEX_QUOTE|MEV_TRI" backend/data/logs -n | tail -5
 ### NFT Floor & Snipe Plan
 
 **Endpoints**:
+
 - `GET /nft/floor?collection=miladymaker`
 - `GET /nft/snipe/plan?collection=miladymaker&budget_usd=300&discount_pct=12`
 
 **Reservoir Integration**: `RESERVOIR_API_KEY` varsa gerçek floor; yoksa offline fallback (42.0 USD)
 
 **Örnek**:
+
 ```bash
 # Floor price
 curl -s "http://127.0.0.1:8000/nft/floor?collection=miladymaker" | jq
@@ -1052,6 +1414,7 @@ rg "NFT_FLOOR|NFT_SNIPE_PLAN" backend/data/logs -n | tail -5
 **YAML-based**: `backend/configs/yields.yaml` içinden okur (Arbitrum/Base/Optimism protokol APR'leri)
 
 **Örnek**:
+
 ```bash
 # L2 yields
 curl -s "http://127.0.0.1:8000/l2/yields" | jq
@@ -1064,6 +1427,7 @@ rg "L2_YIELDS" backend/data/logs -n | tail -3
 **Event**: `L2_YIELDS`
 
 **ENV**:
+
 ```bash
 # DEX / MEV
 ZEROX_API_URL=https://api.0x.org/swap/v1/quote
@@ -1076,6 +1440,7 @@ RESERVOIR_API_KEY=
 ```
 
 **Test**:
+
 ```bash
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/test_mev_quote_tri.py backend/tests/test_nft_floor_plan.py backend/tests/test_l2_yields.py
 # → 11 passed
@@ -1086,21 +1451,25 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/test_mev_quote_tri.py b
 **3 yeni kart**: Dashboard'da görsel olarak MEV/NFT/L2 verilerini gösterir.
 
 **DEXQuoteCard**:
+
 - Input: `sell` (ETH), `buy` (USDC), `amount` (0.1)
 - Output: Price (offline fallback: 2000, gerçek 0x API varsa live)
 - Auto-fetch on mount
 
 **NFTFloorCard**:
+
 - Input: `collection` (miladymaker)
 - Output: Floor price (offline fallback: 42 USD, gerçek Reservoir API varsa live)
 - Snipe Plan: `budget`, `discount%` → target price
 
 **L2YieldsCard**:
+
 - `backend/configs/yields.yaml`'dan okur
 - Tablo: Chain / Protocol / Pool / APR%
 - Refresh button
 
 **Kullanım**:
+
 ```bash
 # Backend
 make run
@@ -1120,6 +1489,7 @@ cd frontend/panel && npm i && npm run dev
 **Redis-backed token bucket** rate limiter for multi-instance deployments.
 
 **ENV**:
+
 ```bash
 REDIS_URL=redis://localhost:6379/0
 RL_WINDOW_SEC=60
@@ -1128,10 +1498,12 @@ RL_BURST=40
 ```
 
 **Davranış**:
+
 - `REDIS_URL` varsa → Redis token-bucket (Lua script, atomic)
 - `REDIS_URL` yoksa → In-memory fallback (thread-safe, single instance)
 
 **Özellikler**:
+
 - ✅ **Distributed**: Çok replika arasında paylaşılan limit
 - ✅ **Atomic**: Lua script ile race condition yok
 - ✅ **Burst tolerance**: Kısa süreli spike'lara tolerans
@@ -1139,6 +1511,7 @@ RL_BURST=40
 - ✅ **Graceful fallback**: Redis yoksa in-memory'ye düşer
 
 **Kullanım**:
+
 ```bash
 # Redis başlat (Docker)
 docker run -d --name redis -p 6379:6379 redis:7
@@ -1158,6 +1531,7 @@ for i in {1..40}; do curl -s -o /dev/null -w "%{http_code} " http://127.0.0.1:80
 ```
 
 **Test**:
+
 ```bash
 # Fallback mode (Redis yok)
 unset REDIS_URL
@@ -1171,6 +1545,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q backend/tests/test_redis_rl.py
 ```
 
 **Metrics**:
+
 ```bash
 cat backend/artifacts/metrics.json
 # {
@@ -1181,6 +1556,7 @@ cat backend/artifacts/metrics.json
 ```
 
 ## Event Şemaları
+
 ```json
 // ONCHAIN_SIGNAL
 {"ts":"...","event_type":"ONCHAIN_SIGNAL","payload":{"chain":"ethereum","kind":"univ3_pool_created|erc20_transfer","tx_hash":"0x..","block":12345}}
@@ -1199,6 +1575,7 @@ cat backend/artifacts/metrics.json
 ```
 
 ## Config Örnekleri (ek)
+
 ```yaml
 # backend/configs/onchain.yaml
 chains:
@@ -1206,7 +1583,13 @@ chains:
     rpc_ws: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
     rpc_http: https://mainnet.infura.io/v3/${INFURA_KEY}
     start_block: latest
-    topics: [uniswap_v3_pool_created, uniswap_v3_swap, erc20_transfer, aave_liquidation]
+    topics:
+      [
+        uniswap_v3_pool_created,
+        uniswap_v3_swap,
+        erc20_transfer,
+        aave_liquidation,
+      ]
 cex_hot_wallets: [binance, coinbase, kraken]
 stable_symbols: [USDT, USDC, DAI]
 thresholds: { whale_usd: 500000, new_pool_min_liq_usd: 150000 }
@@ -1219,10 +1602,17 @@ liquidations: { enable: true, protocols: [aave_v3, compound_v3] }
 # backend/configs/nft.yaml
 market: { providers: [reservoir, opensea, blur] }
 filters: { min_floor_usd: 100, rare_score_min: 0.9, max_spread_pct: 2.0 }
-sniper: { enabled: true, max_notional_usd: 800, private_tx: true, wallet_label: "nft_vault_1" }
+sniper:
+  {
+    enabled: true,
+    max_notional_usd: 800,
+    private_tx: true,
+    wallet_label: "nft_vault_1",
+  }
 ```
 
 ## Hızlı Smoke Akışı
+
 ```bash
 # ENV (örnek)
 export INFURA_KEY=xxxxx
@@ -1250,6 +1640,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
 ```
 
 ## Sorun Giderme (Troubleshooting)
+
 - Uvicorn import hataları: eksik stub registry (TWAP/BREAKOUT) ve `pandas` çözüldü; sorun devam ederse venv’i temizleyip kurun.
 - WebSocket bağlanmıyor: `INFURA_KEY`/WSS erişimi ve kurum ağı engellerini kontrol edin.
 - `/events` boş: önce producer’ları (listener/snapshot/sniper) çalıştırın; sonra tekrar sorgulayın.
@@ -1257,6 +1648,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
 - DuckDB dosya kilidi: aynı parquet’i birden fazla job yazmasın; scheduler tek işte yazsın.
 
 ## Güvenlik ve Operasyon
+
 - MEV defans: Protect/MEV‑Share ile private mempool, kendi işlemlerini sandwich’e kapat.
 - OpSec: API anahtarları/.env’ler repo dışı; HSM/keystore önerilir. `nft_vault_1` için ayrı cüzdan.
 - Simülasyon: Tenderly/Foundry ile dry‑run; NFT’de wash‑trade tespiti için blacklist/heuristic.
@@ -1265,6 +1657,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
 ## 🧯 Troubleshooting
 
 ### 1) `uvicorn: command not found`
+
 - Neden: venv aktif değil.
 - Çözüm:
   ```bash
@@ -1274,6 +1667,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
   ```
 
 ### 2) CORS / Panel istekleri bloklanıyor
+
 - Belirti: Panel `/events` fetch error.
 - Çözüm: `.env` içine izinli origin ekle:
   ```ini
@@ -1282,6 +1676,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
   API restart sonrası tekrar deneyin.
 
 ### 3) JSONL dosyaları görünmüyor
+
 - Belirti: `backend/data/logs/*/events-*.jsonl` bulunamadı.
 - Çözüm: Önce bir işlem tetikle:
   ```bash
@@ -1296,16 +1691,19 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
   ```
 
 ### 4) `jq` / `rg` yok
+
 - macOS: `brew install jq ripgrep fd`
 - Ubuntu/Debian: `sudo apt install -y jq ripgrep fd-find`
 
 ### 5) Port çakışması (8000 kullanılıyor)
+
 - Çözüm:
   ```bash
   ./.venv/bin/uvicorn backend.src.app.main:app --host 127.0.0.1 --port 8010 --reload
   ```
 
 ### 6) Pytest plugin çakışması
+
 - Belirti: “weird plugin import errors”.
 - Çözüm:
   ```bash
@@ -1314,6 +1712,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
   ```
 
 ### 7) Health & Metrics görünmüyor
+
 - Health:
   ```bash
   curl -s http://127.0.0.1:8000/healthz | jq
@@ -1324,6 +1723,7 @@ curl -s 'http://localhost:8000/events?event_type=NFT_SNIPE_CANDIDATE&limit=3' | 
   ```
 
 ### Panel — Trades
+
 <p align="center">
   <img src="assets/panel-trades.png" alt="Trades Feed" width="720"/>
   </p>

@@ -1,0 +1,43 @@
+# LSE (Low-latency Scalp Engine) Configuration
+
+# Trading Symbol & Mode
+symbol: BTCUSDT
+mode: paper # paper | real
+leverage: 3
+
+# Position Sizing
+quote_budget: 1000.0 # USD per trade
+max_open_trades: 1
+
+# Timeframe Windows (seconds)
+windows: [3, 15, 60]
+
+# ATR Entry Conditions
+atr:
+  period: 14
+  k_enter: 0.8 # ATR multiplier for entry threshold
+
+# Z-score Volatility Filter
+zscore:
+  lookback: 120
+  z_enter: 1.5 # Minimum z-score for entry
+
+# Risk Management
+risk:
+  max_daily_dd: 0.02 # 2% daily drawdown limit
+  max_open_trades: 1
+  slippage_bps: 1.5
+  fee_bps: 7
+  hard_stop_bps: 15
+  take_profit_bps: 25
+
+# Guard Filters
+filters:
+  min_vol_bps: 5 # Minimum realized volatility
+  max_spread_bps: 1 # Maximum bid-ask spread
+  max_latency_ms: 120 # Maximum acceptable latency
+
+# Data Recording (optional)
+recording:
+  parquet: false
+  path: "data/lse/"

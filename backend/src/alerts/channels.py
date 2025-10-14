@@ -105,27 +105,70 @@ def route_targets(env: Dict[str, str] | None = None) -> List[str]:
     targets = []
     slack_url = env.get("SLACK_WEBHOOK_URL", "").strip()
     discord_url = env.get("DISCORD_WEBHOOK_URL", "").strip()
+    telegram_bot_token = env.get("TELEGRAM_BOT_TOKEN", "").strip()
+    telegram_alert_chat = env.get("TELEGRAM_ALERT_CHAT_ID", "").strip()
     
     if slack_url:
         targets.append("slack")
     if discord_url:
         targets.append("discord")
+    if telegram_bot_token and telegram_alert_chat:
+        targets.append("telegram")
     
     # Optional explicit targets override
     default_targets = env.get("ALERT_DEFAULT_TARGETS", "").strip()
     if default_targets:
         explicit = [t.strip().lower() for t in default_targets.split(",") if t.strip()]
         # Only include targets that have URLs configured
-        targets = [t for t in explicit if (t == "slack" and slack_url) or (t == "discord" and discord_url)]
+        targets = [t for t in explicit if 
+                  (t == "slack" and slack_url) or 
+                  (t == "discord" and discord_url) or
+                  (t == "telegram" and telegram_bot_token and telegram_alert_chat)]
     
     return targets
+
+
+def format_telegram(alert: Dict[str, Any]) -> str:
+    """Format alert for Telegram."""
+    title = alert.get("title", "Alert")
+    summary = alert.get("summary", "")
+    severity = alert.get("severity", "info")
+    source = alert.get("source", "system")
+    labels = alert.get("labels", {})
+    
+    # Severity emoji mapping
+    severity_emoji = {
+        "info": "ℹ️",
+        "low": "🔵",
+        "medium": "🟡",
+        "high": "🟠",
+        "critical": "🔴",
+    }
+    emoji = severity_emoji.get(severity.lower(), "ℹ️")
+    
+    lines = [
+        f"{emoji} *{title}*",
+        f"",
+        f"{summary}",
+        f"",
+        f"📊 *Source:* {source}",
+        f"⚠️ *Severity:* {severity.upper()}",
+    ]
+    
+    if labels:
+        lines.append("")
+        lines.append("🏷️ *Labels:*")
+        for k, v in list(labels.items())[:10]:
+            lines.append(f"  • {k}: {v}")
+    
+    return "\n".join(lines)
 
 
 def deliver_alert_via(target: str, alert: Dict[str, Any], queue) -> None:
     """Format and enqueue alert to specified target.
     
     Args:
-        target: "slack" or "discord"
+        target: "slack", "discord", or "telegram"
         alert: Alert dictionary with title, summary, severity, labels, etc.
         queue: WebhookQueue instance (from main.py WEBHOOK_QUEUE)
     """
@@ -152,4 +195,13 @@ def deliver_alert_via(target: str, alert: Dict[str, Any], queue) -> None:
             # Fallback to plain text
             payload = {"content": f"{alert.get('title', 'Alert')}: {alert.get('summary', '')}"}
         queue.enqueue(target_url=url, payload=payload, target_key="discord")
+    
+    elif target == "telegram":
+        # Telegram uses direct bot API, not webhook queue
+        try:
+            from ..alerts.notify import send as send_telegram
+            text = format_telegram(alert)
+            send_telegram(text)
+        except Exception:
+            pass  # Silently fail for Telegram
 

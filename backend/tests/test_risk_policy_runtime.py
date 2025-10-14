@@ -1,7 +1,11 @@
 from fastapi.testclient import TestClient
+
 from backend.src.app.main import app
+from backend.src.core.risk import _reset as reset_risk_policy_state
+
 
 def test_get_and_put_policy(monkeypatch):
+    reset_risk_policy_state()
     c = TestClient(app)
     r1 = c.get("/risk/policy")
     assert r1.status_code == 200

@@ -1,0 +1,43 @@
+# RSI + MACD Strategy: Swing Mode
+# ─────────────────────────────────────────
+# 4h timeframe, wide targets, low frequency
+# Target: PF ≥ 1.5, Calmar ≥ 0.5
+
+name: rsi_macd
+mode: swing
+symbol: BTCUSDT
+tf: 4h
+
+rsi:
+  period: 14
+  enter_above: 50
+  pullback_zone: [40, 55]
+
+macd:
+  fast: 12
+  slow: 26
+  signal: 9
+
+sync_bars: 3 # RSI + MACD must sync within 3 bars
+
+risk:
+  atr_period: 14
+  sl_atr_mult: 2.0 # Wide stop for swing
+  tp_atr_mult: 3.0 # 2:3 R:R
+  timeout_bars: 10 # ~40 hours (10 * 4h)
+  fee_bps: 7
+
+filters:
+  min_adx: 18 # Only trade trending markets
+  max_spread_bps: 2.0
+  max_latency_ms: 300
+
+sizing:
+  r_per_trade: 0.5 # Risk 0.5% of account per trade
+  max_concurrent: 1
+
+cooldown_bars: 0 # No cooldown for swing
+
+# Partial take profits: 50% at 1R, 50% at 2R
+partial_take_profits: [1.0, 2.0]
+

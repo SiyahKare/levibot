@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import os
 import subprocess
-from typing import Dict
+
 
 def get_version() -> str:
     """Return version from ENV or default."""
@@ -11,7 +12,8 @@ def get_git_sha() -> str:
     """Return git SHA from ENV or try git command, fallback to 'unknown'."""
     sha = os.getenv("BUILD_SHA")
     if sha:
-        return sha[:7]  # short sha
+        value = sha.strip()
+        return value[:7] if len(value) >= 7 else value
     
     try:
         result = subprocess.run(
@@ -49,7 +51,7 @@ def get_git_branch() -> str:
     
     return "unknown"
 
-def get_build_info() -> Dict[str, str]:
+def get_build_info() -> dict[str, str]:
     """Return dict with version, git_sha, branch."""
     return {
         "version": get_version(),

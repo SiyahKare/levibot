@@ -1,0 +1,67 @@
+{
+  "BTCUSDT": {
+    "symbol": "BTCUSDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  },
+  "ETHUSDT": {
+    "symbol": "ETHUSDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  },
+  "SOLUSDT": {
+    "symbol": "SOLUSDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  },
+  "ATOMUSDT": {
+    "symbol": "ATOMUSDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  },
+  "AVAXUSDT": {
+    "symbol": "AVAXUSDT",
+    "registered_at": null,
+    "status": "starting",
+    "uptime_seconds": 0.0,
+    "last_heartbeat": null,
+    "error_count": 0,
+    "last_error": null,
+    "position": null,
+    "daily_pnl": 0.0,
+    "total_pnl": 0.0,
+    "trade_count": 0
+  }
+}

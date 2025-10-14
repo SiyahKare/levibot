@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from .types import PaperOrderRequest, PaperOrderResult
+import os
+
 from ..infra.logger import log_event
+from .types import PaperOrderRequest, PaperOrderResult
 
 
 def _synthetic_mark(symbol: str) -> float:
@@ -17,6 +19,8 @@ def place_paper_order(req: PaperOrderRequest) -> PaperOrderResult:
     mark = float(req.price) if req.price is not None else _synthetic_mark(req.symbol)
     qty = max(1e-6, req.notional_usd / max(mark, 1e-9))
 
+    risk_enabled = os.getenv("PAPER_RISK_DISABLE", "false").lower() != "true"
+
     log_event(
         "ORDER_NEW",
         {"symbol": req.symbol, "side": req.side, "qty": qty, "price": mark},
@@ -29,6 +33,7 @@ def place_paper_order(req: PaperOrderRequest) -> PaperOrderResult:
         symbol=req.symbol,
         trace_id=req.trace_id,
     )
+
     log_event(
         "POSITION_CLOSED",
         {"symbol": req.symbol, "pnl_usdt": 0.0, "qty": qty},

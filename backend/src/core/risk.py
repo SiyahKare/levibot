@@ -1,9 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass
-import time
+
 import os
 import threading
-from typing import Dict, Tuple, Optional, List
+import time
+from dataclasses import dataclass
 
 
 @dataclass
@@ -16,7 +16,7 @@ class RiskConfig:
     fallback_tp_pct: float = 0.020  # ATR yoksa %2.0
 
 
-def atr_wilder(high: List[float], low: List[float], close: List[float], period: int = 14) -> Optional[float]:
+def atr_wilder(high: list[float], low: list[float], close: list[float], period: int = 14) -> float | None:
     """Wilder ATR hesaplama; n < period+1 ise None döner."""
     n = min(len(high), len(low), len(close))
     if n < period + 1:
@@ -49,6 +49,11 @@ POLICIES = {
 # --- Runtime cache (thread-safe) ---
 _POLICY_LOCK = threading.Lock()
 _CURRENT = (os.getenv("RISK_POLICY", "moderate") or "moderate").lower()
+
+
+def _reset():
+    global _CURRENT
+    _CURRENT = (os.getenv("RISK_POLICY", "moderate") or "moderate").lower()
 
 
 def list_policies() -> list[str]:
@@ -107,9 +112,9 @@ def derive_sl_tp(side: str, price: float, atr: float, tp_hint=None, sl_hint=None
 class RiskEngine:
     def __init__(self, cfg: RiskConfig):
         self.cfg = cfg
-        self._last_ts: Dict[str, float] = {}  # per-symbol cooldown
+        self._last_ts: dict[str, float] = {}  # per-symbol cooldown
 
-    def allow(self, symbol: str, notional: float, now: float | None = None) -> Tuple[bool, str]:
+    def allow(self, symbol: str, notional: float, now: float | None = None) -> tuple[bool, str]:
         now = now or time.time()
         if notional > self.cfg.max_notional_usd:
             return False, "risk/max_notional"
@@ -121,7 +126,7 @@ class RiskEngine:
     def record(self, symbol: str, when: float | None = None) -> None:
         self._last_ts[symbol] = when or time.time()
 
-    def sl_tp(self, side: str, price: float, atr: Optional[float]) -> Tuple[float, float]:
+    def sl_tp(self, side: str, price: float, atr: float | None) -> tuple[float, float]:
         if atr and atr > 0:
             sl_off = atr * self.cfg.atr_sl_mult
             tp_off = atr * self.cfg.atr_tp_mult

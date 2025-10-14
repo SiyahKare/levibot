@@ -1,0 +1,71 @@
+ai_model: skops-local
+allow_symbols:
+- BTCUSDT
+- ETHUSDT
+canary_mode: true
+enable_ai_trading: true
+enable_mev_hunting: false
+enable_nft_sniping: false
+enable_telegram_alerts: true
+guardrails_circuit_breaker_enabled: true
+guardrails_circuit_breaker_latency_ms: 300
+guardrails_confidence_threshold: 0.6
+guardrails_cooldown_minutes: 30
+guardrails_max_daily_loss: -200.0
+guardrails_max_trade_usd: 300.0
+guardrails_symbol_allowlist:
+- BTCUSDT
+- ETHUSDT
+killed: false
+log_level: INFO
+max_api_calls_per_minute: 100
+max_daily_loss: -200.0
+max_leverage: 3.0
+max_open_positions: 5
+max_pos_notional: 2000.0
+max_position_size_usd: 1000.0
+max_trades_per_hour: 20
+metrics_enabled: true
+risk_preset: normal
+sentry_enabled: false
+slippage_bps: 2.0
+strategies:
+  day:
+    enabled: false
+    mode: paper
+  lse:
+    config:
+      atr:
+        k_enter: 0.8
+        period: 14
+      filters:
+        max_latency_ms: 120
+        max_spread_bps: 1
+        min_vol_bps: 5
+      leverage: 3
+      mode: paper
+      quote_budget: 1000
+      recording:
+        parquet: false
+        path: data/lse/
+      risk:
+        fee_bps: 7
+        hard_stop_bps: 15
+        max_daily_dd: 0.02
+        max_open_trades: 1
+        slippage_bps: 1.5
+        take_profit_bps: 25
+      symbol: BTCUSDT
+      windows:
+      - 3
+      - 15
+      - 60
+      zscore:
+        lookback: 120
+        z_enter: 1.5
+    enabled: false
+    mode: paper
+  mean_revert: true
+  swing:
+    enabled: false
+    mode: paper

@@ -1,0 +1,466 @@
+{
+  "dashboard": {
+    "title": "LEVIBOT Realtime Operations",
+    "tags": ["levibot", "realtime", "trading", "ops"],
+    "timezone": "utc",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "5s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "Portfolio Equity",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "levibot_equity",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 10000, "color": "yellow"},
+                {"value": 15000, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "Open Positions",
+        "gridPos": {"h": 4, "w": 3, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "levibot_open_positions",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 3, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Daily PnL",
+        "gridPos": {"h": 4, "w": 3, "x": 9, "y": 0},
+        "targets": [
+          {
+            "expr": "levibot_drawdown",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": -200, "color": "red"},
+                {"value": -100, "color": "yellow"},
+                {"value": 0, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "type": "stat",
+        "title": "Win Rate",
+        "gridPos": {"h": 4, "w": 3, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "levibot_win_rate",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 40, "color": "yellow"},
+                {"value": 50, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "type": "stat",
+        "title": "System Status",
+        "gridPos": {"h": 4, "w": 3, "x": 15, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"levibot-api\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "textMode": "name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "DOWN"},
+              {"type": "value", "value": "1", "text": "UP"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "type": "graph",
+        "title": "Equity Curve (1h)",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "levibot_equity",
+            "refId": "A",
+            "legendFormat": "Equity"
+          },
+          {
+            "expr": "levibot_starting_balance",
+            "refId": "B",
+            "legendFormat": "Starting Balance"
+          }
+        ],
+        "yaxes": [
+          {"format": "currencyUSD"},
+          {"show": false}
+        ],
+        "xaxis": {"mode": "time"},
+        "legend": {"show": true, "alignAsTable": true, "rightSide": false}
+      },
+      {
+        "id": 7,
+        "type": "graph",
+        "title": "SSE Event Rate",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "rate(levibot_latency_ms_count{stage=\"ticks\"}[1m]) * 60",
+            "refId": "A",
+            "legendFormat": "Ticks/min"
+          },
+          {
+            "expr": "rate(levibot_latency_ms_count{stage=\"signals\"}[1m]) * 60",
+            "refId": "B",
+            "legendFormat": "Signals/min"
+          }
+        ],
+        "yaxes": [
+          {"format": "short"},
+          {"show": false}
+        ],
+        "xaxis": {"mode": "time"}
+      },
+      {
+        "id": 8,
+        "type": "graph",
+        "title": "Engine Latency (p50, p95, p99)",
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(levibot_latency_ms_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "p50"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(levibot_latency_ms_bucket[5m]))",
+            "refId": "B",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(levibot_latency_ms_bucket[5m]))",
+            "refId": "C",
+            "legendFormat": "p99"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms"},
+          {"show": false}
+        ],
+        "xaxis": {"mode": "time"},
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [250], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["B", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "name": "High Latency Alert"
+        }
+      },
+      {
+        "id": 9,
+        "type": "graph",
+        "title": "Error Rate",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(levibot_errors_total[5m]) * 60",
+            "refId": "A",
+            "legendFormat": "{{module}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "errors/min"},
+          {"show": false}
+        ],
+        "xaxis": {"mode": "time"}
+      },
+      {
+        "id": 10,
+        "type": "table",
+        "title": "Recent Positions",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
+        "targets": [
+          {
+            "expr": "levibot_position_pnl",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true, "__name__": true, "instance": true, "job": true},
+              "indexByName": {},
+              "renameByName": {
+                "symbol": "Symbol",
+                "side": "Side",
+                "Value": "uPnL (USD)"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "type": "logs",
+        "title": "Recent Alerts",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 18},
+        "targets": [
+          {
+            "expr": "{job=\"levibot-api\"} |= \"ALERT\" or \"ERROR\" or \"CRITICAL\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": false,
+          "sortOrder": "Descending"
+        }
+      },
+      {
+        "id": 12,
+        "type": "bargauge",
+        "title": "HTTP Status Codes (5m)",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 26},
+        "targets": [
+          {
+            "expr": "sum by (status_code) (increase(levibot_http_requests_total[5m]))",
+            "refId": "A",
+            "legendFormat": "{{status_code}}"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 13,
+        "type": "stat",
+        "title": "Canary Mode",
+        "gridPos": {"h": 3, "w": 3, "x": 6, "y": 26},
+        "targets": [
+          {
+            "expr": "levibot_canary_mode",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "OFF"},
+              {"type": "value", "value": "1", "text": "ON"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 14,
+        "type": "stat",
+        "title": "Kill Switch",
+        "gridPos": {"h": 3, "w": 3, "x": 9, "y": 26},
+        "targets": [
+          {
+            "expr": "levibot_killed",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "ACTIVE"},
+              {"type": "value", "value": "1", "text": "KILLED"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 15,
+        "type": "graph",
+        "title": "Redis/DB Connections",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 26},
+        "targets": [
+          {
+            "expr": "levibot_redis_connections",
+            "refId": "A",
+            "legendFormat": "Redis"
+          },
+          {
+            "expr": "levibot_db_connections",
+            "refId": "B",
+            "legendFormat": "TimescaleDB"
+          }
+        ],
+        "yaxes": [
+          {"format": "short"},
+          {"show": false}
+        ],
+        "xaxis": {"mode": "time"}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "text": "Prometheus",
+            "value": "Prometheus"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Deployments",
+          "datasource": "Prometheus",
+          "expr": "levibot_build_info",
+          "tagKeys": "version,git_sha",
+          "textFormat": "Deploy: {{version}}",
+          "iconColor": "blue"
+        },
+        {
+          "name": "Alerts",
+          "datasource": "Prometheus",
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "tagKeys": "alertname",
+          "textFormat": "🚨 {{alertname}}",
+          "iconColor": "red"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}
+

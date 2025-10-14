@@ -1,0 +1,46 @@
+{
+  "timestamp": 1760156382.928925,
+  "iso_timestamp": "2025-10-11 04:19:42 UTC",
+  "flags": {
+    "ai_model": "skops-local",
+    "allow_symbols": [
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "canary_mode": true,
+    "enable_ai_trading": true,
+    "enable_mev_hunting": false,
+    "enable_nft_sniping": false,
+    "enable_telegram_alerts": true,
+    "guardrails_circuit_breaker_enabled": true,
+    "guardrails_circuit_breaker_latency_ms": 300,
+    "guardrails_confidence_threshold": 0.6,
+    "guardrails_cooldown_minutes": 30,
+    "guardrails_max_daily_loss": -200.0,
+    "guardrails_max_trade_usd": 300.0,
+    "guardrails_symbol_allowlist": [
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "killed": false,
+    "log_level": "INFO",
+    "max_api_calls_per_minute": 100,
+    "max_daily_loss": -200.0,
+    "max_leverage": 3.0,
+    "max_open_positions": 5,
+    "max_pos_notional": 2000.0,
+    "max_position_size_usd": 1000.0,
+    "max_trades_per_hour": 20,
+    "metrics_enabled": true,
+    "risk_preset": "normal",
+    "sentry_enabled": false,
+    "slippage_bps": 2.0,
+    "strategies": {
+      "telegram_llm": true,
+      "mean_revert": true,
+      "momentum": false,
+      "arbitrage": false
+    }
+  },
+  "source": "http://localhost:8000"
+}

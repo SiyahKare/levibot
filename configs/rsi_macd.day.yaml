@@ -1,0 +1,41 @@
+# RSI + MACD Strategy: Day Mode
+# ─────────────────────────────────────────
+# 15m timeframe, moderate targets, medium frequency
+# Target: PF ≥ 1.25
+
+name: rsi_macd
+mode: day
+symbol: BTCUSDT
+tf: 15m
+
+rsi:
+  period: 14
+  enter_above: 50
+  pullback_zone: [45, 50]
+
+macd:
+  fast: 12
+  slow: 26
+  signal: 9
+
+sync_bars: 3 # RSI + MACD must sync within 3 bars
+
+risk:
+  atr_period: 14
+  sl_atr_mult: 1.5 # Moderate stop
+  tp_atr_mult: 2.0 # 1.5:2.0 R:R
+  timeout_bars: 24 # ~6 hours (24 * 15m)
+  fee_bps: 7
+
+filters:
+  max_spread_bps: 1.2
+  max_latency_ms: 150
+  min_vol_bps_60s: 5
+
+sizing:
+  quote_budget: 300 # Fixed $300 per trade
+  max_concurrent: 1
+
+cooldown_bars: 8 # Wait 8 bars (~2 hours) after exit
+
+

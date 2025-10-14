@@ -1,11 +1,13 @@
 from __future__ import annotations
+
+import json
+import os
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-import os
-import json
-from pathlib import Path
-from datetime import datetime, timedelta
 
 from ...alerts.channels import deliver_alert_via, route_targets
 
@@ -17,13 +19,13 @@ class TriggerAlertRequest(BaseModel):
     summary: str
     severity: str = "info"  # info | low | medium | high | critical
     source: str = "manual"
-    labels: Optional[Dict[str, str]] = None
-    url: Optional[str] = None
+    labels: dict[str, str] | None = None
+    url: str | None = None
 
 
 class TriggerAlertResponse(BaseModel):
     status: str
-    targets: List[str]
+    targets: list[str]
 
 
 @router.post("/trigger", response_model=TriggerAlertResponse)
@@ -59,8 +61,8 @@ async def trigger_alert(req: TriggerAlertRequest):
 @router.get("/history")
 async def get_alert_history(
     limit: int = 50,
-    severity: Optional[str] = None,
-    source: Optional[str] = None,
+    severity: str | None = None,
+    source: str | None = None,
     days: int = 7
 ):
     """Get alert history from JSONL logs."""
@@ -70,7 +72,7 @@ async def get_alert_history(
     
     # Collect alerts from last N days
     alerts = []
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     for i in range(days):
         day = today - timedelta(days=i)
         day_dir = log_dir / day.strftime("%Y-%m-%d")
@@ -79,7 +81,7 @@ async def get_alert_history(
         
         for log_file in sorted(day_dir.glob("alerts*.jsonl")):
             try:
-                with open(log_file, "r", encoding="utf-8") as f:
+                with open(log_file, encoding="utf-8") as f:
                     for line in f:
                         try:
                             alert = json.loads(line.strip())
@@ -100,17 +102,17 @@ async def get_alert_history(
     return {"alerts": limited, "total": len(limited)}
 
 
-def _log_alert(alert: Dict[str, Any]) -> None:
+def _log_alert(alert: dict[str, Any]) -> None:
     """Log alert to JSONL file."""
     log_dir = Path(os.getenv("ALERT_LOG_DIR", "backend/data/alerts"))
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     day_dir = log_dir / today.strftime("%Y-%m-%d")
     day_dir.mkdir(parents=True, exist_ok=True)
     
     log_file = day_dir / "alerts.jsonl"
     record = {
         **alert,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(UTC).isoformat()
     }
     
     try:

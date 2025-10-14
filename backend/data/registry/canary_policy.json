@@ -1,0 +1,19 @@
+{
+  "mode": "paper",
+  "enabled": false,
+  "fraction": 0.10,
+  "min_confidence": 0.58,
+  "max_risk_per_trade": 0.006,
+  "guards": {
+    "max_staleness_sec": 1800,
+    "max_ece": 0.06,
+    "min_sharpe": 0.8
+  },
+  "promote_criteria": {
+    "min_days": 7,
+    "sharpe_improvement": 0.2,
+    "max_dd_ratio": 0.9
+  },
+  "updated_at": "2025-10-08T00:00:00Z"
+}
+

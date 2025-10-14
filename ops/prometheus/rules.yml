@@ -1,50 +1,195 @@
+# Prometheus Alert Rules for LEVIBOT Production
+# Kritik metrikler için alarm tanımları
+
 groups:
-  - name: levibot-recording
+  - name: levibot_critical
+    interval: 30s
     rules:
-      # HTTP error rate (%)
-      - record: job:http_request_errors:rate5m
-        expr: |
-          100 * sum(rate(levibot_http_requests_total{status!~"2.."}[5m])) 
-            / clamp_min(sum(rate(levibot_http_requests_total[5m])), 1)
+      # SSE tick akışı durması
+      - alert: SSENoTicks
+        expr: rate(levibot_latency_ms_count{stage="ticks"}[1m]) == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: sse
+        annotations:
+          summary: "SSE tick akışı durdu"
+          description: "Son 1 dakikadır SSE üzerinden tick eventi gelmedi. Market data akışı kesilmiş olabilir."
+          action: "docker compose logs api | grep -i sse && docker compose restart api"
 
-      # HTTP p95 latency (per endpoint)
-      - record: job:endpoint:latency_p95_seconds
-        expr: |
-          histogram_quantile(0.95, sum(rate(levibot_http_request_latency_seconds_bucket[5m])) by (le, endpoint))
+      # Trading engine hata artışı
+      - alert: TradingErrorsSpike
+        expr: increase(levibot_errors_total{module="trading"}[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: trading
+        annotations:
+          summary: "Trading hata artışı tespit edildi"
+          description: "Son 5 dakikada trading module'de {{ $value }} hata oluştu."
+          action: "curl http://localhost:8000/paper/positions | jq && docker compose logs api --tail=100"
 
-      # Events per second (POSITION_CLOSED)
-      - record: job:events_position_closed_rps
-        expr: |
-          sum(rate(levibot_events_total{event_type="POSITION_CLOSED"}[5m]))
+      # Günlük zarar limite yaklaşıyor
+      - alert: DailyLossNearLimit
+        expr: levibot_drawdown < -180
+        for: 1m
+        labels:
+          severity: warning
+          component: risk
+        annotations:
+          summary: "Günlük zarar limite yaklaştı"
+          description: "Mevcut drawdown: {{ $value }} USD. Limit: -200 USD. Acil inceleme gerekli."
+          action: "curl -X POST http://localhost:8000/admin/canary/on"
 
-  - name: levibot-alerts
+      # Engine latency yüksek
+      - alert: EngineLatencyHigh
+        expr: histogram_quantile(0.95, rate(levibot_latency_ms_bucket[5m])) > 250
+        for: 3m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Engine p95 latency çok yüksek"
+          description: "Son 5 dakikada p95 latency {{ $value }}ms. Normal: <100ms."
+          action: "docker stats levibot-api && curl http://localhost:8000/metrics | grep latency"
+
+  - name: levibot_operational
+    interval: 60s
     rules:
-      - alert: HighHttpErrorRate
-        expr: job:http_request_errors:rate5m > 1
+      # API container down
+      - alert: APIContainerDown
+        expr: up{job="levibot-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "API container erişilebilir değil"
+          description: "LEVIBOT API container'ı down. Tüm işlemler durdu."
+          action: "docker compose ps && docker compose up -d api"
+
+      # Redis bağlantı sorunu
+      - alert: RedisConnectionFailed
+        expr: levibot_redis_errors_total > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis bağlantı hatası"
+          description: "Redis ile bağlantı koptu. Cache çalışmıyor."
+          action: "docker compose logs redis && docker compose restart redis"
+
+      # TimescaleDB yavaş
+      - alert: DatabaseSlowQueries
+        expr: rate(levibot_db_query_duration_seconds_sum[5m]) / rate(levibot_db_query_duration_seconds_count[5m]) > 1.0
         for: 5m
         labels:
           severity: warning
+          component: database
         annotations:
-          summary: "HTTP error rate high (>1%)"
-          description: "Check logs and recent deploys."
+          summary: "Database sorguları yavaş"
+          description: "Ortalama query süresi {{ $value }}s. Normal: <0.1s"
+          action: "docker compose logs timescaledb && psql -d levibot -c 'SELECT * FROM pg_stat_activity;'"
 
-      - alert: HighLatencyP95
-        expr: job:endpoint:latency_p95_seconds > 0.5
+      # Disk dolmak üzere
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_avail_bytes{mountpoint="/app/backend/data"} / node_filesystem_size_bytes{mountpoint="/app/backend/data"}) < 0.1
         for: 5m
         labels:
           severity: warning
+          component: infrastructure
         annotations:
-          summary: "p95 latency > 500ms"
-          description: "Endpoint latency elevated."
+          summary: "Disk alanı azalıyor"
+          description: "Data volume'ünde sadece %{{ $value }} alan kaldı."
+          action: "du -sh /app/backend/data/* | sort -h && rm -rf /app/backend/data/logs/*.gz"
 
-      - alert: EventsGap
-        expr: job:events_position_closed_rps < 0.01
-        for: 10m
+  - name: levibot_business
+    interval: 60s
+    rules:
+      # Win rate düşük
+      - alert: LowWinRate
+        expr: levibot_win_rate < 40
+        for: 1h
+        labels:
+          severity: info
+          component: strategy
+        annotations:
+          summary: "Win rate düşük"
+          description: "Son 1 saatte win rate %{{ $value }}. Strateji gözden geçirilmeli."
+          action: "curl http://localhost:8000/paper/trades?limit=20 | jq '.trades[] | {symbol, pnl_usd}'"
+
+      # Çok fazla açık pozisyon
+      - alert: TooManyOpenPositions
+        expr: levibot_open_positions > 5
+        for: 5m
         labels:
           severity: warning
+          component: risk
         annotations:
-          summary: "Event gap on POSITION_CLOSED"
-          description: "Trading pipeline likely stalled."
+          summary: "Açık pozisyon sayısı limit üstünde"
+          description: "Şu anda {{ $value }} açık pozisyon var. Limit: 5"
+          action: "curl http://localhost:8000/paper/positions | jq '.positions[] | {symbol, pnl_usd}'"
 
+      # Pozisyon açılamıyor
+      - alert: NoNewPositionsOpened
+        expr: rate(levibot_positions_opened_total[30m]) == 0
+        for: 30m
+        labels:
+          severity: info
+          component: trading
+        annotations:
+          summary: "30 dakikadır yeni pozisyon açılmıyor"
+          description: "Trading engine pozisyon açmıyor. Signal yok veya kill switch aktif olabilir."
+          action: "curl http://localhost:8000/admin/flags | jq '.flags.killed'"
 
+      # Equity çok düştü
+      - alert: EquityDrawdownHigh
+        expr: (levibot_equity / levibot_starting_balance - 1) < -0.10
+        for: 5m
+        labels:
+          severity: warning
+          component: risk
+        annotations:
+          summary: "Portfolio drawdown %10'u geçti"
+          description: "Equity başlangıca göre %{{ $value }} düştü."
+          action: "curl http://localhost:8000/paper/summary | jq && curl -X POST http://localhost:8000/admin/kill"
 
+  - name: levibot_integrations
+    interval: 60s
+    rules:
+      # Telegram bot çalışmıyor
+      - alert: TelegramBotDown
+        expr: levibot_telegram_send_errors_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: telegram
+        annotations:
+          summary: "Telegram bot mesaj gönderemiyor"
+          description: "Son 5 dakikada Telegram hataları var. Alert sistemi çalışmıyor."
+          action: "curl http://localhost:8000/telegram/status | jq"
+
+      # OpenAI API limit
+      - alert: OpenAIRateLimitHit
+        expr: levibot_openai_ratelimit_errors_total > 0
+        for: 2m
+        labels:
+          severity: info
+          component: ai
+        annotations:
+          summary: "OpenAI rate limit'e ulaşıldı"
+          description: "AI modeli geçici olarak kullanılamıyor."
+          action: "echo 'OpenAI RPM limiti düşürülmeli' && curl http://localhost:8000/admin/set-flag?key=enable_ai_trading&value=false"
+
+      # CEX bağlantı sorunu
+      - alert: CEXConnectionFailed
+        expr: levibot_cex_connection_errors_total > 0
+        for: 3m
+        labels:
+          severity: critical
+          component: exchange
+        annotations:
+          summary: "CEX bağlantısı kesildi"
+          description: "Exchange API'ye bağlanılamıyor. Trading durdu."
+          action: "curl http://localhost:8000/health | jq '.cex_status'"

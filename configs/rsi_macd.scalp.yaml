@@ -1,0 +1,41 @@
+# RSI + MACD Strategy: Scalp Mode
+# ─────────────────────────────────────────
+# 1m timeframe, tight stops, high frequency
+# Target: 55%+ win rate, PF ≥ 1.15
+
+name: rsi_macd
+mode: scalp
+symbol: BTCUSDT
+tf: 1m
+
+rsi:
+  period: 14
+  enter_above: 50
+  pullback_zone: [40, 45]
+
+macd:
+  fast: 12
+  slow: 26
+  signal: 9
+
+sync_bars: 2 # RSI + MACD must sync within 2 bars
+
+risk:
+  atr_period: 14
+  sl_atr_mult: 1.2 # Tight stop for scalp
+  tp_atr_mult: 1.2 # Symmetric R:R
+  timeout_bars: 30 # Exit if no movement in 30 bars
+  fee_bps: 7
+
+filters:
+  max_spread_bps: 0.8 # Strict spread filter
+  max_latency_ms: 100 # Low latency required
+  min_vol_bps_60s: 7 # High volatility needed
+
+sizing:
+  quote_budget: 150 # Fixed $150 per trade
+  max_concurrent: 1
+
+cooldown_bars: 5 # Wait 5 bars after exit
+
+

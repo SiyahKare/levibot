@@ -1,0 +1,85 @@
+🚀 LEVIBOT REALTIME - Yeni/Güncellenmiş Dosyalar
+
+=== BACKEND - Core Realtime ===
+backend/src/infra/settings.py         (YENİ) - Merkezi konfigürasyon
+backend/src/infra/db.py                (YENİ) - TimescaleDB async client
+backend/src/infra/redis_stream.py      (YENİ) - Redis XStream wrapper
+
+backend/src/realtime/__init__.py       (YENİ) - Realtime modül
+backend/src/realtime/schemas.py        (YENİ) - Tick, Signal, Candle schemas
+backend/src/realtime/dispatcher.py     (YENİ) - Event processing pipeline
+
+backend/src/market/__init__.py         (YENİ) - Market data modül
+backend/src/market/normalize.py        (YENİ) - Symbol normalization
+backend/src/market/ws_mexc.py          (YENİ) - MEXC WebSocket feed
+
+backend/src/trading/__init__.py        (YENİ) - Trading modül
+backend/src/trading/slippage.py        (YENİ) - Slippage & fee calc
+backend/src/trading/risk_guard.py      (YENİ) - Real-time risk guard
+backend/src/trading/paper_engine_rt.py (YENİ) - Tick-driven paper engine
+
+backend/src/ai/prompts.py              (YENİ) - AI prompt templates
+backend/src/ai/openai_client.py        (GÜNCEL) - Signal extraction
+
+backend/src/app/main.py                (GÜNCEL) - SSE endpoints (/stream/*)
+
+=== BACKEND - Database ===
+backend/sql/001_timescale_init.sql     (YENİ) - Hypertables
+backend/sql/010_caggs.sql              (YENİ) - Continuous aggregates
+
+=== BACKEND - Tests ===
+backend/tests/test_realtime_smoke.py   (YENİ) - Smoke tests
+
+=== FRONTEND ===
+frontend/panel/src/pages/PaperTrading.tsx  (GÜNCEL) - EventSource SSE
+
+=== INFRASTRUCTURE ===
+docker-compose.yml                     (GÜNCEL) - TimescaleDB eklendi
+backend/requirements.txt               (GÜNCEL) - asyncpg, websockets
+ops/nginx.conf                         (GÜNCEL) - Stream endpoints
+
+=== DOCUMENTATION ===
+RUNBOOK_REALTIME.md                    (YENİ) - Production deployment guide
+REALTIME_IMPLEMENTATION.md             (YENİ) - Complete feature list
+env.realtime.example                   (YENİ) - Environment template
+REALTIME_FILES.txt                     (YENİ) - Bu dosya
+
+=== KOMUTLAR ===
+
+# Docker ile başlat
+docker-compose up -d
+
+# Health check
+curl http://localhost:8000/healthz
+curl http://localhost:8000/stream/ticks  # SSE stream
+
+# Panel
+open http://localhost:3001
+
+# Logs
+docker-compose logs -f api
+
+# Stop
+docker-compose down
+
+=== ARCHİTECTURE ===
+
+MEXC WS → Redis Stream → Dispatcher → Paper Engine → SSE → Frontend
+             ↓                            ↓
+        TimescaleDB              Prometheus Metrics
+
+=== KEY FEATURES ===
+
+✅ Real-time WebSocket tick feed (MEXC)
+✅ Redis XStream event pipeline
+✅ TimescaleDB time-series storage
+✅ Tick-driven paper trading (NEVER REST)
+✅ Fair slippage & fee simulation
+✅ Risk guard (daily loss, position limits)
+✅ OpenAI signal extraction
+✅ SSE streams for frontend
+✅ Continuous aggregates (1s, 1m, 5m candles)
+✅ Auto-reconnect & error recovery
+✅ Docker Compose full stack
+✅ Comprehensive documentation
+

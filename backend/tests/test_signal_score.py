@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from backend.src.app.main import app
 
 
@@ -13,7 +14,8 @@ def test_signal_score_endpoints():
     r2 = c.post("/signals/ingest-and-score", params={"text": "avoid news, no trade", "source": "tg"})
     assert r2.status_code == 200
     j2 = r2.json()
-    assert j2["label"] in {"BUY", "SELL", "NO-TRADE"}
+    label = j2.get("label") or j2.get("score", {}).get("label")
+    assert label in {"BUY", "SELL", "NO-TRADE"}
 
 
 

@@ -1,0 +1,144 @@
+name: Nightly Replay & Drift Detection
+
+on:
+  schedule:
+    # Her gece saat 01:00 UTC'de çalış
+    - cron: "0 1 * * *"
+  
+  # Manuel tetikleme imkanı
+  workflow_dispatch:
+    inputs:
+      lookback_hours:
+        description: "Replay lookback hours"
+        required: false
+        default: "24"
+
+jobs:
+  replay:
+    name: 24h Market Replay
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: levibot
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      
+      - name: 🗄️ Setup test database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Import schema if exists
+          if [ -f backend/sql/001_timescale_init.sql ]; then
+            psql -h localhost -U postgres -d levibot -f backend/sql/001_timescale_init.sql
+          fi
+          
+          # Create minimal test data (optional)
+          echo "Database ready for replay"
+      
+      - name: 🔄 Run replay script
+        env:
+          PG_DSN: postgresql://postgres:postgres@localhost:5432/levibot
+          REPLAY_HOURS: ${{ github.event.inputs.lookback_hours || '24' }}
+          REPLAY_OUTPUT: ./reports
+        run: |
+          mkdir -p reports
+          python scripts/replay_24h.py | tee replay_output.log
+      
+      - name: 📊 Upload replay report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: replay-report-${{ github.run_number }}
+          path: |
+            reports/replay_*.json
+            replay_output.log
+          retention-days: 30
+      
+      - name: 🔍 Check tolerance
+        id: tolerance_check
+        run: |
+          # Parse JSON report and check tolerance_ok
+          REPORT=$(ls -t reports/replay_*.json | head -1)
+          if [ -f "$REPORT" ]; then
+            TOLERANCE_OK=$(jq -r '.drift_detection.tolerance_ok' "$REPORT")
+            echo "tolerance_ok=$TOLERANCE_OK" >> $GITHUB_OUTPUT
+            
+            if [ "$TOLERANCE_OK" = "false" ]; then
+              echo "⚠️ DRIFT DETECTED!"
+              exit 1
+            fi
+          fi
+      
+      - name: 📢 Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Nightly replay failed or drift detected!"
+          echo "Check artifacts for detailed report."
+          # Buraya Telegram/Slack notification eklenebilir
+
+  summary:
+    name: Generate Summary
+    runs-on: ubuntu-latest
+    needs: replay
+    if: always()
+    
+    steps:
+      - name: 📥 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: replay-report-*
+          merge-multiple: true
+      
+      - name: 📝 Generate summary
+        run: |
+          echo "## 🌙 Nightly Replay Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          REPORT=$(ls -t replay_*.json | head -1)
+          if [ -f "$REPORT" ]; then
+            echo "### 📊 Results" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            jq '.summary' "$REPORT" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract key metrics
+            TOLERANCE_OK=$(jq -r '.drift_detection.tolerance_ok' "$REPORT")
+            DRIFT=$(jq -r '.drift_detection.drift_detected' "$REPORT")
+            EVENTS=$(jq -r '.market_data.events' "$REPORT")
+            
+            if [ "$TOLERANCE_OK" = "true" ]; then
+              echo "✅ **Status**: PASSED" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️  **Status**: DRIFT DETECTED" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "- Market events: $EVENTS" >> $GITHUB_STEP_SUMMARY
+            echo "- Drift detected: $DRIFT" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ No report generated" >> $GITHUB_STEP_SUMMARY
+          fi
+

@@ -1,137 +1,304 @@
-import { useEffect, useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { EventStats, getEventStats, getEventTimeseries, getTopTraces, TimeSeries, TracesResp } from "../api";
-
-const COLORS = ["#2563eb","#16a34a","#f59e0b","#ef4444","#7c3aed","#0891b2","#f472b6","#84cc16","#22d3ee","#fb7185"];
+/**
+ * Analytics Page
+ * Displays trading analytics with date range selection, confidence deciles, and CSV export
+ */
+import { DateRange } from "@/components/DateRange";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { api } from "@/lib/api";
+import { useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { toast } from "sonner";
+import useSWR from "swr";
 
 export default function Analytics() {
-  const [days, setDays] = useState<number>(1);
-  const [typesCsv, setTypesCsv] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [stats, setStats] = useState<EventStats | null>(null);
-  const [series, setSeries] = useState<TimeSeries | null>(null);
-  const [traces, setTraces] = useState<TracesResp | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [interval, setIntervalStr] = useState<"1m"|"5m"|"15m"|"1h">("5m");
+  const [fromIso, setFrom] = useState<string>("");
+  const [toIso, setTo] = useState<string>("");
+  const [win, setWin] = useState<"24h" | "7d">("24h");
 
-  const refresh = async () => {
-    setLoading(true);
-    setError(null);
+  // Fetch deciles data
+  const { data: dec, isLoading: decilesLoading } = useSWR(
+    `/analytics/deciles?${win}&${fromIso}&${toIso}`,
+    () =>
+      api.decilesRange({
+        window: win,
+        from: fromIso || undefined,
+        to: toIso || undefined,
+      }),
+    { refreshInterval: 30000 }
+  );
+
+  // Fetch PnL by strategy
+  const { data: pnl, isLoading: pnlLoading } = useSWR(
+    `/analytics/pnl?${win}&${fromIso}&${toIso}`,
+    () =>
+      api.pnlByStrategyRange({
+        window: win,
+        from: fromIso || undefined,
+        to: toIso || undefined,
+      }),
+    { refreshInterval: 30000 }
+  );
+
+  // Fetch recent trades
+  const { data: trades } = useSWR(
+    "/analytics/trades/recent",
+    () => api.tradesRecent(200),
+    { refreshInterval: 30000 }
+  );
+
+  const decilesData =
+    dec?.buckets?.map((b: any) => ({
+      decile: b.decile,
+      trades: Number(b.count || 0),
+      pnl: Number(b.gross_pnl || 0),
+      confidence: Number(b.avg_confidence || 0),
+    })) || [];
+
+  const pnlData =
+    pnl?.items?.map((item: any) => ({
+      strategy: item.strategy,
+      pnl: Number(item.realized_pnl || 0),
+      trades: Number(item.trades || 0),
+    })) || [];
+
+  const handleExportCSV = async () => {
     try {
-      const [s, t, r] = await Promise.all([
-        getEventStats({ days, event_type: typesCsv || undefined }),
-        getEventTimeseries({ interval, days, event_type: typesCsv || undefined }),
-        getTopTraces({ days, limit: 20 })
-      ]);
-      setStats(s); setSeries(t); setTraces(r);
-    } catch (e:any) {
-      setError(e.message || "fetch failed");
-    } finally {
-      setLoading(false);
+      const res = await api.exportTradesCSV({
+        from: fromIso || undefined,
+        to: toIso || undefined,
+        limit: 5000,
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `trades_${fromIso || "from"}_${toIso || "to"}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV exported successfully!");
+    } catch (error) {
+      toast.error(`Export failed: ${error}`);
     }
   };
 
-  useEffect(() => { refresh(); /* auto-refresh */ const id = setInterval(refresh, 30000); return () => clearInterval(id); }, [days, typesCsv, interval]); // eslint-disable-line
-
-  const pieData = useMemo(() => {
-    if (!stats) return [];
-    return Object.entries(stats.event_types).map(([name, value]) => ({ name, value }));
-  }, [stats]);
-
-  const symData = useMemo(() => {
-    if (!stats) return [];
-    const arr = Object.entries(stats.symbols).map(([symbol, count]) => ({ symbol, count }));
-    arr.sort((a,b)=>b.count-a.count);
-    return arr.slice(0,10);
-  }, [stats]);
-
   return (
-    <div className="p-4 bg-white rounded-2xl shadow">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Analytics Dashboard</h2>
-        <div className="flex gap-2">
-          <select className="border rounded px-2 py-1" value={days} onChange={e=>setDays(parseInt(e.target.value))}>
-            <option value={1}>Last 24h</option>
-            <option value={7}>Last 7d</option>
-            <option value={30}>Last 30d</option>
-          </select>
-          <select className="border rounded px-2 py-1" value={interval} onChange={e=>setIntervalStr(e.target.value as any)}>
-            <option value="1m">1m</option><option value="5m">5m</option><option value="15m">15m</option><option value="1h">1h</option>
-          </select>
-          <input className="border rounded px-2 py-1 w-64" placeholder="event_type CSV (e.g. SIGNAL_SCORED,POSITION_CLOSED)" value={typesCsv} onChange={e=>setTypesCsv(e.target.value)} />
-          <button className="px-3 py-1 bg-black text-white rounded" onClick={refresh}>Refresh</button>
+    <div className="p-6 space-y-6">
+      {/* Header Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+          Trading Analytics
+        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Window Buttons */}
+          {(["24h", "7d"] as const).map((w) => (
+            <button
+              key={w}
+              onClick={() => setWin(w)}
+              className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                w === win
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              {w}
+            </button>
+          ))}
+          {/* Export CSV Button */}
+          <button
+            onClick={handleExportCSV}
+            className="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-sm font-medium"
+          >
+            📊 Export CSV
+          </button>
         </div>
       </div>
 
-      {error && <div className="text-red-600 mb-3">Error: {error}</div>}
-      {loading && <div className="text-gray-500 mb-3">Loading…</div>}
-
-      {/* Row 1: Pie + Line */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-3 border rounded-xl">
-          <h3 className="font-medium mb-2">Event Type Distribution</h3>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={100} label>
-                  {pieData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+      {/* Main Grid */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Confidence → PnL Chart */}
+        <div className="p-6 rounded-2xl shadow bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              Confidence → PnL Deciles
+            </h3>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {decilesData.length} buckets
+            </span>
           </div>
-          <div className="text-sm text-gray-500 mt-2">Total: {stats?.total ?? 0}</div>
-        </div>
-
-        <div className="p-3 border rounded-xl">
-          <h3 className="font-medium mb-2">Events Timeline ({interval})</h3>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <LineChart data={series?.points ?? []} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="ts" tick={{ fontSize: 10 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Line type="monotone" dataKey="count" dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Symbols + Traces */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div className="p-3 border rounded-xl">
-          <h3 className="font-medium mb-2">Top Symbols</h3>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <BarChart data={symData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="symbol" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#2563eb" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-80">
+            {decilesLoading ? (
+              <Skeleton className="h-full" />
+            ) : (
+              <ResponsiveContainer>
+                <BarChart data={decilesData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e4e4e7"
+                    className="dark:stroke-zinc-800"
+                  />
+                  <XAxis
+                    dataKey="decile"
+                    stroke="#71717a"
+                    className="dark:stroke-zinc-400"
+                  />
+                  <YAxis stroke="#71717a" className="dark:stroke-zinc-400" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#27272a",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="pnl" fill="#10b981" name="PnL ($)" />
+                  <Bar dataKey="trades" fill="#3b82f6" name="Trades" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
-        <div className="p-3 border rounded-xl">
-          <h3 className="font-medium mb-2">Top Traces</h3>
-          <div className="overflow-auto max-h-64">
+        {/* Date Range Picker */}
+        <div className="p-6 rounded-2xl shadow bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4">
+            📅 Date Range Filter
+          </h3>
+          <DateRange
+            fromIso={fromIso}
+            toIso={toIso}
+            onChange={(r) => {
+              setFrom(r.fromIso || "");
+              setTo(r.toIso || "");
+            }}
+          />
+        </div>
+
+        {/* PnL by Strategy */}
+        <div className="p-6 rounded-2xl shadow bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              PnL by Strategy
+            </h3>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {pnlData.length} strategies
+            </span>
+          </div>
+          <div className="h-80">
+            {pnlLoading ? (
+              <Skeleton className="h-full" />
+            ) : (
+              <ResponsiveContainer>
+                <BarChart data={pnlData} layout="vertical">
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e4e4e7"
+                    className="dark:stroke-zinc-800"
+                  />
+                  <XAxis type="number" stroke="#71717a" />
+                  <YAxis
+                    dataKey="strategy"
+                    type="category"
+                    stroke="#71717a"
+                    width={100}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#27272a",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Bar dataKey="pnl" fill="#f59e0b" name="PnL ($)" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Trades Table */}
+        <div className="p-6 rounded-2xl shadow bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              Recent Trades
+            </h3>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {trades?.items?.length || 0} trades
+            </span>
+          </div>
+          <div className="overflow-auto max-h-80">
             <table className="w-full text-sm">
-              <thead><tr className="text-left"><th className="py-1">Trace</th><th>Events</th><th>Duration</th><th>First</th><th>Last</th></tr></thead>
+              <thead>
+                <tr className="text-left border-b border-zinc-200 dark:border-zinc-800">
+                  <th className="py-2 text-zinc-600 dark:text-zinc-400">
+                    Time
+                  </th>
+                  <th className="py-2 text-zinc-600 dark:text-zinc-400">
+                    Symbol
+                  </th>
+                  <th className="py-2 text-zinc-600 dark:text-zinc-400">
+                    Side
+                  </th>
+                  <th className="py-2 text-zinc-600 dark:text-zinc-400">
+                    Strategy
+                  </th>
+                  <th className="py-2 text-zinc-600 dark:text-zinc-400">
+                    Conf
+                  </th>
+                </tr>
+              </thead>
               <tbody>
-                {(traces?.rows ?? []).map((r)=>(
-                  <tr key={r.trace_id} className="border-t">
-                    <td className="py-1 font-mono">{r.trace_id.slice(0,10)}</td>
-                    <td>{r.event_count}</td>
-                    <td>{r.duration_sec}s</td>
-                    <td className="text-xs text-gray-500">{new Date(r.first_ts).toLocaleTimeString()}</td>
-                    <td className="text-xs text-gray-500">{new Date(r.last_ts).toLocaleTimeString()}</td>
+                {trades?.items && trades.items.length > 0 ? (
+                  trades.items.slice(0, 10).map((t: any, i: number) => (
+                    <tr
+                      key={i}
+                      className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <td className="py-2 font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                        {new Date(t.ts).toLocaleTimeString()}
+                      </td>
+                      <td className="py-2 font-medium text-zinc-900 dark:text-zinc-100">
+                        {t.symbol}
+                      </td>
+                      <td
+                        className={`py-2 font-bold uppercase ${
+                          t.side === "buy"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-rose-600 dark:text-rose-400"
+                        }`}
+                      >
+                        {t.side}
+                      </td>
+                      <td className="py-2 text-zinc-700 dark:text-zinc-300">
+                        {t.strategy || "—"}
+                      </td>
+                      <td className="py-2 text-zinc-700 dark:text-zinc-300">
+                        {t.confidence
+                          ? `${Math.round(t.confidence * 100)}%`
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-4 text-center text-zinc-400 dark:text-zinc-600"
+                    >
+                      No trades yet
+                    </td>
                   </tr>
-                ))}
-                {(!traces || traces.rows.length===0) && <tr><td className="py-2 text-gray-500" colSpan={5}>No traces</td></tr>}
+                )}
               </tbody>
             </table>
           </div>
@@ -140,4 +307,3 @@ export default function Analytics() {
     </div>
   );
 }
-

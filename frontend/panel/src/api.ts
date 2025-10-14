@@ -19,50 +19,79 @@ export async function getRiskPolicy() {
 }
 
 export async function setRiskPolicy(name: string, apiKey?: string) {
-  const headers: Record<string,string> = {"Content-Type":"application/json"};
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (apiKey) headers["X-API-Key"] = apiKey;
-  const r = await fetch("/risk/policy", { method:"PUT", headers, body: JSON.stringify({name}) });
+  const r = await fetch("/risk/policy", {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ name }),
+  });
   if (!r.ok) throw new Error("policy put failed");
   return r.json();
 }
 
-export async function getDexQuote(params: {sell:string; buy:string; amount:number; chain?:string}) {
-  const q = new URLSearchParams({ sell: params.sell, buy: params.buy, amount: String(params.amount), ...(params.chain?{chain:params.chain}:{}) });
-  const r = await fetch(`/dex/quote?${q.toString()}`); if (!r.ok) throw new Error("dex quote failed"); return r.json();
+export async function getDexQuote(params: {
+  sell: string;
+  buy: string;
+  amount: number;
+  chain?: string;
+}) {
+  const q = new URLSearchParams({
+    sell: params.sell,
+    buy: params.buy,
+    amount: String(params.amount),
+    ...(params.chain ? { chain: params.chain } : {}),
+  });
+  const r = await fetch(`/dex/quote?${q.toString()}`);
+  if (!r.ok) throw new Error("dex quote failed");
+  return r.json();
 }
 
 export async function getNftFloor(collection: string) {
-  const r = await fetch(`/nft/floor?collection=${encodeURIComponent(collection)}`); if (!r.ok) throw new Error("nft floor failed"); return r.json();
+  const r = await fetch(
+    `/nft/floor?collection=${encodeURIComponent(collection)}`
+  );
+  if (!r.ok) throw new Error("nft floor failed");
+  return r.json();
 }
 
-export async function getNftSnipePlan(collection: string, budget: number, discountPct: number) {
-  const q = new URLSearchParams({ collection, budget_usd: String(budget), discount_pct: String(discountPct) });
-  const r = await fetch(`/nft/snipe/plan?${q.toString()}`); if (!r.ok) throw new Error("nft snipe failed"); return r.json();
+export async function getNftSnipePlan(
+  collection: string,
+  budget: number,
+  discountPct: number
+) {
+  const q = new URLSearchParams({
+    collection,
+    budget_usd: String(budget),
+    discount_pct: String(discountPct),
+  });
+  const r = await fetch(`/nft/snipe/plan?${q.toString()}`);
+  if (!r.ok) throw new Error("nft snipe failed");
+  return r.json();
 }
 
 export async function getL2Yields() {
-  const r = await fetch(`/l2/yields`); if (!r.ok) throw new Error("l2 yields failed"); return r.json();
+  const r = await fetch(`/l2/yields`);
+  if (!r.ok) throw new Error("l2 yields failed");
+  return r.json();
 }
 
-export async function getDexQuoteSeries(sell="ETH", buy="USDC", points=20){
-  // basit client-side timeseries: ardışık 20 quote çekip timestamp'li dön
-  const out:{t:number; p:number}[]=[]
-  for(let i=0;i<points;i++){
-    const r=await fetch(`/dex/quote?sell=${sell}&buy=${buy}&amount=0.1`);
-    const j=await r.json(); out.push({t:Date.now(), p:j.price||null});
-    await new Promise(r=>setTimeout(r,150)); // kısa bekleme (demo için)
+export async function getDexQuoteSeries(
+  sell = "ETH",
+  buy = "USDC",
+  points = 20
+) {
+  const out: { t: number; p: number | null }[] = [];
+  for (let i = 0; i < points; i++) {
+    const r = await fetch(`/dex/quote?sell=${sell}&buy=${buy}&amount=0.1`);
+    const j = await r.json();
+    out.push({ t: Date.now(), p: j.price || null });
+    await new Promise((resolve) => setTimeout(resolve, 150));
   }
   return out;
 }
-
-// --- Alerts API helpers -------------------------------
-export type AlertItem = {
-  ts: number;
-  title: string;
-  severity: "info" | "low" | "medium" | "high" | "critical";
-  source?: string;
-  details?: Record<string, unknown> | null;
-};
 
 export async function getAlertsHistory(params: {
   severity?: string;
@@ -72,8 +101,10 @@ export async function getAlertsHistory(params: {
   q?: string;
 }): Promise<AlertItem[]> {
   const u = new URL("/alerts/history", window.location.origin);
-  if (params.severity && params.severity !== "all") u.searchParams.set("severity", params.severity);
-  if (params.source && params.source !== "all") u.searchParams.set("source", params.source);
+  if (params.severity && params.severity !== "all")
+    u.searchParams.set("severity", params.severity);
+  if (params.source && params.source !== "all")
+    u.searchParams.set("source", params.source);
   u.searchParams.set("days", String(params.days ?? 3));
   u.searchParams.set("limit", String(params.limit ?? 300));
   if (params.q && params.q.trim()) u.searchParams.set("q", params.q.trim());
@@ -82,7 +113,9 @@ export async function getAlertsHistory(params: {
   return (await r.json()) as AlertItem[];
 }
 
-export async function triggerTestAlert(payload?: Partial<AlertItem> & { targets?: string[] }) {
+export async function triggerTestAlert(
+  payload?: Partial<AlertItem> & { targets?: string[] }
+) {
   const r = await fetch("/alerts/trigger", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -98,25 +131,9 @@ export async function triggerTestAlert(payload?: Partial<AlertItem> & { targets?
   return r.json();
 }
 
-// --- Timeline API helpers (PR-41) ------------------------
-export type EventFilter = {
-  event_type?: string;   // CSV list
-  symbol?: string;
-  trace_id?: string;
-  since_iso?: string;
-  q?: string;
-  limit?: number;
-};
-
-export type TimelineEvent = {
-  ts: string;           // ISO timestamp from backend
-  event_type: string;
-  payload?: Record<string, any>;
-  trace_id?: string;
-  symbol?: string;
-};
-
-export async function fetchEventsTimeline(f: EventFilter = {}): Promise<TimelineEvent[]> {
+export async function fetchEventsTimeline(
+  f: EventFilter = {}
+): Promise<TimelineEvent[]> {
   const p = new URLSearchParams();
   if (f.event_type) p.set("event_type", f.event_type);
   if (f.symbol) p.set("symbol", f.symbol);
@@ -129,14 +146,11 @@ export async function fetchEventsTimeline(f: EventFilter = {}): Promise<Timeline
   return (await r.json()) as TimelineEvent[];
 }
 
-// --- Analytics API helpers (PR-44) ------------------------
-export type EventStats = { total: number; event_types: Record<string, number>; symbols: Record<string, number> };
-export type TimePoint = { ts: string; count: number };
-export type TimeSeries = { interval: string; points: TimePoint[] };
-export type TraceRow = { trace_id: string; event_count: number; first_ts: string; last_ts: string; duration_sec: number };
-export type TracesResp = { total: number; rows: TraceRow[] };
-
-export async function getEventStats(params?: { days?: number; since_iso?: string; event_type?: string }) {
+export async function getEventStats(params?: {
+  days?: number;
+  since_iso?: string;
+  event_type?: string;
+}) {
   const q = new URLSearchParams();
   if (params?.days) q.set("days", String(params.days));
   if (params?.since_iso) q.set("since_iso", params.since_iso);
@@ -146,7 +160,12 @@ export async function getEventStats(params?: { days?: number; since_iso?: string
   return (await res.json()) as EventStats;
 }
 
-export async function getEventTimeseries(params?: { interval?: "1m"|"5m"|"15m"|"1h"; days?: number; since_iso?: string; event_type?: string }) {
+export async function getEventTimeseries(params?: {
+  interval?: "1m" | "5m" | "15m" | "1h";
+  days?: number;
+  since_iso?: string;
+  event_type?: string;
+}) {
   const q = new URLSearchParams();
   q.set("interval", params?.interval ?? "5m");
   if (params?.days) q.set("days", String(params.days));
@@ -157,7 +176,11 @@ export async function getEventTimeseries(params?: { interval?: "1m"|"5m"|"15m"|"
   return (await res.json()) as TimeSeries;
 }
 
-export async function getTopTraces(params?: { days?: number; since_iso?: string; limit?: number }) {
+export async function getTopTraces(params?: {
+  days?: number;
+  since_iso?: string;
+  limit?: number;
+}) {
   const q = new URLSearchParams();
   if (params?.days) q.set("days", String(params.days));
   if (params?.since_iso) q.set("since_iso", params.since_iso);
@@ -166,4 +189,19 @@ export async function getTopTraces(params?: { days?: number; since_iso?: string;
   if (!res.ok) throw new Error("traces failed");
   return (await res.json()) as TracesResp;
 }
+
+export async function askTelegramBrain(payload: TelegramAiBrainAskPayload) {
+  const res = await fetch("/telegram/ai/brain/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("AI ask failed");
+  return (await res.json()) as TelegramAiBrainAskResponse;
+}
+
+
+
+
+
 

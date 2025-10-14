@@ -1,22 +1,27 @@
 from __future__ import annotations
-import os, time, threading
-from typing import Dict, Tuple
-from fastapi import Request, HTTPException
+
+import os
+import threading
+import time
+
+from fastapi import HTTPException, Request
+
 from . import redis_rl
 
 # thread-safe kaydetme
 _lock = threading.Lock()
 # key -> (window_start_ts, count, burst_tokens)
-_state: Dict[str, Tuple[float, int, float]] = {}
+_state: dict[str, tuple[float, int, float]] = {}
 
 def _conf():
+    enabled = os.getenv("SECURITY_ENABLED", "true").lower() == "true"
     prefixes = [p.strip() for p in os.getenv("SECURED_PATH_PREFIXES", "/signals,/exec,/paper").split(",") if p.strip()]
-    api_keys = [k.strip() for k in os.getenv("API_KEYS","").split(",") if k.strip()]
+    api_keys = [k.strip() for k in os.getenv("API_KEYS"," ").split(",") if k.strip()]
     win = int(os.getenv("RATE_LIMIT_WINDOW_SEC","60"))
     maxi = int(os.getenv("RATE_LIMIT_MAX","120"))
     burst = int(os.getenv("RATE_LIMIT_BURST","40"))
     rl_by = os.getenv("RATE_LIMIT_BY","ip").lower()  # ip|key
-    return prefixes, set(api_keys), win, maxi, burst, rl_by
+    return enabled, prefixes, set(api_keys), win, maxi, burst, rl_by
 
 def _token(request: Request, api_key: str | None, rl_by: str) -> str:
     if rl_by == "key" and api_key:
@@ -31,8 +36,11 @@ def _is_secured(path: str, prefixes: list[str]) -> bool:
 def require_api_key_and_ratelimit():
     async def _mw(request: Request, call_next):
         # Her request'te ENV'i yeniden oku (test uyumluluğu için)
-        prefixes, api_keys, win, maxi, burst, rl_by = _conf()
-        
+        enabled, prefixes, api_keys, win, maxi, burst, rl_by = _conf()
+
+        if not enabled:
+            return await call_next(request)
+
         path = request.url.path
         if not _is_secured(path, prefixes):
             return await call_next(request)
@@ -45,7 +53,7 @@ def require_api_key_and_ratelimit():
 
         # --- Rate limit (Redis → fallback in-memory) ---
         token = _token(request, api_key, rl_by)
-        
+
         if redis_rl.enabled():
             # Redis-backed distributed rate limit
             ok, cnt, reset_at = await redis_rl.check_allow(token)

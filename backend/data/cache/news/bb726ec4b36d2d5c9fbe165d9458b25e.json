@@ -1,0 +1,7 @@
+{
+  "asset": "BTC",
+  "event_type": "adoption",
+  "impact": 1,
+  "horizon": "daily",
+  "confidence": 0.9
+}

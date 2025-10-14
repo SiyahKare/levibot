@@ -1,0 +1,132 @@
+{
+  "dashboard": {
+    "title": "LEVIBOT - ML Health Dashboard",
+    "tags": ["levibot", "ml", "production"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Prediction Latency (p50, p95, p99)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot:predict_latency:p50",
+            "legendFormat": "p50"
+          },
+          {
+            "expr": "levibot:predict_latency:p95",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "levibot:predict_latency:p99",
+            "legendFormat": "p99"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Latency"
+          }
+        ]
+      },
+      {
+        "title": "Prediction Success Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "levibot:predict_success_rate"
+          }
+        ],
+        "format": "percentunit",
+        "valueName": "current",
+        "thresholds": "0.95,0.99"
+      },
+      {
+        "title": "Fallback Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "levibot:fallback_rate"
+          }
+        ],
+        "format": "percentunit",
+        "valueName": "current",
+        "thresholds": "0.05,0.1"
+      },
+      {
+        "title": "Feature Staleness by Symbol",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_features_staleness_seconds",
+            "legendFormat": "{{ symbol }}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Staleness"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 60,
+            "colorMode": "critical"
+          }
+        ]
+      },
+      {
+        "title": "Market Tick Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "levibot_market_ticks_per_minute",
+            "legendFormat": "{{ symbol }}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Ticks/min"
+          }
+        ]
+      },
+      {
+        "title": "Active Model",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "levibot_active_model_info",
+            "format": "table",
+            "instant": true
+          }
+        ]
+      },
+      {
+        "title": "Prediction Requests (by model)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(levibot_predict_requests_total[5m])",
+            "legendFormat": "{{ model_name }} - {{ status }}"
+          }
+        ],
+        "stack": true
+      },
+      {
+        "title": "Fallback Events (by reason)",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (reason) (increase(levibot_fallback_events_total[1h]))"
+          }
+        ]
+      }
+    ],
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    }
+  }
+}
+

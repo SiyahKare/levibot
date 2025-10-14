@@ -1,0 +1,32 @@
+{
+  "run_date": "2025-10-13",
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "results": [
+    {
+      "symbol": "BTCUSDT",
+      "lgbm_path": "backend/data/models/2025-10-13/BTCUSDT/lgbm.pkl",
+      "tft_path": "backend/data/models/2025-10-13/BTCUSDT/tft.pt",
+      "lgbm_score": 0.24477777777777776,
+      "tft_score": 0.52,
+      "best_score": 0.52,
+      "best_model": "TFT"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "lgbm_path": "backend/data/models/2025-10-13/ETHUSDT/lgbm.pkl",
+      "tft_path": "backend/data/models/2025-10-13/ETHUSDT/tft.pt",
+      "lgbm_score": 0.24130555555555555,
+      "tft_score": 0.52,
+      "best_score": 0.52,
+      "best_model": "TFT"
+    }
+  ],
+  "global_best": {
+    "symbol": "BTCUSDT",
+    "model": "TFT",
+    "score": 0.52
+  }
+}

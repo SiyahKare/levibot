@@ -1,0 +1,39 @@
+# Daytrade Engine Configuration
+# Intraday momentum strategy (5m-15m timeframe)
+
+symbol: BTCUSDT
+mode: paper
+leverage: 2
+quote_budget: 1000.0
+base_tf: "5m"
+
+# EMA crossover
+ema_fast: 20
+ema_slow: 50
+
+# Breakout detection
+donchian_period: 20
+
+# Momentum filter
+rsi_period: 14
+
+# Risk management
+risk:
+  max_daily_dd: 0.03
+  max_open_trades: 2
+  slippage_bps: 1.0
+  fee_bps: 7
+  hard_stop_bps: 20
+  take_profit_bps: 35
+  rr_min: 1.3
+
+# Entry filters
+filters:
+  min_vol_bps: 10
+  max_spread_bps: 1.5
+  max_latency_ms: 150
+
+# Data recording
+recording:
+  parquet: false
+  path: "data/day/"
