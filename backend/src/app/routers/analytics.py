@@ -39,7 +39,7 @@ def _iter_events(days: int, since_iso: str | None) -> list[dict[str, Any]]:
                         ev = json.loads(line)
                         ts = ev.get("ts")
                         # ts: ISO string veya epoch olabilir
-                        if isinstance(ts, (int, float)):
+                        if isinstance(ts, int | float):
                             ev_dt = datetime.fromtimestamp(ts, tz=UTC)
                         else:
                             ev_dt = datetime.fromisoformat(
@@ -119,7 +119,7 @@ def analytics_timeseries(
     buckets: dict[str, int] = {}
     for e in evs:
         ts = e.get("ts")
-        if isinstance(ts, (int, float)):
+        if isinstance(ts, int | float):
             dt = datetime.fromtimestamp(ts, tz=UTC)
         else:
             dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
@@ -148,7 +148,7 @@ def analytics_traces(
         if not trace:
             continue
         ts = e.get("ts")
-        if isinstance(ts, (int, float)):
+        if isinstance(ts, int | float):
             dt = datetime.fromtimestamp(ts, tz=UTC)
         else:
             dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))

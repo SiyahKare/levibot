@@ -179,7 +179,7 @@ async def trades_recent(limit: int = Query(200, ge=1, le=1000)) -> dict[str, Any
         for r in rows:
             item = dict(r)
             for k, v in item.items():
-                if isinstance(v, (int, float)):
+                if isinstance(v, int | float):
                     item[k] = float(v)
             items.append(item)
 

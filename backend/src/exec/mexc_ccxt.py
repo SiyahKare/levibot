@@ -137,7 +137,7 @@ class MexcExecutor:
             # Try different price fields
             for key in ("last", "close", "bid", "ask"):
                 price = ticker.get(key)
-                if isinstance(price, (int, float)) and price > 0:
+                if isinstance(price, int | float) and price > 0:
                     return float(price)
             raise ValueError(f"No valid price in ticker: {ticker}")
         except Exception as e:

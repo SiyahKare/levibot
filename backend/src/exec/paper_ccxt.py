@@ -29,7 +29,7 @@ def _fetch_ticker_mark(exchange: str, symbol: str) -> float | None:
         t = ex.fetch_ticker(symbol)
         for k in ("last", "close", "bid", "ask"):
             v = t.get(k)
-            if isinstance(v, (int, float)) and v > 0:
+            if isinstance(v, int | float) and v > 0:
                 return float(v)
     except Exception:
         return None

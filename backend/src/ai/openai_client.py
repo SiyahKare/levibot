@@ -575,7 +575,7 @@ def telegram_ai_answer(
             symbol = item.get("symbol", "?")
             side = item.get("side", "?")
             conf = item.get("confidence")
-            conf_txt = f"{float(conf):.0%}" if isinstance(conf, (int, float)) else "n/a"
+            conf_txt = f"{float(conf):.0%}" if isinstance(conf, int | float) else "n/a"
             lines.append(f"{ts} | {chat} | {symbol} | {side} | confidence={conf_txt}")
         except Exception:
             continue

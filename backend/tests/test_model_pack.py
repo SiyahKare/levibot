@@ -67,10 +67,10 @@ def test_predict_and_log():
     # Check prediction log
     print("\n📊 Testing prediction log...")
 
-    l = requests.get(f"{API}/analytics/predictions/recent?limit=5")
-    assert l.ok, f"Failed to fetch log: {l.status_code}"
+    log_response = requests.get(f"{API}/analytics/predictions/recent?limit=5")
+    assert log_response.ok, f"Failed to fetch log: {log_response.status_code}"
 
-    log_data = l.json()
+    log_data = log_response.json()
     assert "items" in log_data, "Log missing 'items' field"
 
     if len(log_data["items"]) > 0:

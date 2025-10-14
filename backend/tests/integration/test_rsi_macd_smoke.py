@@ -179,7 +179,7 @@ def test_pnl_tracking():
     assert "profit_factor" in pnl
 
     # PnL should be a number
-    assert isinstance(pnl["total_pnl"], (int, float))
+    assert isinstance(pnl["total_pnl"], int | float)
     assert isinstance(pnl["num_trades"], int)
 
     # Stop engine
