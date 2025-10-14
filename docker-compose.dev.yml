@@ -40,20 +40,17 @@ services:
     image: levibot/panel:dev
     container_name: levibot-panel
     environment:
-      - VITE_API_BASE=http://localhost:8000
+      - VITE_API_BASE=http://localhost:8000  # Browser calls this (host network)
       - VITE_ENABLE_BACKTEST=true
       - VITE_ENABLE_KILL=true
       - VITE_DEBUG=false
-    ports:
-      - "5173:5173"
+    network_mode: host  # Use host network for easy localhost access
     depends_on:
       api:
         condition: service_healthy
     restart: unless-stopped
     volumes:
       - ./frontend/panel/src:/app/src       # Hot reload for development
-    networks:
-      - levibot
 
   # Prometheus (Metrics)
   prometheus:

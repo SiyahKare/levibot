@@ -5,6 +5,7 @@ FastAPI main application with engine manager integration.
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from ..engine.manager import get_engine_manager, init_engine_manager
 from .routers.backtest import router as backtest_router
@@ -96,6 +97,20 @@ app = FastAPI(
     description="Multi-symbol trading engine orchestrator",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Panel dev server
+        "http://localhost:3000",  # Alternative frontend port
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register routers
