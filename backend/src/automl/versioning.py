@@ -112,4 +112,3 @@ def rollback_to_release(release_date: str, base: str = "backend/data/models") ->
         write_symlink(str(tft_candidates[0]), f"{base}/best_tft.pt")
 
     print(f"[Rollback] Restored models from {release_date}")
-

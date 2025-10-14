@@ -13,15 +13,21 @@ _lock = threading.Lock()
 # key -> (window_start_ts, count, burst_tokens)
 _state: dict[str, tuple[float, int, float]] = {}
 
+
 def _conf():
     enabled = os.getenv("SECURITY_ENABLED", "true").lower() == "true"
-    prefixes = [p.strip() for p in os.getenv("SECURED_PATH_PREFIXES", "/signals,/exec,/paper").split(",") if p.strip()]
-    api_keys = [k.strip() for k in os.getenv("API_KEYS"," ").split(",") if k.strip()]
-    win = int(os.getenv("RATE_LIMIT_WINDOW_SEC","60"))
-    maxi = int(os.getenv("RATE_LIMIT_MAX","120"))
-    burst = int(os.getenv("RATE_LIMIT_BURST","40"))
-    rl_by = os.getenv("RATE_LIMIT_BY","ip").lower()  # ip|key
+    prefixes = [
+        p.strip()
+        for p in os.getenv("SECURED_PATH_PREFIXES", "/signals,/exec,/paper").split(",")
+        if p.strip()
+    ]
+    api_keys = [k.strip() for k in os.getenv("API_KEYS", " ").split(",") if k.strip()]
+    win = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
+    maxi = int(os.getenv("RATE_LIMIT_MAX", "120"))
+    burst = int(os.getenv("RATE_LIMIT_BURST", "40"))
+    rl_by = os.getenv("RATE_LIMIT_BY", "ip").lower()  # ip|key
     return enabled, prefixes, set(api_keys), win, maxi, burst, rl_by
+
 
 def _token(request: Request, api_key: str | None, rl_by: str) -> str:
     if rl_by == "key" and api_key:
@@ -30,8 +36,10 @@ def _token(request: Request, api_key: str | None, rl_by: str) -> str:
     ip = request.client.host if request.client else "unknown"
     return f"ip:{ip}"
 
+
 def _is_secured(path: str, prefixes: list[str]) -> bool:
     return any(path.startswith(p) for p in prefixes)
+
 
 def require_api_key_and_ratelimit():
     async def _mw(request: Request, call_next):
@@ -58,7 +66,9 @@ def require_api_key_and_ratelimit():
             # Redis-backed distributed rate limit
             ok, cnt, reset_at = await redis_rl.check_allow(token)
             if not ok:
-                raise HTTPException(status_code=429, detail=f"rate limit exceeded; reset_at={reset_at}")
+                raise HTTPException(
+                    status_code=429, detail=f"rate limit exceeded; reset_at={reset_at}"
+                )
         else:
             # In-memory fallback (sliding window + burst)
             now = time.time()
@@ -79,4 +89,5 @@ def require_api_key_and_ratelimit():
                 _state[token] = (start, cnt, bt)
 
         return await call_next(request)
+
     return _mw

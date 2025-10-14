@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+
 import numpy as np
 
 
@@ -29,7 +29,5 @@ class XGBTripleBarrierModel:
             f.write("stub")
 
     @classmethod
-    def load(cls, path: str) -> "XGBTripleBarrierModel":
+    def load(cls, path: str) -> XGBTripleBarrierModel:
         return cls()
-
-

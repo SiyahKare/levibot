@@ -78,11 +78,7 @@ def build_features(raw_path: str, horizon: int = 5) -> dict[str, Any]:
     for i in range(len(rows)):
         # Returns
         ret1 = 0.0 if i == 0 else (closes[i] - closes[i - 1]) / max(1e-9, closes[i - 1])
-        ret5 = (
-            0.0
-            if i < 5
-            else (closes[i] - closes[i - 5]) / max(1e-9, closes[i - 5])
-        )
+        ret5 = 0.0 if i < 5 else (closes[i] - closes[i - 5]) / max(1e-9, closes[i - 5])
 
         # Volatility (rolling std over 20 periods)
         if i >= 20:
@@ -112,4 +108,3 @@ def build_features(raw_path: str, horizon: int = 5) -> dict[str, Any]:
         labels.append(label)
 
     return {"X": features, "y": labels}
-

@@ -11,11 +11,11 @@ def test_signal_score_endpoints():
     assert j["label"] in {"BUY", "SELL", "NO-TRADE"}
     assert 0 <= j["confidence"] <= 1
 
-    r2 = c.post("/signals/ingest-and-score", params={"text": "avoid news, no trade", "source": "tg"})
+    r2 = c.post(
+        "/signals/ingest-and-score",
+        params={"text": "avoid news, no trade", "source": "tg"},
+    )
     assert r2.status_code == 200
     j2 = r2.json()
     label = j2.get("label") or j2.get("score", {}).get("label")
     assert label in {"BUY", "SELL", "NO-TRADE"}
-
-
-

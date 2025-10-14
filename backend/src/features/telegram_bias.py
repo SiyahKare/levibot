@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+
 import duckdb as d
 
 
@@ -20,7 +21,9 @@ def last_signals(symbol: str, minutes: int = 120, now: dt.datetime | None = None
     return d.sql(sql, [symbol, since]).df()
 
 
-def load_reputation(parquet_path: str = "backend/data/derived/telegram_reputation.parquet") -> dict:
+def load_reputation(
+    parquet_path: str = "backend/data/derived/telegram_reputation.parquet",
+) -> dict:
     try:
         df = d.sql(f"SELECT * FROM read_parquet('{parquet_path}')").df()
         return {r.chat: r.reputation for _, r in df.iterrows()}
@@ -28,7 +31,9 @@ def load_reputation(parquet_path: str = "backend/data/derived/telegram_reputatio
         return {}
 
 
-def compute_telegram_bias_with_age(symbol: str, *, half_life_min: int = 120, min_rep: float = 0.35) -> tuple[float, float | None]:
+def compute_telegram_bias_with_age(
+    symbol: str, *, half_life_min: int = 120, min_rep: float = 0.35
+) -> tuple[float, float | None]:
     """Bias ile birlikte en taze sinyal yaşını (dakika) döndürür."""
     now = dt.datetime.utcnow()
     df = last_signals(symbol, minutes=half_life_min * 3, now=now)
@@ -45,10 +50,14 @@ def compute_telegram_bias_with_age(symbol: str, *, half_life_min: int = 120, min
         if rep < min_rep:
             continue
         sgn = +1.0 if str(r.side).upper() in ("LONG", "BUY") else -1.0
-        age_min = max(0.0, (now - dt.datetime.fromisoformat(str(r.ts).replace("Z", "+00:00"))).total_seconds() / 60.0)
+        age_min = max(
+            0.0,
+            (
+                now - dt.datetime.fromisoformat(str(r.ts).replace("Z", "+00:00"))
+            ).total_seconds()
+            / 60.0,
+        )
         decay = 0.5 ** (age_min / float(half_life_min))
-        acc += sgn * float((r.conf if r.conf is not None else 0.6)) * rep * decay
+        acc += sgn * float(r.conf if r.conf is not None else 0.6) * rep * decay
     bias = max(-0.15, min(0.15, acc * 0.15))
     return bias, latest_age_min
-
-

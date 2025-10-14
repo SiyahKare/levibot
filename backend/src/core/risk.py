@@ -16,14 +16,18 @@ class RiskConfig:
     fallback_tp_pct: float = 0.020  # ATR yoksa %2.0
 
 
-def atr_wilder(high: list[float], low: list[float], close: list[float], period: int = 14) -> float | None:
+def atr_wilder(
+    high: list[float], low: list[float], close: list[float], period: int = 14
+) -> float | None:
     """Wilder ATR hesaplama; n < period+1 ise None döner."""
     n = min(len(high), len(low), len(close))
     if n < period + 1:
         return None
     trs = []
     for i in range(1, n):
-        tr = max(high[i] - low[i], abs(high[i] - close[i - 1]), abs(low[i] - close[i - 1]))
+        tr = max(
+            high[i] - low[i], abs(high[i] - close[i - 1]), abs(low[i] - close[i - 1])
+        )
         trs.append(tr)
     # Wilder smoothing
     atr = sum(trs[:period]) / period
@@ -41,9 +45,13 @@ class Policy:
 
 
 POLICIES = {
-    "conservative": Policy("conservative", atr_mult_sl=2.0, atr_mult_tp=1.0, cooldown_sec=45),
-    "moderate":     Policy("moderate",     atr_mult_sl=1.5, atr_mult_tp=1.5, cooldown_sec=30),
-    "aggressive":   Policy("aggressive",   atr_mult_sl=1.0, atr_mult_tp=2.0, cooldown_sec=20),
+    "conservative": Policy(
+        "conservative", atr_mult_sl=2.0, atr_mult_tp=1.0, cooldown_sec=45
+    ),
+    "moderate": Policy("moderate", atr_mult_sl=1.5, atr_mult_tp=1.5, cooldown_sec=30),
+    "aggressive": Policy(
+        "aggressive", atr_mult_sl=1.0, atr_mult_tp=2.0, cooldown_sec=20
+    ),
 }
 
 # --- Runtime cache (thread-safe) ---
@@ -82,8 +90,8 @@ def current_policy() -> Policy:
 
 
 def clamp_notional(n: float) -> float:
-    lo = float(os.getenv("RISK_MIN_NOTIONAL","5"))
-    hi = float(os.getenv("RISK_MAX_NOTIONAL","250"))
+    lo = float(os.getenv("RISK_MIN_NOTIONAL", "5"))
+    hi = float(os.getenv("RISK_MAX_NOTIONAL", "250"))
     return max(lo, min(hi, float(n)))
 
 
@@ -93,8 +101,8 @@ def derive_sl_tp(side: str, price: float, atr: float, tp_hint=None, sl_hint=None
     """
     pol = current_policy()
     # ATR multipliers
-    m_sl = pol.atr_mult_sl * float(os.getenv("RISK_R_MULT","1.0"))
-    m_tp = pol.atr_mult_tp * float(os.getenv("RISK_R_MULT","1.0"))
+    m_sl = pol.atr_mult_sl * float(os.getenv("RISK_R_MULT", "1.0"))
+    m_tp = pol.atr_mult_tp * float(os.getenv("RISK_R_MULT", "1.0"))
 
     if tp_hint is not None or sl_hint is not None:
         return sl_hint, tp_hint, {"policy": pol.name, "atr": atr, "source": "hint"}
@@ -114,7 +122,9 @@ class RiskEngine:
         self.cfg = cfg
         self._last_ts: dict[str, float] = {}  # per-symbol cooldown
 
-    def allow(self, symbol: str, notional: float, now: float | None = None) -> tuple[bool, str]:
+    def allow(
+        self, symbol: str, notional: float, now: float | None = None
+    ) -> tuple[bool, str]:
         now = now or time.time()
         if notional > self.cfg.max_notional_usd:
             return False, "risk/max_notional"
@@ -137,6 +147,3 @@ class RiskEngine:
             return round(price - sl_off, 4), round(price + tp_off, 4)
         else:  # sell/short paper mantığı
             return round(price + sl_off, 4), round(price - tp_off, 4)
-
-
-

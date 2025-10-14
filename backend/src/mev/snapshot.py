@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import duckdb as d
 import pandas as pd
-
 
 OUT1 = Path("backend/data/parquet/dex/univ3_prices.parquet")
 OUT2 = Path("backend/data/parquet/dex/sushi_prices.parquet")
@@ -12,7 +12,9 @@ OUT2 = Path("backend/data/parquet/dex/sushi_prices.parquet")
 def write_snapshots() -> None:
     OUT1.parent.mkdir(parents=True, exist_ok=True)
     try:
-        df = d.sql("SELECT symbol, close AS px FROM read_parquet('backend/data/parquet/ohlcv/*_1m.parquet') USING SAMPLE 1%").df()
+        df = d.sql(
+            "SELECT symbol, close AS px FROM read_parquet('backend/data/parquet/ohlcv/*_1m.parquet') USING SAMPLE 1%"
+        ).df()
     except Exception:
         return
     if df.empty:
@@ -22,16 +24,3 @@ def write_snapshots() -> None:
 
 
 __all__ = ["write_snapshots"]
-
-
-
-
-
-
-
-
-
-
-
-
-

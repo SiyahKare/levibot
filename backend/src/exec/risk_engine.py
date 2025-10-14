@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class RiskDecision:
     allow: bool
-    reason: Optional[str] = None
-    size_usd: Optional[float] = None
-    leverage: Optional[int] = None
+    reason: str | None = None
+    size_usd: float | None = None
+    leverage: int | None = None
 
 
 class RiskEngine:
@@ -18,7 +17,9 @@ class RiskEngine:
         self.cfg = risk_config.get("global", {})
 
     def check_daily_dd(self, dd_pct: float) -> RiskDecision:
-        if self.cfg.get("kill_switch_on_dd", True) and dd_pct >= self.cfg.get("daily_drawdown_stop_pct", 0.03):
+        if self.cfg.get("kill_switch_on_dd", True) and dd_pct >= self.cfg.get(
+            "daily_drawdown_stop_pct", 0.03
+        ):
             return RiskDecision(allow=False, reason="daily_dd_stop")
         return RiskDecision(allow=True)
 
@@ -34,5 +35,3 @@ class RiskEngine:
         max_lev = float(self.cfg.get("max_leverage", 5))
         max_notional = self.equity_usd * max_lev
         return float(min(notional, max_notional))
-
-

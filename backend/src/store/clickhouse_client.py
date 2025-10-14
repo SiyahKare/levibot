@@ -2,6 +2,7 @@
 ClickHouse Client - High-performance timeseries storage
 Optimized for analytics, dashboards, and ML feature queries
 """
+
 import os
 from datetime import datetime
 
@@ -12,21 +13,21 @@ from clickhouse_connect.driver import Client
 class ClickHouseClient:
     """
     ClickHouse client for timeseries data
-    
+
     Features:
     - Async bulk inserts
     - Materialized views for aggregations
     - Partitioning by date
     - TTL for data retention
     """
-    
+
     def __init__(
         self,
         host: str = "localhost",
         port: int = 8123,
         database: str = "levibot",
         username: str = "default",
-        password: str = ""
+        password: str = "",
     ):
         self.host = host
         self.port = port
@@ -34,7 +35,7 @@ class ClickHouseClient:
         self.username = username
         self.password = password
         self._client: Client | None = None
-    
+
     def connect(self) -> Client:
         """Get or create ClickHouse client"""
         if self._client is None:
@@ -43,19 +44,20 @@ class ClickHouseClient:
                 port=self.port,
                 username=self.username,
                 password=self.password,
-                database=self.database
+                database=self.database,
             )
         return self._client
-    
+
     def init_schema(self):
         """Initialize database schema"""
         client = self.connect()
-        
+
         # Create database
         client.command(f"CREATE DATABASE IF NOT EXISTS {self.database}")
-        
+
         # OHLCV table
-        client.command("""
+        client.command(
+            """
             CREATE TABLE IF NOT EXISTS ohlcv (
                 ts DateTime,
                 venue LowCardinality(String),
@@ -71,10 +73,12 @@ class ClickHouseClient:
             PARTITION BY toYYYYMM(ts)
             ORDER BY (symbol, tf, ts)
             TTL ts + INTERVAL 90 DAY
-        """)
-        
+        """
+        )
+
         # Features table
-        client.command("""
+        client.command(
+            """
             CREATE TABLE IF NOT EXISTS features (
                 ts DateTime,
                 symbol LowCardinality(String),
@@ -97,10 +101,12 @@ class ClickHouseClient:
             PARTITION BY toYYYYMM(ts)
             ORDER BY (symbol, tf, ts)
             TTL ts + INTERVAL 90 DAY
-        """)
-        
+        """
+        )
+
         # Signals/Decisions table
-        client.command("""
+        client.command(
+            """
             CREATE TABLE IF NOT EXISTS signals (
                 ts DateTime,
                 symbol LowCardinality(String),
@@ -114,10 +120,12 @@ class ClickHouseClient:
             PARTITION BY toYYYYMM(ts)
             ORDER BY (symbol, strategy, ts)
             TTL ts + INTERVAL 180 DAY
-        """)
-        
+        """
+        )
+
         # Orders table
-        client.command("""
+        client.command(
+            """
             CREATE TABLE IF NOT EXISTS orders (
                 ts DateTime,
                 order_id String,
@@ -136,10 +144,12 @@ class ClickHouseClient:
             PARTITION BY toYYYYMM(ts)
             ORDER BY (symbol, ts)
             TTL ts + INTERVAL 365 DAY
-        """)
-        
+        """
+        )
+
         # Fills table
-        client.command("""
+        client.command(
+            """
             CREATE TABLE IF NOT EXISTS fills (
                 ts DateTime,
                 fill_id String,
@@ -154,10 +164,12 @@ class ClickHouseClient:
             PARTITION BY toYYYYMM(ts)
             ORDER BY (symbol, ts)
             TTL ts + INTERVAL 365 DAY
-        """)
-        
+        """
+        )
+
         # Equity/Performance table
-        client.command("""
+        client.command(
+            """
             CREATE TABLE IF NOT EXISTS equity (
                 ts DateTime,
                 equity Float64,
@@ -172,10 +184,12 @@ class ClickHouseClient:
             ) ENGINE = MergeTree()
             ORDER BY ts
             TTL ts + INTERVAL 730 DAY
-        """)
-        
+        """
+        )
+
         # Materialized view for 1h OHLCV aggregation
-        client.command("""
+        client.command(
+            """
             CREATE MATERIALIZED VIEW IF NOT EXISTS ohlcv_1h
             ENGINE = MergeTree()
             PARTITION BY toYYYYMM(ts_1h)
@@ -192,10 +206,12 @@ class ClickHouseClient:
             FROM ohlcv
             WHERE tf = '1m'
             GROUP BY symbol, ts_1h
-        """)
-        
+        """
+        )
+
         # Materialized view for strategy performance
-        client.command("""
+        client.command(
+            """
             CREATE MATERIALIZED VIEW IF NOT EXISTS strategy_performance
             ENGINE = SummingMergeTree()
             PARTITION BY toYYYYMM(date)
@@ -209,33 +225,42 @@ class ClickHouseClient:
                 avg(confidence) as avg_confidence
             FROM signals
             GROUP BY date, strategy
-        """)
-        
+        """
+        )
+
         print("✅ ClickHouse schema initialized")
-    
+
     def insert_ohlcv(self, data: list[dict]):
         """Bulk insert OHLCV data"""
         if not data:
             return
-        
+
         client = self.connect()
         client.insert(
             "ohlcv",
             data,
             column_names=[
-                "ts", "venue", "symbol", "tf",
-                "open", "high", "low", "close", "volume", "trades"
-            ]
+                "ts",
+                "venue",
+                "symbol",
+                "tf",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "trades",
+            ],
         )
-    
+
     def insert_features(self, data: list[dict]):
         """Bulk insert feature data"""
         if not data:
             return
-        
+
         client = self.connect()
         client.insert("features", data)
-    
+
     def insert_signal(
         self,
         symbol: str,
@@ -243,23 +268,25 @@ class ClickHouseClient:
         side: int,
         confidence: float,
         reason: str,
-        metadata: dict
+        metadata: dict,
     ):
         """Insert trading signal"""
         client = self.connect()
         client.insert(
             "signals",
-            [{
-                "ts": datetime.now(),
-                "symbol": symbol,
-                "strategy": strategy,
-                "side": side,
-                "confidence": confidence,
-                "reason": reason,
-                "metadata": str(metadata)
-            }]
+            [
+                {
+                    "ts": datetime.now(),
+                    "symbol": symbol,
+                    "strategy": strategy,
+                    "side": side,
+                    "confidence": confidence,
+                    "reason": reason,
+                    "metadata": str(metadata),
+                }
+            ],
         )
-    
+
     def insert_equity_snapshot(
         self,
         equity: float,
@@ -270,48 +297,49 @@ class ClickHouseClient:
         num_positions: int,
         daily_pnl: float,
         daily_return: float,
-        drawdown: float
+        drawdown: float,
     ):
         """Insert equity snapshot"""
         client = self.connect()
         client.insert(
             "equity",
-            [{
-                "ts": datetime.now(),
-                "equity": equity,
-                "cash_balance": cash_balance,
-                "unrealized_pnl": unrealized_pnl,
-                "realized_pnl": realized_pnl,
-                "exposure": exposure,
-                "num_positions": num_positions,
-                "daily_pnl": daily_pnl,
-                "daily_return": daily_return,
-                "drawdown": drawdown
-            }]
+            [
+                {
+                    "ts": datetime.now(),
+                    "equity": equity,
+                    "cash_balance": cash_balance,
+                    "unrealized_pnl": unrealized_pnl,
+                    "realized_pnl": realized_pnl,
+                    "exposure": exposure,
+                    "num_positions": num_positions,
+                    "daily_pnl": daily_pnl,
+                    "daily_return": daily_return,
+                    "drawdown": drawdown,
+                }
+            ],
         )
-    
+
     def query_recent_signals(
         self,
         symbol: str | None = None,
         strategy: str | None = None,
         hours: int = 24,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[dict]:
         """Query recent signals"""
         client = self.connect()
-        
-        where_clauses = [
-            f"ts >= now() - INTERVAL {hours} HOUR"
-        ]
-        
+
+        where_clauses = [f"ts >= now() - INTERVAL {hours} HOUR"]
+
         if symbol:
             where_clauses.append(f"symbol = '{symbol}'")
         if strategy:
             where_clauses.append(f"strategy = '{strategy}'")
-        
+
         where_sql = " AND ".join(where_clauses)
-        
-        result = client.query(f"""
+
+        result = client.query(
+            f"""
             SELECT
                 ts,
                 symbol,
@@ -324,18 +352,17 @@ class ClickHouseClient:
             WHERE {where_sql}
             ORDER BY ts DESC
             LIMIT {limit}
-        """)
-        
+        """
+        )
+
         return result.result_rows
-    
-    def query_equity_curve(
-        self,
-        hours: int = 24
-    ) -> list[dict]:
+
+    def query_equity_curve(self, hours: int = 24) -> list[dict]:
         """Query equity curve"""
         client = self.connect()
-        
-        result = client.query(f"""
+
+        result = client.query(
+            f"""
             SELECT
                 ts,
                 equity,
@@ -346,8 +373,9 @@ class ClickHouseClient:
             FROM equity
             WHERE ts >= now() - INTERVAL {hours} HOUR
             ORDER BY ts ASC
-        """)
-        
+        """
+        )
+
         return [
             {
                 "ts": row[0],
@@ -355,20 +383,17 @@ class ClickHouseClient:
                 "realized_pnl": row[2],
                 "unrealized_pnl": row[3],
                 "exposure": row[4],
-                "drawdown": row[5]
+                "drawdown": row[5],
             }
             for row in result.result_rows
         ]
-    
-    def query_strategy_stats(
-        self,
-        strategy: str,
-        days: int = 7
-    ) -> dict:
+
+    def query_strategy_stats(self, strategy: str, days: int = 7) -> dict:
         """Query strategy performance statistics"""
         client = self.connect()
-        
-        result = client.query(f"""
+
+        result = client.query(
+            f"""
             SELECT
                 count() as num_signals,
                 countIf(side = 1) as num_long,
@@ -379,8 +404,9 @@ class ClickHouseClient:
             FROM signals
             WHERE strategy = '{strategy}'
               AND ts >= now() - INTERVAL {days} DAY
-        """)
-        
+        """
+        )
+
         row = result.result_rows[0]
         return {
             "num_signals": row[0],
@@ -388,7 +414,7 @@ class ClickHouseClient:
             "num_short": row[2],
             "avg_confidence": row[3],
             "min_confidence": row[4],
-            "max_confidence": row[5]
+            "max_confidence": row[5],
         }
 
 
@@ -405,7 +431,7 @@ def get_clickhouse_client() -> ClickHouseClient:
             port=int(os.getenv("CLICKHOUSE_PORT", "8123")),
             database=os.getenv("CLICKHOUSE_DB", "levibot"),
             username=os.getenv("CLICKHOUSE_USER", "default"),
-            password=os.getenv("CLICKHOUSE_PASSWORD", "")
+            password=os.getenv("CLICKHOUSE_PASSWORD", ""),
         )
     return _client
 
@@ -414,7 +440,7 @@ if __name__ == "__main__":
     # Initialize schema
     client = get_clickhouse_client()
     client.init_schema()
-    
+
     # Test insert
     client.insert_signal(
         symbol="BTCUSDT",
@@ -422,12 +448,11 @@ if __name__ == "__main__":
         side=1,
         confidence=0.65,
         reason="momentum_breakout",
-        metadata={"atr": 150.5, "rsi": 62.3}
+        metadata={"atr": 150.5, "rsi": 62.3},
     )
-    
+
     print("✅ Test signal inserted")
-    
+
     # Query
     signals = client.query_recent_signals(limit=10)
     print(f"📊 Recent signals: {len(signals)}")
-

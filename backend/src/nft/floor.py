@@ -1,9 +1,13 @@
 from __future__ import annotations
-import os, aiohttp
+
+import os
+
+import aiohttp
+
 
 async def reservoir_floor(collection: str) -> dict | None:
     base = os.getenv("RESERVOIR_API_URL", "https://api.reservoir.tools")
-    key  = os.getenv("RESERVOIR_API_KEY","")
+    key = os.getenv("RESERVOIR_API_KEY", "")
     headers = {"x-api-key": key} if key else {}
     url = f"{base}/collections/v5"
     params = {"id": collection}
@@ -15,10 +19,17 @@ async def reservoir_floor(collection: str) -> dict | None:
                 items = j.get("collections") or []
                 if items:
                     it = items[0]
-                    return {"floor": it.get("floorAsk",{}).get("price",{}).get("amount",{}).get("usd"), "name": it.get("name")}
+                    return {
+                        "floor": it.get("floorAsk", {})
+                        .get("price", {})
+                        .get("amount", {})
+                        .get("usd"),
+                        "name": it.get("name"),
+                    }
     except Exception:
         return None
     return None
+
 
 async def floor_price(collection: str) -> dict:
     j = await reservoir_floor(collection)

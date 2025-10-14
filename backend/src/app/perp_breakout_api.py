@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from ..strategy.perp_breakout import BREAKOUT_REGISTRY, BreakoutParams
 
+from ..strategy.perp_breakout import BREAKOUT_REGISTRY, BreakoutParams
 
 router = APIRouter()
 
@@ -50,20 +50,3 @@ def stop(task_id: str) -> dict:
 @router.get("/strategy/perp-breakout/status")
 def status(task_id: str | None = None) -> dict:
     return BREAKOUT_REGISTRY.status(task_id)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

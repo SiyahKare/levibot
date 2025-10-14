@@ -12,24 +12,11 @@ class BybitTWAPAdapter(TWAPAdapter):
         return False
 
     def place_twap(self, symbol: str, side: str, qty: float, duration_sec: int) -> dict:
-        log_event("INFO", {"mode": "bybit-native", "msg": "stub adapter, fallback to software"})
+        log_event(
+            "INFO",
+            {"mode": "bybit-native", "msg": "stub adapter, fallback to software"},
+        )
         raise NotImplementedError("Bybit native TWAP not enabled")
 
 
 register(BybitTWAPAdapter())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

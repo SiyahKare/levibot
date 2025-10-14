@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Optional
-
+from typing import Literal
 
 Side = Literal["buy", "sell"]
 
@@ -12,8 +11,8 @@ class PaperOrderRequest:
     symbol: str
     side: Side
     notional_usd: float
-    price: Optional[float] = None
-    trace_id: Optional[str] = None
+    price: float | None = None
+    trace_id: str | None = None
 
 
 @dataclass
@@ -25,11 +24,3 @@ class PaperOrderResult:
     price: float
     filled: bool
     pnl_usd: float
-
-
-
-
-
-
-
-

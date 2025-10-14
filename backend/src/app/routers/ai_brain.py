@@ -2,6 +2,7 @@
 AI Brain API Router
 Endpoints for OpenAI-powered decision support
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,19 +20,19 @@ async def score_news_endpoint(
 ) -> dict[str, Any]:
     """
     Score news headlines for crypto impact.
-    
+
     Args:
         headlines: List of news headline texts
-    
+
     Returns:
         Scored headlines with structured impact data
     """
     if not headlines:
         raise HTTPException(status_code=400, detail="No headlines provided")
-    
+
     if len(headlines) > 20:
         raise HTTPException(status_code=400, detail="Max 20 headlines per request")
-    
+
     try:
         scores = score_headlines(headlines)
         return {
@@ -52,16 +53,16 @@ async def regime_endpoint(
 ) -> dict[str, Any]:
     """
     Get regime-based trading advice.
-    
+
     Args:
         metrics: Current market metrics
-    
+
     Returns:
         Regime advice with risk adjustments
     """
     if not metrics:
         raise HTTPException(status_code=400, detail="No metrics provided")
-    
+
     try:
         advice = regime_advice(metrics)
         return {
@@ -81,16 +82,16 @@ async def explain_endpoint(
 ) -> dict[str, Any]:
     """
     Explain an anomaly and get runbook suggestions.
-    
+
     Args:
         context: Anomaly context (PSI, ECE, PnL, etc.)
-    
+
     Returns:
         Explanation with cause, runbook, and severity
     """
     if not context:
         raise HTTPException(status_code=400, detail="No context provided")
-    
+
     try:
         explanation = explain_anomaly(context)
         return {
@@ -108,7 +109,7 @@ async def explain_endpoint(
 async def ai_status() -> dict[str, Any]:
     """Get AI Brain status."""
     import os
-    
+
     return {
         "ok": True,
         "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
@@ -119,4 +120,3 @@ async def ai_status() -> dict[str, Any]:
             "explainer": "gpt-4o-mini",
         },
     }
-

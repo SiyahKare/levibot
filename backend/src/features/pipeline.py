@@ -10,5 +10,3 @@ def add_basic_features(df: pl.DataFrame) -> pl.DataFrame:
     rsi = (close - close.shift(1)).fill_null(0).cumsum().alias("rsi_proxy")
     out = df.with_columns([ema_fast, ema_slow, rsi])
     return out
-
-

@@ -1,8 +1,9 @@
 from __future__ import annotations
-from pathlib import Path
+
 import json
 import sys
 import time
+from pathlib import Path
 
 DATA = Path("backend/data/signals/labels.jsonl")
 DATA.parent.mkdir(parents=True, exist_ok=True)
@@ -24,7 +25,7 @@ def dump_report() -> dict:
     cnt = {k: 0 for k in VALID}
     n = 0
     if DATA.exists():
-        with open(DATA, "r", encoding="utf-8") as f:
+        with open(DATA, encoding="utf-8") as f:
             for line in f:
                 try:
                     obj = json.loads(line)
@@ -48,6 +49,3 @@ if __name__ == "__main__":
         append_label(text, label)
     else:
         dump_report()
-
-
-

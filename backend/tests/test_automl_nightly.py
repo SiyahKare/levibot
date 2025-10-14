@@ -236,4 +236,3 @@ def test_nightly_pipeline_smoke(tmp_path, monkeypatch):
     assert summary["run_date"] == run_date
     assert len(summary["results"]) == 2  # BTCUSDT, ETHUSDT
     assert "global_best" in summary
-

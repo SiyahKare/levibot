@@ -4,6 +4,7 @@ Auto-Trade API - Simplified Signal to Execution Pipeline
 Directly processes trading signals and executes them on paper portfolio
 with real prices, risk management, and full logging.
 """
+
 from typing import Any
 
 from fastapi import APIRouter, Body
@@ -24,7 +25,7 @@ async def auto_trade(
 ) -> dict[str, Any]:
     """
     Execute auto-trade with real prices and risk management.
-    
+
     Pipeline:
     1. Validate inputs
     2. Get real price from CoinGecko
@@ -34,14 +35,14 @@ async def auto_trade(
     6. Log events
     7. Return result
     """
-    
+
     # Normalize symbol
     symbol_clean = symbol.replace("/", "").upper()
     side_norm = side.lower()
-    
+
     if side_norm not in ["buy", "sell"]:
         return {"ok": False, "error": "side must be 'buy' or 'sell'"}
-    
+
     # Log signal received
     log_event(
         "AUTO_TRADE_SIGNAL",
@@ -53,7 +54,7 @@ async def auto_trade(
         },
         symbol=symbol_clean,
     )
-    
+
     # Get real price from CoinGecko
     price = get_price(symbol)
     if price is None:
@@ -62,18 +63,18 @@ async def auto_trade(
             "error": f"Could not fetch price for {symbol}",
             "symbol": symbol_clean,
         }
-    
+
     # Calculate quantity
     qty = notional_usd / price
-    
+
     portfolio = get_paper_portfolio()
-    
+
     if side_norm == "buy":
         # Open long position
         success = portfolio.open_position(
             symbol_clean, "long", qty, price, notional_usd
         )
-        
+
         if not success:
             log_event(
                 "AUTO_TRADE_FAILED",
@@ -92,7 +93,7 @@ async def auto_trade(
                 "required": notional_usd,
                 "available": portfolio.cash_balance,
             }
-        
+
         # Log success
         log_event(
             "AUTO_TRADE_EXECUTED",
@@ -106,7 +107,7 @@ async def auto_trade(
             },
             symbol=symbol_clean,
         )
-        
+
         log_event(
             "POSITION_OPENED",
             {
@@ -118,7 +119,7 @@ async def auto_trade(
             },
             symbol=symbol_clean,
         )
-        
+
         return {
             "ok": True,
             "action": "opened",
@@ -133,11 +134,11 @@ async def auto_trade(
                 "open_positions": len(portfolio.positions),
             },
         }
-    
+
     else:  # sell
         # Close existing position
         trade = portfolio.close_position(symbol_clean, price)
-        
+
         if not trade:
             log_event(
                 "AUTO_TRADE_FAILED",
@@ -153,7 +154,7 @@ async def auto_trade(
                 "error": f"No open position for {symbol_clean}",
                 "symbol": symbol_clean,
             }
-        
+
         # Log success with PnL
         log_event(
             "AUTO_TRADE_EXECUTED",
@@ -168,7 +169,7 @@ async def auto_trade(
             },
             symbol=symbol_clean,
         )
-        
+
         log_event(
             "POSITION_CLOSED",
             {
@@ -182,9 +183,9 @@ async def auto_trade(
             },
             symbol=symbol_clean,
         )
-        
+
         stats = portfolio.get_stats()
-        
+
         return {
             "ok": True,
             "action": "closed",
@@ -210,7 +211,7 @@ async def get_trading_status() -> dict[str, Any]:
     portfolio = get_paper_portfolio()
     stats = portfolio.get_stats()
     positions = portfolio.get_positions()
-    
+
     return {
         "ok": True,
         "status": "active",
@@ -233,4 +234,3 @@ async def get_trading_status() -> dict[str, Any]:
             "details": positions,
         },
     }
-

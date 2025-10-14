@@ -46,7 +46,9 @@ def test_cex_paper_order_creates_events(tmp_path, monkeypatch):
                     continue
                 if rec.get("trace_id") == trace and rec.get("event_type"):
                     seen.add(rec["event_type"])
-    assert {"ORDER_NEW", "ORDER_PARTIAL_FILL", "ORDER_FILLED", "POSITION_CLOSED"} <= seen
-
-
-
+    assert {
+        "ORDER_NEW",
+        "ORDER_PARTIAL_FILL",
+        "ORDER_FILLED",
+        "POSITION_CLOSED",
+    } <= seen

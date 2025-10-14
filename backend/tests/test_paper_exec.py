@@ -52,5 +52,3 @@ def test_paper_order_creates_events(tmp_path, monkeypatch):
     assert files, "no log files created"
     seen = _events_for_trace(files, trace)
     assert {"ORDER_NEW", "ORDER_FILLED", "POSITION_CLOSED"} <= seen
-
-

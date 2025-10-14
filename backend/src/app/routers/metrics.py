@@ -12,12 +12,11 @@ router = APIRouter(tags=["metrics"])
 async def prometheus_metrics():
     """
     Prometheus metrics endpoint.
-    
+
     Exposes all LeviBot metrics in Prometheus format.
-    
+
     Usage:
         curl http://localhost:8000/metrics/prom
     """
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
-

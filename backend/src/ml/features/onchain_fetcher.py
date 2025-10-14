@@ -11,17 +11,17 @@ from ..utils.cache import JsonCache
 class OnchainProvider:
     """
     Abstract on-chain data provider interface.
-    
+
     Implementations:
     - Dune Analytics (SQL queries)
     - Nansen API
     - Custom blockchain RPC
     """
-    
+
     async def metrics(self, symbol: str) -> dict[str, float]:
         """
         Fetch on-chain metrics for a symbol.
-        
+
         Returns:
             {
                 "active_wallets": 1234,
@@ -38,16 +38,16 @@ class OnchainProvider:
 class MockOnchainProvider(OnchainProvider):
     """
     Mock on-chain provider for development/testing.
-    
+
     TODO: Replace with real Dune/Nansen integration in production.
     """
-    
+
     async def metrics(self, symbol: str) -> dict[str, float]:
         """
         Return mock on-chain metrics.
-        
+
         TODO: Implement real queries:
-        
+
         Dune query example:
         ```sql
         SELECT
@@ -72,17 +72,17 @@ class MockOnchainProvider(OnchainProvider):
 class DuneOnchainProvider(OnchainProvider):
     """
     Dune Analytics on-chain provider.
-    
+
     TODO: Implement
     """
-    
+
     def __init__(self, api_key: str):
         self.api_key = api_key
-    
+
     async def metrics(self, symbol: str) -> dict[str, float]:
         """
         Execute Dune query and parse results.
-        
+
         TODO: Implement
         """
         # Example:
@@ -99,7 +99,7 @@ class OnchainFetcher:
     """
     High-level on-chain data fetcher with caching.
     """
-    
+
     def __init__(self, provider: OnchainProvider, ttl_seconds: int = 300):
         """
         Args:
@@ -108,31 +108,30 @@ class OnchainFetcher:
         """
         self.provider = provider
         self.cache = JsonCache(base="data/cache/onchain", ttl_seconds=ttl_seconds)
-    
+
     async def get_metrics(self, symbol: str) -> dict[str, float]:
         """
         Get on-chain metrics for a symbol.
-        
+
         Results are cached for ttl_seconds.
-        
+
         Args:
             symbol: Trading symbol (e.g., "BTCUSDT")
-        
+
         Returns:
             On-chain metrics dictionary
         """
         cache_key = f"onchain:{symbol}"
-        
+
         # Check cache
         cached = self.cache.get(cache_key)
         if cached is not None:
             return cached
-        
+
         # Fetch fresh data
         data = await self.provider.metrics(symbol)
-        
+
         # Cache result
         self.cache.set(cache_key, data)
-        
-        return data
 
+        return data

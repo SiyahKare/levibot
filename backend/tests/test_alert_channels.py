@@ -1,4 +1,10 @@
-from backend.src.alerts.channels import format_slack, format_discord, route_targets, SEVERITY_COLORS
+from backend.src.alerts.channels import (
+    SEVERITY_COLORS,
+    format_discord,
+    format_slack,
+    route_targets,
+)
+
 
 def test_format_slack_basic():
     alert = {

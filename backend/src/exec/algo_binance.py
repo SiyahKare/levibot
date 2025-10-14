@@ -1,9 +1,10 @@
 import os
+
 import requests
-from .binance_sig import sign_params, auth_params
+
 from ..infra.logger import log_event
 from .algo_base import TWAPAdapter, register
-
+from .binance_sig import auth_params, sign_params
 
 BASE = "https://api.binance.com"
 
@@ -20,7 +21,12 @@ def twap_new_order(
     position_side: str | None = None,
     limit_price: float | None = None,
 ):
-    body: dict = {"symbol": symbol, "side": side.upper(), "quantity": float(quantity), "duration": int(duration_sec)}
+    body: dict = {
+        "symbol": symbol,
+        "side": side.upper(),
+        "quantity": float(quantity),
+        "duration": int(duration_sec),
+    }
     if position_side:
         body["positionSide"] = position_side.upper()
     if limit_price is not None:
@@ -63,5 +69,3 @@ class BinanceTWAPAdapter(TWAPAdapter):
 
 # Register adapter
 register(BinanceTWAPAdapter())
-
-

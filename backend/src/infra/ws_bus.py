@@ -1,9 +1,11 @@
 # lightweight in-proc pub/sub for events
 from __future__ import annotations
+
 import asyncio
 import json
-import time
-from typing import Any, AsyncIterator, Dict
+from collections.abc import AsyncIterator
+from typing import Any
+
 
 class EventBus:
     def __init__(self) -> None:
@@ -25,9 +27,10 @@ class EventBus:
             finally:
                 async with self._lock:
                     self._subs.pop(sid, None)
+
         return sid, gen()
 
-    async def publish(self, event: Dict[str, Any]) -> None:
+    async def publish(self, event: dict[str, Any]) -> None:
         msg = json.dumps(event, ensure_ascii=False)
         # non-blocking fanout; drop when queue full
         for q in list(self._subs.values()):
@@ -37,5 +40,5 @@ class EventBus:
                 # best-effort; drop message
                 pass
 
-BUS = EventBus()
 
+BUS = EventBus()

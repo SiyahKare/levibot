@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+
 import uvicorn
+
 from .main import app
 
 
@@ -13,5 +15,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

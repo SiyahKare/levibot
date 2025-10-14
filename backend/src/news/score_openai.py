@@ -3,6 +3,7 @@ OpenAI Sentiment Scorer
 
 Use OpenAI structured outputs to score news headlines for crypto impact.
 """
+
 import hashlib
 import json
 import os
@@ -27,11 +28,11 @@ def get_openai_client() -> OpenAI | None:
 def score_headline(headline: str, client: OpenAI | None = None) -> dict[str, Any]:
     """
     Score a single headline using OpenAI structured output.
-    
+
     Args:
         headline: News headline text
         client: Optional OpenAI client (will create if None)
-    
+
     Returns:
         {
             "asset": str,           # e.g., "BTC", "ETH", "MKT" (market-wide)
@@ -44,17 +45,17 @@ def score_headline(headline: str, client: OpenAI | None = None) -> dict[str, Any
     # Check cache first
     cache_key = hashlib.md5(headline.encode()).hexdigest()
     cache_file = CACHE_DIR / f"{cache_key}.json"
-    
+
     if cache_file.exists():
         with open(cache_file) as f:
             result = json.load(f)
             result["cached"] = True
             return result
-    
+
     # Call OpenAI if client available
     if client is None:
         client = get_openai_client()
-    
+
     if client is None:
         # No API key, return neutral
         return {
@@ -64,7 +65,7 @@ def score_headline(headline: str, client: OpenAI | None = None) -> dict[str, Any
             "confidence": 0.0,
             "cached": False,
         }
-    
+
     try:
         # Use structured JSON output
         response = client.chat.completions.create(
@@ -83,13 +84,13 @@ def score_headline(headline: str, client: OpenAI | None = None) -> dict[str, Any
             temperature=0.3,
             max_tokens=150,
         )
-        
+
         content = response.choices[0].message.content
         if not content:
             raise ValueError("Empty response from OpenAI")
-        
+
         result = json.loads(content)
-        
+
         # Validate and normalize
         result = {
             "asset": str(result.get("asset", "MKT")),
@@ -98,13 +99,13 @@ def score_headline(headline: str, client: OpenAI | None = None) -> dict[str, Any
             "confidence": float(max(0.0, min(1.0, result.get("confidence", 0.5)))),
             "cached": False,
         }
-        
+
         # Cache result
         with open(cache_file, "w") as f:
             json.dump(result, f)
-        
+
         return result
-    
+
     except Exception as e:
         # Fallback to neutral on error
         return {
@@ -120,30 +121,30 @@ def score_headline(headline: str, client: OpenAI | None = None) -> dict[str, Any
 def score_headlines(headlines: list[str]) -> list[dict[str, Any]]:
     """
     Score multiple headlines with shared client.
-    
+
     Args:
         headlines: List of headline strings
-    
+
     Returns:
         List of score dictionaries
     """
     client = get_openai_client()
     results = []
-    
+
     for headline in headlines:
         result = score_headline(headline, client=client)
         results.append(result)
-    
+
     return results
 
 
 def get_cache_stats() -> dict[str, Any]:
     """Get sentiment cache statistics."""
     cache_files = list(CACHE_DIR.glob("*.json"))
-    
+
     total_cached = len(cache_files)
     total_size_kb = sum(f.stat().st_size for f in cache_files) / 1024
-    
+
     return {
         "cached_headlines": total_cached,
         "cache_size_kb": round(total_size_kb, 2),
@@ -155,4 +156,3 @@ def clear_cache():
     """Clear sentiment cache (useful for testing)."""
     for cache_file in CACHE_DIR.glob("*.json"):
         cache_file.unlink()
-

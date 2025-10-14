@@ -1,20 +1,28 @@
 from __future__ import annotations
-import os
+
 import asyncio
 import logging
-from telethon import TelegramClient, events
+import os
+import random
+import time
+
 import aiohttp
-import random, time
-from ..infra.metrics import TG_RECONNECTS_TOTAL, TG_LAST_MESSAGE_TS, TG_LAST_SCORE_OK_TS
+from telethon import TelegramClient, events
+
+from ..infra.metrics import TG_LAST_MESSAGE_TS, TG_LAST_SCORE_OK_TS, TG_RECONNECTS_TOTAL
 
 API_ID = int(os.getenv("TELEGRAM_API_ID", "0") or "0")
 API_HASH = os.getenv("TELEGRAM_API_HASH", "")
 SESSION = os.getenv("TELEGRAM_SESSION", "backend/data/telegram.session")
-CHANNELS = [x.strip() for x in os.getenv("TELEGRAM_CHANNELS", "").split(",") if x.strip()]
+CHANNELS = [
+    x.strip() for x in os.getenv("TELEGRAM_CHANNELS", "").split(",") if x.strip()
+]
 MINLEN = int(os.getenv("TELEGRAM_MIN_TEXT_LEN", "12"))
 API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s"
+)
 log = logging.getLogger("tg-live")
 
 
@@ -22,18 +30,24 @@ def _jittered_sleep(attempt: int) -> float:
     base = float(os.getenv("TG_BACKOFF_BASE", "2"))
     mx = float(os.getenv("TG_BACKOFF_MAX_SEC", "60"))
     jitter = float(os.getenv("TG_BACKOFF_JITTER", "0.3"))
-    raw = min(mx, (base ** attempt))
+    raw = min(mx, (base**attempt))
     delta = raw * jitter
     return max(1.0, raw - delta + random.random() * (2 * delta))
 
 
-async def score_and_route(text: str, source: str = "telegram", channel: str = "") -> None:
+async def score_and_route(
+    text: str, source: str = "telegram", channel: str = ""
+) -> None:
     """Call /signals/ingest-and-score API endpoint."""
     url = f"{API_BASE}/signals/ingest-and-score"
-    timeout = aiohttp.ClientTimeout(total=float(os.getenv("TG_FETCH_TIMEOUT_SEC", "15")))
+    timeout = aiohttp.ClientTimeout(
+        total=float(os.getenv("TG_FETCH_TIMEOUT_SEC", "15"))
+    )
     async with aiohttp.ClientSession(timeout=timeout) as s:
         try:
-            async with s.post(url, params={"text": text, "source": source, "channel": channel}) as r:
+            async with s.post(
+                url, params={"text": text, "source": source, "channel": channel}
+            ) as r:
                 j = await r.json()
                 TG_LAST_SCORE_OK_TS.set(time.time())
                 routed = j.get("routed", False)
@@ -92,12 +106,14 @@ async def main():
             attempt += 1
             TG_RECONNECTS_TOTAL.inc()
             sleep_s = _jittered_sleep(attempt)
-            log.warning("tg live crashed (%s). reconnecting in %.1fs (attempt=%d)…", e, sleep_s, attempt)
+            log.warning(
+                "tg live crashed (%s). reconnecting in %.1fs (attempt=%d)…",
+                e,
+                sleep_s,
+                attempt,
+            )
             await asyncio.sleep(sleep_s)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-

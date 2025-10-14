@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import date, datetime
 
 
 @dataclass
@@ -18,5 +18,3 @@ class DailyDrawdownTracker:
         if now.date() != self.day:
             self.day = now.date()
             self.start_equity = current_equity
-
-

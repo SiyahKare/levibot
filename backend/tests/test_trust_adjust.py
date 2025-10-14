@@ -8,5 +8,3 @@ def test_adjust_conf_with_env(monkeypatch):
     assert abs(adjust_conf("@good", 0.50) - 0.60) < 1e-6
     assert abs(adjust_conf("@meh", 0.80) - 0.72) < 1e-6
     assert abs(adjust_conf("@none", 0.70) - 0.70) < 1e-6
-
-

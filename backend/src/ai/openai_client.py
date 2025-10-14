@@ -2,6 +2,7 @@
 OpenAI AI Brain Client (with Rate Limiting & Secret Masking)
 Handles news scoring, regime advice, and anomaly explanation
 """
+
 import hashlib
 import json
 import os
@@ -35,17 +36,17 @@ _ai_tokens_month = {
 def mask_secret(text: str, show_chars: int = 4) -> str:
     """
     Mask sensitive strings in logs.
-    
+
     Args:
         text: Text to mask
         show_chars: Number of chars to show at start/end
-    
+
     Returns:
         Masked string like "sk-ab...xyz"
     """
     if not settings.MASK_SECRETS_IN_LOGS or not text or len(text) <= show_chars * 2:
         return text
-    
+
     return f"{text[:show_chars]}...{text[-show_chars:]}"
 
 
@@ -57,26 +58,26 @@ def rate_limit_check():
     with _rate_limiter["lock"]:
         now = time.time()
         elapsed = now - _rate_limiter["last_refill"]
-        
+
         # Refill tokens based on elapsed time (RPM = tokens/60sec)
         refill_amount = (elapsed / 60.0) * settings.OPENAI_RPM
         _rate_limiter["tokens"] = min(
-            settings.OPENAI_RPM,
-            _rate_limiter["tokens"] + refill_amount
+            settings.OPENAI_RPM, _rate_limiter["tokens"] + refill_amount
         )
         _rate_limiter["last_refill"] = now
-        
+
         # Check if we have tokens available
         if _rate_limiter["tokens"] < 1.0:
             wait_time = (1.0 - _rate_limiter["tokens"]) * (60.0 / settings.OPENAI_RPM)
             raise RateLimitError(f"OpenAI rate limit exceeded. Wait {wait_time:.1f}s")
-        
+
         # Consume one token
         _rate_limiter["tokens"] -= 1.0
 
 
 class RateLimitError(Exception):
     """Raised when rate limit is exceeded."""
+
     pass
 
 
@@ -94,48 +95,49 @@ def get_client() -> OpenAI:
 def cached(cache_dir: str, key: str, fn: callable) -> Any:
     """
     Cache helper for OpenAI responses.
-    
+
     Args:
         cache_dir: Cache directory path
         key: Cache key (will be hashed)
         fn: Function to call if cache miss
-    
+
     Returns:
         Cached or fresh result
     """
     cache_path = Path(cache_dir)
     cache_path.mkdir(parents=True, exist_ok=True)
-    
+
     cache_file = cache_path / f"{hashlib.md5(key.encode()).hexdigest()}.json"
-    
+
     if cache_file.exists():
         try:
             with open(cache_file) as f:
                 return json.load(f)
         except Exception:
             pass  # Cache corrupted, regenerate
-    
+
     result = fn()
-    
+
     try:
         with open(cache_file, "w") as f:
             json.dump(result, f, indent=2)
     except Exception:
         pass  # Cache write failed, continue anyway
-    
+
     return result
 
 
 def score_headline(headline: str) -> dict[str, Any]:
     """
     Score a single news headline for crypto impact.
-    
+
     Args:
         headline: News headline text
-    
+
     Returns:
         Structured impact data: {asset, event_type, impact, horizon, confidence}
     """
+
     def call():
         rate_limit_check()  # Check rate limit before API call
         cli = get_client()
@@ -149,7 +151,7 @@ def score_headline(headline: str) -> dict[str, Any]:
             "- confidence: number from 0 (uncertain) to 1 (very confident)\n\n"
             "Respond ONLY with valid JSON, no explanation."
         )
-        
+
         try:
             resp = cli.chat.completions.create(
                 model="gpt-4o-mini",  # Cost-effective, fast
@@ -157,17 +159,17 @@ def score_headline(headline: str) -> dict[str, Any]:
                 temperature=0.2,
                 max_tokens=120,
             )
-            
+
             txt = resp.choices[0].message.content.strip()
-            
+
             # Try to extract JSON from response
             if "```json" in txt:
                 txt = txt.split("```json")[1].split("```")[0].strip()
             elif "```" in txt:
                 txt = txt.split("```")[1].split("```")[0].strip()
-            
+
             return json.loads(txt)
-        
+
         except Exception as e:
             # Fallback on error
             return {
@@ -178,17 +180,17 @@ def score_headline(headline: str) -> dict[str, Any]:
                 "confidence": 0.5,
                 "error": str(e),
             }
-    
+
     return cached("backend/data/cache/news", headline, call)
 
 
 def score_headlines(headlines: list[str]) -> list[dict[str, Any]]:
     """
     Score multiple headlines (uses cache for deduplication).
-    
+
     Args:
         headlines: List of news headline texts
-    
+
     Returns:
         List of structured impact data
     """
@@ -198,16 +200,16 @@ def score_headlines(headlines: list[str]) -> list[dict[str, Any]]:
 def regime_advice(metrics: dict[str, Any]) -> dict[str, Any]:
     """
     Get regime-based trading advice from AI.
-    
+
     Args:
         metrics: Current market metrics (volatility, trend, ECE, PSI, PnL, etc.)
-    
+
     Returns:
         Regime advice: {regime, risk_multiplier, entry_delta, exit_delta, reason}
     """
     rate_limit_check()  # Check rate limit before API call
     cli = get_client()
-    
+
     system_prompt = (
         "You are a strict risk/regime advisor for cryptocurrency quantitative trading.\n"
         "Your role is to adjust position sizing and entry/exit thresholds based on market conditions.\n\n"
@@ -219,9 +221,9 @@ def regime_advice(metrics: dict[str, Any]) -> dict[str, Any]:
         "- reason: string, brief explanation (max 100 chars)\n\n"
         "Be CONSERVATIVE. Never exceed the bounds. Respond ONLY with valid JSON."
     )
-    
+
     user_prompt = f"Market metrics:\n{json.dumps(metrics, indent=2)}"
-    
+
     try:
         resp = cli.chat.completions.create(
             model="gpt-4o-mini",
@@ -232,24 +234,30 @@ def regime_advice(metrics: dict[str, Any]) -> dict[str, Any]:
             temperature=0.1,
             max_tokens=160,
         )
-        
+
         txt = resp.choices[0].message.content.strip()
-        
+
         # Try to extract JSON
         if "```json" in txt:
             txt = txt.split("```json")[1].split("```")[0].strip()
         elif "```" in txt:
             txt = txt.split("```")[1].split("```")[0].strip()
-        
+
         result = json.loads(txt)
-        
+
         # Validate and clamp
-        result["risk_multiplier"] = max(0.5, min(1.5, float(result.get("risk_multiplier", 1.0))))
-        result["entry_delta"] = max(-0.02, min(0.02, float(result.get("entry_delta", 0.0))))
-        result["exit_delta"] = max(-0.02, min(0.02, float(result.get("exit_delta", 0.0))))
-        
+        result["risk_multiplier"] = max(
+            0.5, min(1.5, float(result.get("risk_multiplier", 1.0)))
+        )
+        result["entry_delta"] = max(
+            -0.02, min(0.02, float(result.get("entry_delta", 0.0)))
+        )
+        result["exit_delta"] = max(
+            -0.02, min(0.02, float(result.get("exit_delta", 0.0)))
+        )
+
         return result
-    
+
     except Exception as e:
         # Fallback on error
         return {
@@ -264,16 +272,16 @@ def regime_advice(metrics: dict[str, Any]) -> dict[str, Any]:
 def explain_anomaly(context: dict[str, Any]) -> dict[str, Any]:
     """
     Explain an anomaly and provide runbook suggestions.
-    
+
     Args:
         context: Anomaly context (PSI, ECE, PnL, staleness, etc.)
-    
+
     Returns:
         Explanation: {cause, runbook, severity}
     """
     rate_limit_check()  # Check rate limit before API call
     cli = get_client()
-    
+
     system_prompt = (
         "You are a production ML system debugger for crypto trading.\n"
         "Given anomaly indicators, provide:\n"
@@ -282,9 +290,9 @@ def explain_anomaly(context: dict[str, Any]) -> dict[str, Any]:
         "- severity: string, one of 'low', 'medium', 'high', 'critical'\n\n"
         "Respond ONLY with valid JSON."
     )
-    
+
     user_prompt = f"Anomaly context:\n{json.dumps(context, indent=2)}"
-    
+
     try:
         resp = cli.chat.completions.create(
             model="gpt-4o-mini",
@@ -295,17 +303,17 @@ def explain_anomaly(context: dict[str, Any]) -> dict[str, Any]:
             temperature=0.2,
             max_tokens=300,
         )
-        
+
         txt = resp.choices[0].message.content.strip()
-        
+
         # Try to extract JSON
         if "```json" in txt:
             txt = txt.split("```json")[1].split("```")[0].strip()
         elif "```" in txt:
             txt = txt.split("```")[1].split("```")[0].strip()
-        
+
         return json.loads(txt)
-    
+
     except Exception as e:
         # Fallback on error
         return {
@@ -318,48 +326,54 @@ def explain_anomaly(context: dict[str, Any]) -> dict[str, Any]:
 def extract_signal_from_text(text: str) -> dict[str, Any]:
     """
     Extract trading signal from raw text (e.g., Telegram message).
-    
+
     Args:
         text: Raw signal text
-    
+
     Returns:
         Parsed signal: {symbol, side, size_hint, sl, tp, confidence, rationale}
     """
     from .prompts import SIGNAL_EXTRACTOR_PROMPT
-    
+
     rate_limit_check()  # Check rate limit before API call
     cli = get_client()
-    
+
     try:
         resp = cli.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You output ONLY valid JSON. No markdown, no explanations."},
-                {"role": "user", "content": SIGNAL_EXTRACTOR_PROMPT.format(text=text[:1000])},
+                {
+                    "role": "system",
+                    "content": "You output ONLY valid JSON. No markdown, no explanations.",
+                },
+                {
+                    "role": "user",
+                    "content": SIGNAL_EXTRACTOR_PROMPT.format(text=text[:1000]),
+                },
             ],
             temperature=0.1,
             max_tokens=200,
         )
-        
+
         txt = resp.choices[0].message.content.strip()
-        
+
         # Remove markdown code blocks
         if "```json" in txt:
             txt = txt.split("```json")[1].split("```")[0].strip()
         elif "```" in txt:
             txt = txt.split("```")[1].split("```")[0].strip()
-        
+
         result = json.loads(txt)
-        
+
         # Validate and set defaults
         result.setdefault("symbol", "UNKNOWN")
         result.setdefault("side", "buy")
         result.setdefault("size_hint", 0.01)
         result.setdefault("confidence", 0.0)
         result.setdefault("rationale", "")
-        
+
         return result
-    
+
     except Exception as e:
         return {
             "symbol": "UNKNOWN",
@@ -373,6 +387,7 @@ def extract_signal_from_text(text: str) -> dict[str, Any]:
 def _month_key() -> str:
     """Get current month key for budget tracking (YYYY-MM)."""
     from datetime import datetime
+
     now = datetime.utcnow()
     return f"{now.year}-{now.month:02d}"
 
@@ -385,7 +400,7 @@ def _budget_ok() -> bool:
             # New month, reset counter
             _ai_tokens_month["month"] = mk
             _ai_tokens_month["used"] = 0
-        
+
         return _ai_tokens_month["used"] < settings.AI_REASON_MONTHLY_TOKEN_BUDGET
 
 
@@ -396,7 +411,7 @@ def _acc_tokens(n: int) -> None:
         if _ai_tokens_month["month"] != mk:
             _ai_tokens_month["month"] = mk
             _ai_tokens_month["used"] = 0
-        
+
         _ai_tokens_month["used"] += max(0, n)
 
 
@@ -406,11 +421,11 @@ def brief_reason(
     qty: float,
     mark: float,
     confidence: float = 0.0,
-    excerpt: str = ""
+    excerpt: str = "",
 ) -> str:
     """
     Generate brief trade reason (1-2 sentences).
-    
+
     Args:
         symbol: Trading pair
         side: buy or sell
@@ -418,24 +433,24 @@ def brief_reason(
         mark: Mark price
         confidence: Signal confidence (0-1)
         excerpt: Brief context
-    
+
     Returns:
         Plain text explanation
     """
     from .prompts.trade_reason import TRADE_REASON_PROMPT
-    
+
     rate_limit_check()
     cli = get_client()
-    
+
     prompt = TRADE_REASON_PROMPT.format(
         symbol=symbol,
         side=side,
         qty=qty,
         mark=mark,
         confidence=confidence,
-        excerpt=excerpt[:240]
+        excerpt=excerpt[:240],
     )
-    
+
     try:
         resp = cli.chat.completions.create(
             model="gpt-4o-mini",
@@ -443,9 +458,9 @@ def brief_reason(
             temperature=0.3,
             max_tokens=80,
         )
-        
+
         return resp.choices[0].message.content.strip()
-    
+
     except Exception:
         return f"Trade executed based on signal (confidence: {confidence:.2f})"
 
@@ -458,11 +473,11 @@ def brief_reason_plus(
     confidence: float = 0.0,
     excerpt: str = "",
     ctx: dict[str, Any] | None = None,
-    timeout_s: float | None = None
+    timeout_s: float | None = None,
 ) -> str:
     """
     Enhanced trade reason with market context, budget tracking, and timeout.
-    
+
     Args:
         symbol: Trading pair
         side: buy or sell
@@ -472,25 +487,25 @@ def brief_reason_plus(
         excerpt: Brief context
         ctx: Market context dict (last_px, ret_1m, spread_bps)
         timeout_s: Timeout in seconds (default from settings)
-    
+
     Returns:
         Plain text explanation
     """
     # Check if AI reason is enabled
     if not settings.AI_REASON_ENABLED:
         return "-"
-    
+
     # Check monthly budget
     if not _budget_ok():
         return "-"
-    
+
     timeout = timeout_s or settings.AI_REASON_TIMEOUT_S
     context = ctx or {}
-    
+
     last_px = context.get("last_px")
     ret_1m = context.get("ret_1m")
     spread_bps = context.get("spread_bps")
-    
+
     # Build enhanced prompt with market context
     prompt = (
         "You are a trading analyst. In <=2 sentences, explain the rationale for this trade.\n"
@@ -500,40 +515,41 @@ def brief_reason_plus(
         f"context_excerpt={excerpt[:240]}\n"
         "No disclaimers, no emojis, no JSON."
     )
-    
+
     # Time-boxed completion
     import threading
+
     result = ["-"]  # Mutable container for thread result
-    
+
     def _run():
         try:
             rate_limit_check()
             cli = get_client()
-            
+
             resp = cli.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
                 max_tokens=80,
             )
-            
+
             # Estimate tokens: prompt/4 + output
             est_tokens = len(prompt) // 4 + 80
             _acc_tokens(est_tokens)
-            
+
             result[0] = resp.choices[0].message.content.strip()
-        
+
         except Exception:
             result[0] = "-"
-    
+
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()
     thread.join(timeout=timeout)
-    
+
     if thread.is_alive():
         # Timeout exceeded
         return "-"
-    
+
     return result[0] or "-"
 
 
@@ -565,7 +581,9 @@ def telegram_ai_answer(
             continue
 
     signals_block = "\n".join(lines) if lines else "(no recent signals provided)"
-    metrics_block = json.dumps(metrics or {}, indent=2) if metrics else "(no metrics provided)"
+    metrics_block = (
+        json.dumps(metrics or {}, indent=2) if metrics else "(no metrics provided)"
+    )
 
     system_prompt = (
         "You are LeviBot's Telegram GPT analyst."
@@ -628,4 +646,3 @@ def telegram_ai_answer(
                 "Ensure OpenAI API key is configured",
             ],
         }
-

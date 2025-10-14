@@ -1,10 +1,3 @@
 """
 Trading execution and simulation.
 """
-
-
-
-
-
-
-

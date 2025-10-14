@@ -10,9 +10,9 @@ def test_get_and_put_policy(monkeypatch):
     r1 = c.get("/risk/policy")
     assert r1.status_code == 200
     cur = r1.json().get("current")
-    assert cur in ("conservative","moderate","aggressive")
+    assert cur in ("conservative", "moderate", "aggressive")
 
-    r2 = c.put("/risk/policy", json={"name":"aggressive"})
+    r2 = c.put("/risk/policy", json={"name": "aggressive"})
     assert r2.status_code == 200
     assert r2.json().get("current") == "aggressive"
 
@@ -20,10 +20,12 @@ def test_get_and_put_policy(monkeypatch):
     assert r3.status_code == 200
     assert r3.json().get("current") == "aggressive"
 
+
 def test_put_invalid_policy():
     c = TestClient(app)
-    r = c.put("/risk/policy", json={"name":"yolo"})
+    r = c.put("/risk/policy", json={"name": "yolo"})
     assert r.status_code == 400
+
 
 def test_policy_response_structure():
     c = TestClient(app)

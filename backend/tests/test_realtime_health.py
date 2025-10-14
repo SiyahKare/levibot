@@ -3,6 +3,7 @@ Realtime Health Pytest Suite
 
 Quick smoke tests for critical endpoints.
 """
+
 import os
 
 import pytest
@@ -55,8 +56,7 @@ def test_analytics_stats():
 
 
 @pytest.mark.skipif(
-    not os.getenv("TEST_SSE"),
-    reason="SSE test requires sseclient-py and may timeout"
+    not os.getenv("TEST_SSE"), reason="SSE test requires sseclient-py and may timeout"
 )
 def test_sse_stream():
     """Test SSE stream (optional, needs sseclient-py)."""
@@ -82,4 +82,3 @@ def test_sse_stream():
 
     # At least connection established
     assert r.status_code == 200
-

@@ -4,6 +4,7 @@ Automatic Trading Bot - Demo Automation
 Periodically executes trades based on simple rules.
 Perfect for testing and demonstration of automated trading.
 """
+
 import random
 from datetime import datetime
 
@@ -153,4 +154,3 @@ def get_auto_trader() -> AutoTrader:
     if _AUTO_TRADER is None:
         _AUTO_TRADER = AutoTrader()
     return _AUTO_TRADER
-

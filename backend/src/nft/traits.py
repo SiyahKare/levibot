@@ -4,10 +4,9 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 import requests
-
 
 BASE = "https://api.reservoir.tools"
 KEY = os.getenv("RESERVOIR_API_KEY", "")
@@ -16,7 +15,7 @@ CACHE = Path("backend/data/cache/nft")
 CACHE.mkdir(parents=True, exist_ok=True)
 
 
-def _get(url: str, **params: Any) -> Dict[str, Any]:
+def _get(url: str, **params: Any) -> dict[str, Any]:
     r = requests.get(BASE + url, headers=HDR, params=params, timeout=20)
     r.raise_for_status()
     return r.json()
@@ -33,12 +32,12 @@ def floor_usd(collection: str) -> float | None:
     return float(fa["price"]["amount"]["usd"])  # type: ignore[index]
 
 
-def traits_freq(collection: str) -> Dict[str, int]:
+def traits_freq(collection: str) -> dict[str, int]:
     p = CACHE / f"{collection.replace(':', '_')}_traits.json"
     if p.exists() and time.time() - p.stat().st_mtime < 86400:
         return json.loads(p.read_text())
     j = _get(f"/collections/{collection}/attributes/all/v2")
-    freq: Dict[str, int] = {}
+    freq: dict[str, int] = {}
     for a in j.get("attributes", []):
         k = a.get("key")
         for it in a.get("values", []) or []:
@@ -48,16 +47,3 @@ def traits_freq(collection: str) -> Dict[str, int]:
 
 
 __all__ = ["floor_usd", "traits_freq"]
-
-
-
-
-
-
-
-
-
-
-
-
-

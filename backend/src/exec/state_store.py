@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Optional
 import os
+from typing import Any
 
 
 class StateStore:
@@ -22,7 +22,7 @@ class StateStore:
             except Exception:
                 self._redis = None
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         if self._redis:
             val = self._redis.get(key)
             return val
@@ -33,5 +33,3 @@ class StateStore:
             self._redis.set(key, value)
         else:
             self._mem[key] = value
-
-

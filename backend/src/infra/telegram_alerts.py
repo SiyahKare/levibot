@@ -2,6 +2,7 @@
 Telegram Alerts for Critical Events
 Sends alerts for guardrails, cooldown, kill switch, and model fallback events
 """
+
 import os
 
 import requests
@@ -13,32 +14,28 @@ TELEGRAM_ALERT_CHAT_ID = os.getenv("TELEGRAM_ALERT_CHAT_ID", "")
 def send_telegram_alert(message: str, priority: str = "INFO") -> bool:
     """
     Send alert to Telegram channel.
-    
+
     Args:
         message: Alert message
         priority: INFO, WARNING, CRITICAL
-    
+
     Returns:
         True if sent successfully
     """
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_ALERT_CHAT_ID:
         # Telegram not configured, skip
         return False
-    
-    emoji = {
-        "INFO": "ℹ️",
-        "WARNING": "⚠️",
-        "CRITICAL": "🚨"
-    }.get(priority, "📢")
-    
+
+    emoji = {"INFO": "ℹ️", "WARNING": "⚠️", "CRITICAL": "🚨"}.get(priority, "📢")
+
     formatted_message = f"{emoji} **LeviBot Alert**\n\n{message}"
-    
+
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": TELEGRAM_ALERT_CHAT_ID,
             "text": formatted_message,
-            "parse_mode": "Markdown"
+            "parse_mode": "Markdown",
         }
         resp = requests.post(url, json=payload, timeout=5)
         return resp.status_code == 200
@@ -47,7 +44,9 @@ def send_telegram_alert(message: str, priority: str = "INFO") -> bool:
         return False
 
 
-def alert_guardrails_rejection(symbol: str, confidence: float, threshold: float) -> None:
+def alert_guardrails_rejection(
+    symbol: str, confidence: float, threshold: float
+) -> None:
     """Alert when trade is rejected by guardrails."""
     message = (
         f"**Guardrails Rejection**\n"
@@ -125,4 +124,3 @@ def alert_daily_loss_limit(current_loss: float, limit: float) -> None:
         f"Trading may be halted"
     )
     send_telegram_alert(message, "CRITICAL")
-

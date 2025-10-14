@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from ..strategy.twap_rule_bot import TWAP_BOT_REGISTRY, TwapRuleParams
 
+from ..strategy.twap_rule_bot import TWAP_BOT_REGISTRY, TwapRuleParams
 
 router = APIRouter()
 
@@ -44,20 +44,3 @@ def stop(task_id: str) -> dict:
 @router.get("/strategy/twap-rule/status")
 def status(task_id: str | None = None) -> dict:
     return TWAP_BOT_REGISTRY.status(task_id)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

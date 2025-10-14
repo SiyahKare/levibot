@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import os
-import re
 import asyncio
 import datetime as dt
-from typing import Optional, Dict, Any
+import os
+import re
+from typing import Any
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.types import Message
 
 from ..infra.logger import log_event
-
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
@@ -33,14 +32,14 @@ def norm_symbol(s: str) -> str:
     return s if s.endswith("USDT") else (s + "USDT" if s else s)
 
 
-def _to_float(x: Optional[str]) -> Optional[float]:
+def _to_float(x: str | None) -> float | None:
     try:
         return float(x) if x else None
     except Exception:
         return None
 
 
-def parse_signal(text: str) -> Optional[Dict[str, Any]]:
+def parse_signal(text: str) -> dict[str, Any] | None:
     if not text:
         return None
     m = PATTERN.search(text)
@@ -48,7 +47,11 @@ def parse_signal(text: str) -> Optional[Dict[str, Any]]:
         return None
     gd = m.groupdict()
     raw_side = (gd.get("side") or "").upper()
-    side = "LONG" if raw_side in ("LONG", "BUY") else "SHORT" if raw_side in ("SHORT", "SELL") else None
+    side = (
+        "LONG"
+        if raw_side in ("LONG", "BUY")
+        else "SHORT" if raw_side in ("SHORT", "SELL") else None
+    )
     sym = norm_symbol(gd.get("sym") or "")
     if not sym or not side:
         return None
@@ -94,19 +97,3 @@ async def run_polling() -> None:
 
 if __name__ == "__main__":
     asyncio.run(run_polling())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from backend.src.infra.version import get_build_info, get_git_branch, get_git_sha, get_version
+from backend.src.infra.version import (
+    get_build_info,
+    get_git_branch,
+    get_git_sha,
+    get_version,
+)
 
 
 def test_get_version_from_env(monkeypatch):

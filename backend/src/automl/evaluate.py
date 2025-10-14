@@ -65,4 +65,3 @@ def calculate_sharpe(returns: list[float], risk_free_rate: float = 0.0) -> float
     sharpe = (mean_return - risk_free_rate) / std_dev * (252**0.5)
 
     return sharpe
-

@@ -1,26 +1,30 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import APIRouter, Response, Query
-import duckdb
-from ..infra import duck as duckinfra
-import io
-import polars as pl
 import glob
+import io
 import json as _json
+from datetime import datetime, timedelta
 
+import duckdb
+import polars as pl
+from fastapi import APIRouter, Query, Response
+
+from ..infra import duck as duckinfra
 
 router = APIRouter()
 
 
 def _export_json(data: dict) -> Response:
     from fastapi.responses import JSONResponse
+
     return JSONResponse(content=data)
 
 
 @router.get("/reports/daily")
-def daily(date: Optional[str] = None, format: str = Query("json", pattern=r"^(json|csv|parquet)$")):
+def daily(
+    date: str | None = None,
+    format: str = Query("json", pattern=r"^(json|csv|parquet)$"),
+):
     # Doğrudan read_json_auto ile sorgula (CREATE VIEW ve prepared param gerektirme)
     con = duckdb.connect()
     day = date or datetime.utcnow().strftime("%Y-%m-%d")
@@ -31,16 +35,20 @@ def daily(date: Optional[str] = None, format: str = Query("json", pattern=r"^(js
         by_symbol = []
     else:
         pnl = 0.0  # pnl_usdt yok, smoke için 0
-        trades = con.sql(f"""
+        trades = con.sql(
+            f"""
             SELECT count(*) FROM read_json_auto('{pattern}') 
             WHERE event_type='POSITION_CLOSED'
-        """).fetchone()[0]
-        by_symbol = con.sql(f"""
+        """
+        ).fetchone()[0]
+        by_symbol = con.sql(
+            f"""
             SELECT symbol, count(*) AS trades, 0.0 AS pnl
             FROM read_json_auto('{pattern}')
             WHERE event_type='POSITION_CLOSED' AND symbol IS NOT NULL
             GROUP BY symbol
-        """).fetchall()
+        """
+        ).fetchall()
     # trades ve by_symbol yukarıda hesaplandı
     data = {
         "date": (date or datetime.utcnow().strftime("%Y-%m-%d")),
@@ -61,19 +69,38 @@ def daily(date: Optional[str] = None, format: str = Query("json", pattern=r"^(js
     }
     if format == "json":
         return _export_json(data)
-    df = pl.DataFrame(data["by_symbol"]) if data["by_symbol"] else pl.DataFrame({"symbol": [], "trades": [], "pnl": []})
+    df = (
+        pl.DataFrame(data["by_symbol"])
+        if data["by_symbol"]
+        else pl.DataFrame({"symbol": [], "trades": [], "pnl": []})
+    )
     if format == "csv":
         buf = io.StringIO()
         buf.write(df.write_csv())
-        return Response(buf.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=daily_{date or 'today'}.csv"})
+        return Response(
+            buf.getvalue(),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=daily_{date or 'today'}.csv"
+            },
+        )
     # parquet
     bbuf = io.BytesIO()
     df.write_parquet(bbuf)
-    return Response(bbuf.getvalue(), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename=daily_{date or 'today'}.parquet"})
+    return Response(
+        bbuf.getvalue(),
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename=daily_{date or 'today'}.parquet"
+        },
+    )
 
 
 @router.get("/reports/weekly")
-def weekly(end: Optional[str] = None, format: str = Query("json", pattern=r"^(json|csv|parquet)$")):
+def weekly(
+    end: str | None = None,
+    format: str = Query("json", pattern=r"^(json|csv|parquet)$"),
+):
     # Haftalık: mevcut günlerin path'lerini topla ve SQL'i birleştir
     con = duckdb.connect()
     end_dt = datetime.strptime(end, "%Y-%m-%d") if end else datetime.utcnow()
@@ -83,7 +110,9 @@ def weekly(end: Optional[str] = None, format: str = Query("json", pattern=r"^(js
         pat = duckinfra._glob_for_day(d)
         if glob.glob(pat):
             # Sadece gerekli alanları projekte et, payload'ı dahil etme
-            parts.append(f"SELECT substr(ts, 1, 10) AS date FROM read_json_auto('{pat}') WHERE event_type='POSITION_CLOSED'")
+            parts.append(
+                f"SELECT substr(ts, 1, 10) AS date FROM read_json_auto('{pat}') WHERE event_type='POSITION_CLOSED'"
+            )
     pnl = 0.0
     if parts:
         union_sql = " UNION ALL ".join(parts)
@@ -109,14 +138,30 @@ def weekly(end: Optional[str] = None, format: str = Query("json", pattern=r"^(js
     }
     if format == "json":
         return _export_json(data)
-    df = pl.DataFrame(data["by_day"]) if data["by_day"] else pl.DataFrame({"date": [], "pnl": []})
+    df = (
+        pl.DataFrame(data["by_day"])
+        if data["by_day"]
+        else pl.DataFrame({"date": [], "pnl": []})
+    )
     if format == "csv":
         buf = io.StringIO()
         buf.write(df.write_csv())
-        return Response(buf.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=weekly_{end or 'today'}.csv"})
+        return Response(
+            buf.getvalue(),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=weekly_{end or 'today'}.csv"
+            },
+        )
     bbuf = io.BytesIO()
     df.write_parquet(bbuf)
-    return Response(bbuf.getvalue(), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename=weekly_{end or 'today'}.parquet"})
+    return Response(
+        bbuf.getvalue(),
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename=weekly_{end or 'today'}.parquet"
+        },
+    )
 
 
 @router.get("/events")
@@ -124,15 +169,15 @@ def events(
     limit: int = Query(200, ge=1, le=1000),
     format: str = Query("json", pattern=r"^(json|jsonl)$"),
     days: int = Query(1, ge=1, le=7),
-    event_type: Optional[str] = None,
-    symbol: Optional[str] = None,
-    trace_id: Optional[str] = None,
-    since_iso: Optional[str] = None,
-    q: Optional[str] = None,
+    event_type: str | None = None,
+    symbol: str | None = None,
+    trace_id: str | None = None,
+    since_iso: str | None = None,
+    q: str | None = None,
 ):
     """
     Smart event filtering endpoint
-    
+
     Filters (all optional):
     - event_type: CSV list (e.g., "SIGNAL_SCORED,POSITION_CLOSED")
     - symbol: Exact match (e.g., "BTCUSDT")
@@ -146,12 +191,15 @@ def events(
         # Get log base directory
         import os
         from pathlib import Path
+
         log_base = Path(os.getenv("LOG_DIR", "/app/backend/data/logs"))
-        
+
         # Get recent days
         end_dt = datetime.utcnow()
-        day_list = [(end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
-        
+        day_list = [
+            (end_dt - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)
+        ]
+
         # Collect files (most recent first)
         files = []
         for d in sorted(day_list, reverse=True):
@@ -159,50 +207,52 @@ def events(
             root_file = log_base / f"{d}.jsonl"
             if root_file.exists():
                 files.append(str(root_file))
-            
+
             # Directory-level events-*.jsonl files
             day_dir = log_base / d
             if day_dir.exists() and day_dir.is_dir():
                 events_files = sorted(day_dir.glob("events-*.jsonl"), reverse=True)
                 files.extend([str(f) for f in events_files])
-        
+
         # Prepare filters
         allowed_types = None
         if event_type:
             allowed_types = {t.strip() for t in event_type.split(",") if t.strip()}
-        
+
         q_lower = q.lower() if q else None
         since = since_iso or "1970-01-01T00:00:00Z"
-        
+
         # Read and filter events
         out = []
         for fp in files:
             try:
-                with open(fp, "r", encoding="utf-8") as f:
+                with open(fp, encoding="utf-8") as f:
                     for line in f:
                         try:
                             rec = _json.loads(line)
                         except:
                             continue
-                        
+
                         # Apply filters
                         if allowed_types and rec.get("event_type") not in allowed_types:
                             continue
-                        
+
                         if symbol and rec.get("symbol") != symbol:
                             continue
-                        
+
                         if trace_id and rec.get("trace_id") != trace_id:
                             continue
-                        
+
                         ts = rec.get("ts") or ""
                         if ts < since:
                             continue
-                        
+
                         if q_lower:
                             # Full-text search in payload
                             try:
-                                payload_str = _json.dumps(rec.get("payload", {}), ensure_ascii=False).lower()
+                                payload_str = _json.dumps(
+                                    rec.get("payload", {}), ensure_ascii=False
+                                ).lower()
                                 event_type_str = (rec.get("event_type") or "").lower()
                                 symbol_str = (rec.get("symbol") or "").lower()
                                 trace_str = (rec.get("trace_id") or "").lower()
@@ -211,29 +261,31 @@ def events(
                                     continue
                             except:
                                 continue
-                        
+
                         out.append(rec)
                         if len(out) >= limit:
                             break
-                
+
                 if len(out) >= limit:
                     break
             except:
                 continue
-        
+
         # Sort by timestamp (most recent first)
         out.sort(key=lambda r: r.get("ts") or "", reverse=True)
         out = out[:limit]
-        
+
     except Exception as e:
         import sys
+
         print(f"[/events] ERROR: {e}", file=sys.stderr, flush=True)
         out = []
-    
+
     if format == "jsonl":
-        s = "\n".join(_json.dumps(o, ensure_ascii=False) for o in out) + ("\n" if out else "")
+        s = "\n".join(_json.dumps(o, ensure_ascii=False) for o in out) + (
+            "\n" if out else ""
+        )
         return Response(s, media_type="application/x-ndjson")
     from fastapi.responses import JSONResponse
+
     return JSONResponse(content=out)
-
-

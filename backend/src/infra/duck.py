@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import glob
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
+
 import duckdb
-import glob
 
 
 def _glob_for_day(day_str: str) -> str:
@@ -13,7 +13,7 @@ def _glob_for_day(day_str: str) -> str:
     return str(base / "events-*.jsonl")
 
 
-def load_day(day_str: Optional[str] = None) -> duckdb.DuckDBPyRelation:
+def load_day(day_str: str | None = None) -> duckdb.DuckDBPyRelation:
     day = day_str or datetime.utcnow().strftime("%Y-%m-%d")
     con = duckdb.connect()
     # Dosyalar yoksa boş şemalı bir relation döndür
@@ -36,7 +36,7 @@ def load_day(day_str: Optional[str] = None) -> duckdb.DuckDBPyRelation:
     return rel
 
 
-def load_week_ending(end_day: Optional[str] = None) -> duckdb.DuckDBPyRelation:
+def load_week_ending(end_day: str | None = None) -> duckdb.DuckDBPyRelation:
     end = datetime.strptime(end_day, "%Y-%m-%d") if end_day else datetime.utcnow()
     days = [(end - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
     con = duckdb.connect()
@@ -66,5 +66,3 @@ def load_week_ending(end_day: Optional[str] = None) -> duckdb.DuckDBPyRelation:
     for r in rels[1:]:
         base = base.union_all(r)
     return base
-
-

@@ -2,6 +2,7 @@
 Feed API Routes
 Monitor real-time market data feed health
 """
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/feed", tags=["feed"])
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/feed", tags=["feed"])
 def get_feed_health():
     """
     Get feed health status.
-    
+
     Returns:
         {
             "ok": true,
@@ -30,7 +31,7 @@ def get_feed_health():
     """
     # TODO: Get real metrics from feed service
     # For now, return stub with expected structure
-    
+
     return {
         "ok": True,
         "provider": "mexc",
@@ -38,14 +39,10 @@ def get_feed_health():
         "topics": ["deals", "book_ticker"],
         "symbols_count": 24,  # TODO: Count from active universe
         "recv_rate_per_sec": 0.0,  # TODO: Calculate from metrics
-        "latency_ms": {
-            "p50": 0.0,
-            "p95": 0.0,
-            "p99": 0.0
-        },
+        "latency_ms": {"p50": 0.0, "p95": 0.0, "p99": 0.0},
         "outliers_filtered_1m": 0,  # TODO: Count filtered ticks
         "last_message_ts": None,  # TODO: Track last message time
-        "reconnects_1h": 0  # TODO: Count reconnections
+        "reconnects_1h": 0,  # TODO: Count reconnections
     }
 
 
@@ -53,7 +50,7 @@ def get_feed_health():
 def get_feed_metrics():
     """
     Get detailed feed metrics per symbol.
-    
+
     Returns per-symbol metrics:
         - Message rate
         - Tick rate (after dedup)
@@ -61,7 +58,7 @@ def get_feed_metrics():
         - Outlier count
     """
     # TODO: Query from feed service metrics
-    
+
     return {
         "ok": True,
         "metrics": {
@@ -70,10 +67,10 @@ def get_feed_metrics():
                 "tick_rate": 0.0,
                 "latency_p50": 0.0,
                 "latency_p95": 0.0,
-                "outliers_1m": 0
+                "outliers_1m": 0,
             }
             # ... more symbols
-        }
+        },
     }
 
 
@@ -81,7 +78,7 @@ def get_feed_metrics():
 def force_reconnect():
     """
     Force feed reconnection (admin only).
-    
+
     Useful for:
         - Recovering from stuck connections
         - Applying new subscription changes
@@ -89,18 +86,15 @@ def force_reconnect():
     """
     # TODO: Add admin auth check
     # TODO: Trigger feed reconnection
-    
-    return {
-        "ok": True,
-        "message": "Reconnection triggered"
-    }
+
+    return {"ok": True, "message": "Reconnection triggered"}
 
 
 @router.get("/subscriptions")
 def get_subscriptions():
     """
     Get current WS subscriptions.
-    
+
     Returns:
         {
             "ok": true,
@@ -112,14 +106,5 @@ def get_subscriptions():
         }
     """
     # TODO: Get from feed service
-    
-    return {
-        "ok": True,
-        "topics": {
-            "deals": [],
-            "book_ticker": []
-        },
-        "total_count": 0
-    }
 
-
+    return {"ok": True, "topics": {"deals": [], "book_ticker": []}, "total_count": 0}

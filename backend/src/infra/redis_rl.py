@@ -8,8 +8,10 @@ try:
 except Exception:
     redis = None
 
+
 def enabled() -> bool:
     return bool(os.getenv("REDIS_URL")) and redis is not None
+
 
 def _cfg():
     return {
@@ -18,9 +20,13 @@ def _cfg():
         "burst": int(os.getenv("RL_BURST", "40")),
     }
 
+
 async def get_client():
     assert enabled(), "redis rl not enabled"
-    return redis.from_url(os.getenv("REDIS_URL"), encoding="utf-8", decode_responses=True)
+    return redis.from_url(
+        os.getenv("REDIS_URL"), encoding="utf-8", decode_responses=True
+    )
+
 
 # token-bucket benzeri: (count, reset_at)
 LUA_SCRIPT = """
@@ -42,6 +48,7 @@ end
 local reset_at = (slot + 1) * window
 return {allowed, cnt, reset_at}
 """
+
 
 async def check_allow(bucket_key: str) -> tuple[bool, int, int]:
     """

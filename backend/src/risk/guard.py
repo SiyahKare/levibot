@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import time
-from ..infra.metrics import levibot_risk_used_ratio
+
 from ..infra.logger import JsonlEventLogger
+from ..infra.metrics import levibot_risk_used_ratio
 
 
 class KillSwitch:
@@ -30,7 +31,9 @@ class KillSwitch:
         self.realized_pnl += pnl_delta
         used = 0.0
         if self.equity_start:
-            used = max(0.0, -self.realized_pnl) / (self.equity_start * (self.max_dd_pct / 100.0))
+            used = max(0.0, -self.realized_pnl) / (
+                self.equity_start * (self.max_dd_pct / 100.0)
+            )
         levibot_risk_used_ratio.labels(user=user).set(min(1.0, used))
         if used >= 1.0 and not self.tripped:
             self.tripped = True
@@ -51,7 +54,3 @@ def get_ks(user: str, max_dd_pct: float) -> KillSwitch:
         ks = KillSwitch(max_dd_pct)
         KS_REGISTRY[user] = ks
     return ks
-
-
-
-

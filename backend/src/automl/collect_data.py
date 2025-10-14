@@ -71,4 +71,3 @@ def save_raw(symbol: str, rows: list[dict[str, Any]]) -> str:
 
     filename.write_text(json.dumps(rows, indent=2))
     return str(filename)
-

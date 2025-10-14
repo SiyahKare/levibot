@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import os
-from aiogram import Bot, Dispatcher, F
+
+import httpx
+from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
-import httpx
 
 API_BASE = os.getenv("LEVI_API_BASE", "http://127.0.0.1:8000")
 
@@ -45,7 +46,9 @@ async def handle_set_leverage(message: Message) -> None:
         return
     user_id = os.getenv("LEVI_DEFAULT_USER_ID", "onur")
     async with httpx.AsyncClient() as client:
-        await client.post(f"{API_BASE}/risk/leverage", json={"user_id": user_id, "leverage": leverage})
+        await client.post(
+            f"{API_BASE}/risk/leverage", json={"user_id": user_id, "leverage": leverage}
+        )
     await message.answer(f"Kaldıraç ayarlandı: x{leverage}")
 
 
@@ -66,5 +69,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-

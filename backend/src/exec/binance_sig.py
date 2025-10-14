@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import hmac
 import hashlib
+import hmac
 import time
 import urllib.parse
 
@@ -17,21 +17,3 @@ def auth_params(extra: dict | None = None, recv_window: int = 5000) -> dict:
     if extra:
         p.update(extra)
     return p
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

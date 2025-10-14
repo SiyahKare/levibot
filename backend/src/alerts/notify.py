@@ -1,7 +1,7 @@
-import os
 import asyncio
-from aiogram import Bot
+import os
 
+from aiogram import Bot
 
 _TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 _CHAT = os.getenv("TELEGRAM_ALERT_CHAT_ID")
@@ -23,19 +23,3 @@ def send(text: str):
         asyncio.create_task(_send_async(text))
     except RuntimeError:
         asyncio.run(_send_async(text))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

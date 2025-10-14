@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from ..infra import config_store
 
+from ..infra import config_store
 
 router = APIRouter()
 
@@ -21,19 +21,3 @@ def update_config(patch: dict):
         return {"ok": True, "config": cfg}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

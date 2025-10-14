@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import os
 
 
@@ -28,5 +29,3 @@ def adjust_conf(channel: str, conf: float) -> float:
     mult = trust.get((channel or "").lower(), 1.0)
     mult = clamp(mult, tmin, tmax)
     return clamp(conf * mult, 0.0, 0.999)
-
-

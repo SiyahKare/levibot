@@ -19,6 +19,7 @@ def test_fallback_allow():
         if original:
             os.environ["REDIS_URL"] = original
 
+
 def test_redis_path_if_available():
     url = os.getenv("REDIS_URL")
     if not url:
@@ -30,6 +31,7 @@ def test_redis_path_if_available():
         return
     pytest.skip("redis fallback active; cannot validate counter increment")
 
+
 def test_redis_rate_limit_enforcement():
     url = os.getenv("REDIS_URL")
     if not url:
@@ -38,7 +40,7 @@ def test_redis_rate_limit_enforcement():
     os.environ["RL_MAX"] = "3"
     os.environ["RL_BURST"] = "1"
     os.environ["RL_WINDOW_SEC"] = "60"
-    
+
     bucket = "test:enforce:limit"
     results = []
     limited = False
@@ -47,7 +49,7 @@ def test_redis_rate_limit_enforcement():
         results.append(ok)
         if not ok:
             limited = True
-    
+
     # İlk 4 (3+1 burst) geçmeli, sonrası block
     assert results[:4].count(True) == 4
     if not limited:

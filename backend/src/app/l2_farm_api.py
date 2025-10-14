@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from ..l2.farm import REGISTRY, FARMER
 
+from ..l2.farm import FARMER, REGISTRY
 
 router = APIRouter()
 
@@ -37,22 +37,12 @@ def simulate(req: SimReq) -> dict:
 
 
 @router.post("/l2/run-sequence")
-def run_sequence(wallet_id: str, network: str = "zksync", recipe: str = "default", dry_run: bool = True) -> dict:
-    return FARMER.run_sequence(wallet_id=wallet_id, network=network, recipe=recipe, dry_run=dry_run)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def run_sequence(
+    wallet_id: str,
+    network: str = "zksync",
+    recipe: str = "default",
+    dry_run: bool = True,
+) -> dict:
+    return FARMER.run_sequence(
+        wallet_id=wallet_id, network=network, recipe=recipe, dry_run=dry_run
+    )

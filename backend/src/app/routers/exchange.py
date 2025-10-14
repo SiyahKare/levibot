@@ -3,6 +3,7 @@ Exchange health & balance endpoints.
 
 Provides runtime diagnostics for configured exchange connections.
 """
+
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -17,14 +18,14 @@ router = APIRouter(prefix="/exchange", tags=["exchange"])
 async def exchange_ping() -> dict[str, Any]:
     """
     Health check for exchange connectivity.
-    
+
     Returns:
         - ok: bool
         - exchange: str (mexc | paper)
         - markets_count: int (if MEXC)
     """
     executor = get_executor()
-    
+
     if executor is None:
         # Paper mode
         return {
@@ -33,12 +34,12 @@ async def exchange_ping() -> dict[str, Any]:
             "mode": "simulation",
             "note": "No live exchange configured",
         }
-    
+
     # MEXC mode
     if hasattr(executor, "health_check"):
         result = executor.health_check()
         return result
-    
+
     return {"ok": False, "error": "Executor does not support health checks"}
 
 
@@ -46,26 +47,26 @@ async def exchange_ping() -> dict[str, Any]:
 async def exchange_balance() -> dict[str, Any]:
     """
     Fetch account balance from configured exchange.
-    
+
     Returns:
         - ok: bool
         - balance: dict (if MEXC)
         - error: str (if failed)
     """
     executor = get_executor()
-    
+
     if executor is None:
         return {
             "ok": False,
             "error": "Paper mode - no real balance available",
             "note": "Use EXCHANGE=MEXC to connect to live exchange",
         }
-    
+
     # MEXC mode
     if hasattr(executor, "get_balance"):
         result = executor.get_balance()
         return result
-    
+
     return {"ok": False, "error": "Executor does not support balance queries"}
 
 
@@ -73,23 +74,23 @@ async def exchange_balance() -> dict[str, Any]:
 async def exchange_markets(limit: int = 20) -> dict[str, Any]:
     """
     List available trading markets.
-    
+
     Args:
         limit: Max number of markets to return
-    
+
     Returns:
         - ok: bool
         - markets: list of symbol names
         - total: int
     """
     executor = get_executor()
-    
+
     if executor is None:
         return {
             "ok": False,
             "error": "Paper mode - markets not available",
         }
-    
+
     # MEXC mode
     if hasattr(executor, "load_markets"):
         try:
@@ -103,7 +104,7 @@ async def exchange_markets(limit: int = 20) -> dict[str, Any]:
             }
         except Exception as e:
             return {"ok": False, "error": str(e)}
-    
+
     return {"ok": False, "error": "Executor does not support market listing"}
 
 
@@ -111,10 +112,10 @@ async def exchange_markets(limit: int = 20) -> dict[str, Any]:
 async def exchange_ticker(symbol: str) -> dict[str, Any]:
     """
     Fetch current ticker price for a symbol.
-    
+
     Args:
         symbol: Trading pair (e.g., BTCUSDT or BTC/USDT)
-    
+
     Returns:
         - ok: bool
         - symbol: str (normalized)
@@ -122,13 +123,13 @@ async def exchange_ticker(symbol: str) -> dict[str, Any]:
         - error: str (if failed)
     """
     executor = get_executor()
-    
+
     if executor is None:
         return {
             "ok": False,
             "error": "Paper mode - use /dex/quote for synthetic prices",
         }
-    
+
     # MEXC mode
     if hasattr(executor, "fetch_ticker_price"):
         try:
@@ -142,7 +143,7 @@ async def exchange_ticker(symbol: str) -> dict[str, Any]:
             }
         except Exception as e:
             return {"ok": False, "symbol": symbol, "error": str(e)}
-    
+
     return {"ok": False, "error": "Executor does not support ticker queries"}
 
 
@@ -155,13 +156,13 @@ async def test_order(
 ) -> dict[str, Any]:
     """
     Test order placement (dry-run by default for safety).
-    
+
     Args:
         symbol: Trading pair
         side: "buy" or "sell"
         notional_usd: Order size in USD
         dry_run: If True, simulate order without execution (default: True)
-    
+
     Returns:
         Execution result dict
     """
@@ -182,15 +183,15 @@ async def test_order(
             "price": result.price,
             "filled": result.filled,
         }
-    
+
     # LIVE ORDER (use with caution!)
     executor = get_executor()
     if executor is None:
         raise HTTPException(400, "Live orders require EXCHANGE=MEXC configuration")
-    
+
     if not hasattr(executor, "place_market_order"):
         raise HTTPException(400, "Executor does not support order placement")
-    
+
     result = executor.place_market_order(symbol, side, notional_usd)
     return {
         "ok": result.ok,
@@ -201,4 +202,3 @@ async def test_order(
         "price": result.price,
         "filled": result.filled,
     }
-

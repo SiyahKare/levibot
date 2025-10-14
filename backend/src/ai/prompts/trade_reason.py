@@ -15,4 +15,3 @@ Context:
 - Excerpt: {excerpt}
 
 Explanation:"""
-

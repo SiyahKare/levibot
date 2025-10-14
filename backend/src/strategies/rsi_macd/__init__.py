@@ -25,5 +25,3 @@ from .config import RsiMacdConfig
 from .engine import RsiMacdEngine
 
 __all__ = ["RsiMacdConfig", "RsiMacdEngine"]
-
-

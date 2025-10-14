@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import datetime as dt
+
 import duckdb as d
-from ..infra.logger import log_event, JsonlEventLogger
-from ..signals.hybrid import combine_signals
-from ..exec.router import ExchangeRouter
+
+from ..exec.algo_base import pick_twap_adapter
 from ..exec.precision import MarketMeta
-from ..exec.sizing import size_with_pulse, RiskParams
+from ..exec.router import ExchangeRouter
+from ..exec.sizing import RiskParams, size_with_pulse
 from ..exec.twap import start_twap_software
 from ..infra.config_store import load as load_cfg
-from ..exec.algo_base import pick_twap_adapter
+from ..infra.logger import JsonlEventLogger, log_event
+from ..signals.hybrid import combine_signals
 
 _last_at = {}
 
@@ -57,7 +59,13 @@ def run_tick(user_id: str = "default") -> None:
         max_leverage=float(rc.get("max_leverage", 3)),
         max_pos_notional_pct=(float(rc.get("max_pos_notional_pct", 0)) / 100.0 or None),
         max_pos_usd=(float(rc.get("max_pos_usd", 0)) or None),
-        hard_cap=float(load_cfg().get("telegram", {}).get("evaluation", {}).get("pulse", {}).get("hard_cap", 1.5)),
+        hard_cap=float(
+            load_cfg()
+            .get("telegram", {})
+            .get("evaluation", {})
+            .get("pulse", {})
+            .get("hard_cap", 1.5)
+        ),
     )
 
     for symbol in cfg.get("symbols", ["ETHUSDT"]):
@@ -69,6 +77,7 @@ def run_tick(user_id: str = "default") -> None:
             continue
 
         import polars as pl
+
         mark = float(ex.client.fetch_ticker(cc).get("last"))
         df = pl.DataFrame({"close": [mark], "symbol": [symbol]})
         hsig = combine_signals(df, ml_proba=0.5, news_bias=0.0)
@@ -77,51 +86,107 @@ def run_tick(user_id: str = "default") -> None:
         if cfg.get("trend_required", True) and max(pL, pS) < max(thrL, 1 - thrS):
             continue
 
-        side = "buy" if pL >= thrL and _cooldown_ok(symbol + ":L", cooldown) else "sell" if pS >= (1 - thrS) and _cooldown_ok(symbol + ":S", cooldown) else None
+        side = (
+            "buy"
+            if pL >= thrL and _cooldown_ok(symbol + ":L", cooldown)
+            else (
+                "sell"
+                if pS >= (1 - thrS) and _cooldown_ok(symbol + ":S", cooldown)
+                else None
+            )
+        )
         if not side:
             continue
 
         # ATR kısa pencere tahmini
-        bars = d.sql(f"SELECT close, high, low FROM read_parquet('backend/data/parquet/ohlcv/{symbol}_{tf}.parquet') ORDER BY time DESC LIMIT 45").df()
+        bars = d.sql(
+            f"SELECT close, high, low FROM read_parquet('backend/data/parquet/ohlcv/{symbol}_{tf}.parquet') ORDER BY time DESC LIMIT 45"
+        ).df()
         atr = None
         if not bars.empty:
             import numpy as np
-            c = bars["close"].to_numpy(); h_ = bars["high"].to_numpy(); l_ = bars["low"].to_numpy()
-            prev = np.roll(c, 1); prev[0] = c[0]
+
+            c = bars["close"].to_numpy()
+            h_ = bars["high"].to_numpy()
+            l_ = bars["low"].to_numpy()
+            prev = np.roll(c, 1)
+            prev[0] = c[0]
             tr = np.maximum(h_ - l_, np.maximum(abs(h_ - prev), abs(l_ - prev)))
             atr = float(tr[-14:].mean())
 
         entry = mark
-        stop = (entry - 1.8 * atr) if (atr and side == "buy") else (entry + 1.8 * atr) if atr else None
+        stop = (
+            (entry - 1.8 * atr)
+            if (atr and side == "buy")
+            else (entry + 1.8 * atr) if atr else None
+        )
 
-        pulse_factor = (hsig.components.get("telegram_pulse", {}) or {}).get("factor", 1.0)
-        sizing = size_with_pulse(symbol, side, entry, stop, atr, pulse_factor, rp, meta, mark_price=mark)
+        pulse_factor = (hsig.components.get("telegram_pulse", {}) or {}).get(
+            "factor", 1.0
+        )
+        sizing = size_with_pulse(
+            symbol, side, entry, stop, atr, pulse_factor, rp, meta, mark_price=mark
+        )
         qty = sizing.get("qty", 0.0)
         if qty <= 0:
             continue
 
         notional = qty * mark
-        adapter = pick_twap_adapter(symbol, notional, duration) if mode in ("native", "auto") else None
+        adapter = (
+            pick_twap_adapter(symbol, notional, duration)
+            if mode in ("native", "auto")
+            else None
+        )
         if adapter:
             try:
-                adapter.place_twap(symbol, "BUY" if side == "buy" else "SELL", qty, duration)
+                adapter.place_twap(
+                    symbol, "BUY" if side == "buy" else "SELL", qty, duration
+                )
                 _last_at[symbol + (":L" if side == "buy" else ":S")] = _now()
-                log_event("STRAT_TWAP_OPEN", {"symbol": symbol, "side": side, "qty": qty, "duration": duration, "mode": adapter.name, "pulse": pulse_factor, "spread_bps": sp_bps})
+                log_event(
+                    "STRAT_TWAP_OPEN",
+                    {
+                        "symbol": symbol,
+                        "side": side,
+                        "qty": qty,
+                        "duration": duration,
+                        "mode": adapter.name,
+                        "pulse": pulse_factor,
+                        "spread_bps": sp_bps,
+                    },
+                )
                 continue
             except Exception as e:
-                log_event("ERROR", {"scope": "twap_native", "adapter": getattr(adapter, "name", "?"), "symbol": symbol, "err": str(e)})
+                log_event(
+                    "ERROR",
+                    {
+                        "scope": "twap_native",
+                        "adapter": getattr(adapter, "name", "?"),
+                        "symbol": symbol,
+                        "err": str(e),
+                    },
+                )
         start_twap_software(cc, side, qty, duration, slices, meta)
         _last_at[symbol + (":L" if side == "buy" else ":S")] = _now()
-        log_event("STRAT_TWAP_OPEN", {"symbol": symbol, "side": side, "qty": qty, "duration": duration, "mode": "software", "pulse": pulse_factor, "spread_bps": sp_bps})
+        log_event(
+            "STRAT_TWAP_OPEN",
+            {
+                "symbol": symbol,
+                "side": side,
+                "qty": qty,
+                "duration": duration,
+                "mode": "software",
+                "pulse": pulse_factor,
+                "spread_bps": sp_bps,
+            },
+        )
 
 
-
+import threading
+import uuid
 
 # --- Minimal API Registry (stub) for twap_rule_api ---
 from dataclasses import dataclass
-from typing import Optional, Dict
-import threading
-import uuid
 
 
 @dataclass
@@ -142,20 +207,24 @@ class _TwapRuleTask:
         self.params = params
         self.stopped = False
         self.logger = JsonlEventLogger()
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return
 
         def _loop() -> None:
-            self.logger.write("TWAP_RULE_START", {"task_id": self.id, "params": self.params.__dict__})
+            self.logger.write(
+                "TWAP_RULE_START", {"task_id": self.id, "params": self.params.__dict__}
+            )
             try:
                 while not self.stopped:
                     try:
                         run_tick(user_id="default")
                     except Exception as e:
-                        self.logger.write("TWAP_RULE_ERR", {"task_id": self.id, "error": str(e)})
+                        self.logger.write(
+                            "TWAP_RULE_ERR", {"task_id": self.id, "error": str(e)}
+                        )
                     # basic cadence ~60s
                     for _ in range(60):
                         if self.stopped:
@@ -164,7 +233,9 @@ class _TwapRuleTask:
             finally:
                 self.logger.write("TWAP_RULE_STOP", {"task_id": self.id})
 
-        self._thread = threading.Thread(target=_loop, name=f"twap-rule-{self.id}", daemon=True)
+        self._thread = threading.Thread(
+            target=_loop, name=f"twap-rule-{self.id}", daemon=True
+        )
         self._thread.start()
 
     def stop(self) -> None:
@@ -173,7 +244,7 @@ class _TwapRuleTask:
 
 class TwapRuleRegistry:
     def __init__(self) -> None:
-        self._tasks: Dict[str, _TwapRuleTask] = {}
+        self._tasks: dict[str, _TwapRuleTask] = {}
 
     def start_task(self, params: TwapRuleParams) -> str:
         tid = uuid.uuid4().hex[:12]
@@ -189,13 +260,16 @@ class TwapRuleRegistry:
         t.stop()
         return True
 
-    def status(self, task_id: Optional[str] = None) -> Dict[str, dict]:
+    def status(self, task_id: str | None = None) -> dict[str, dict]:
         if task_id:
             t = self._tasks.get(task_id)
             if not t:
                 return {}
             return {task_id: {"stopped": t.stopped, "params": t.params.__dict__}}
-        return {k: {"stopped": v.stopped, "params": v.params.__dict__} for k, v in self._tasks.items()}
+        return {
+            k: {"stopped": v.stopped, "params": v.params.__dict__}
+            for k, v in self._tasks.items()
+        }
 
 
 TWAP_BOT_REGISTRY = TwapRuleRegistry()

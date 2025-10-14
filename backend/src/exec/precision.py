@@ -1,15 +1,23 @@
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
 
 
 class MarketMeta:
     def __init__(self, m: dict):
-        self.price_step = Decimal(str(m.get("precision", {}).get("price", m.get("priceIncrement", "0.01"))))
-        self.amount_step = Decimal(str(m.get("precision", {}).get("amount", m.get("amountIncrement", "0.001"))))
-        self.min_notional = Decimal(str(m.get("limits", {}).get("cost", {}).get("min", 0)))
+        self.price_step = Decimal(
+            str(m.get("precision", {}).get("price", m.get("priceIncrement", "0.01")))
+        )
+        self.amount_step = Decimal(
+            str(m.get("precision", {}).get("amount", m.get("amountIncrement", "0.001")))
+        )
+        self.min_notional = Decimal(
+            str(m.get("limits", {}).get("cost", {}).get("min", 0))
+        )
         self.min_amt = Decimal(str(m.get("limits", {}).get("amount", {}).get("min", 0)))
-        self.min_price = Decimal(str(m.get("limits", {}).get("price", {}).get("min", 0)))
+        self.min_price = Decimal(
+            str(m.get("limits", {}).get("price", {}).get("min", 0))
+        )
 
 
 def _round_step(x: Decimal, step: Decimal) -> Decimal:
@@ -34,7 +42,3 @@ def quantize_amount(amount: float, meta: MarketMeta) -> float:
 def passes_min_notional(price: float, amount: float, meta: MarketMeta) -> bool:
     notional = Decimal(str(price)) * Decimal(str(amount))
     return notional >= meta.min_notional
-
-
-
-

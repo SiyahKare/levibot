@@ -1,16 +1,16 @@
 from __future__ import annotations
-import os
+
 import json
-import joblib
+import os
 import re
 from pathlib import Path
-from typing import List, Tuple
 
-from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
+import joblib
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
 
 MODEL_DIR = Path(os.getenv("MODEL_DIR", "backend/artifacts"))
 DATA_PATH = Path("backend/data/signals/labels.jsonl")
@@ -30,11 +30,11 @@ def _normalize(text: str) -> str:
     return t
 
 
-def load_dataset(path=DATA_PATH) -> Tuple[List[str], List[str]]:
+def load_dataset(path=DATA_PATH) -> tuple[list[str], list[str]]:
     X, y = [], []
     if not path.exists():
         return X, y
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             try:
                 obj = json.loads(line)
@@ -50,19 +50,24 @@ def train_and_save():
     X, y = load_dataset()
     if not X:
         raise RuntimeError("no training data at backend/data/signals/labels.jsonl")
-    
+
     # Base pipeline: TF-IDF + LinearSVC
     base_pipe = Pipeline(
         [
-            ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, max_features=20000)),
+            (
+                "tfidf",
+                TfidfVectorizer(ngram_range=(1, 2), min_df=1, max_features=20000),
+            ),
             ("clf", LinearSVC()),
         ]
     )
-    
+
     # Wrap with CalibratedClassifierCV for proper probabilities
-    calibrated = CalibratedClassifierCV(base_pipe, method="sigmoid", cv=3 if len(X) >= 10 else 2)
+    calibrated = CalibratedClassifierCV(
+        base_pipe, method="sigmoid", cv=3 if len(X) >= 10 else 2
+    )
     calibrated.fit(X, y)
-    
+
     joblib.dump(calibrated, MODEL_PATH)
     pred = calibrated.predict(X)
     print(classification_report(y, pred, labels=LABELS))
@@ -76,12 +81,12 @@ def load_model():
     return joblib.load(train_and_save())
 
 
-def infer(text: str) -> Tuple[str, float]:
+def infer(text: str) -> tuple[str, float]:
     """Predict label and calibrated confidence (0-1) for single text."""
     model = load_model()
     p = _normalize(text)
     label = model.predict([p])[0]
-    
+
     try:
         # Use predict_proba for calibrated confidence
         proba = model.predict_proba([p])[0]
@@ -89,7 +94,7 @@ def infer(text: str) -> Tuple[str, float]:
     except Exception:
         # Fallback if model doesn't support predict_proba
         conf = 0.5
-    
+
     return label, conf
 
 
@@ -104,4 +109,3 @@ def warmup():
     except Exception:
         # Artifact doesn't exist or load failed; runtime will lazy load
         pass
-

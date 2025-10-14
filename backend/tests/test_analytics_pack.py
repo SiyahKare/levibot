@@ -2,6 +2,7 @@
 Analytics Pack Tests
 Tests for strategy PnL and trades endpoints
 """
+
 import os
 
 import requests
@@ -47,30 +48,29 @@ def test_trades_recent_limit():
 
 if __name__ == "__main__":
     print("Testing Analytics Pack endpoints...")
-    
+
     try:
         test_pnl_by_strategy()
         print("✅ test_pnl_by_strategy passed")
     except Exception as e:
         print(f"❌ test_pnl_by_strategy failed: {e}")
-    
+
     try:
         test_pnl_by_strategy_7d()
         print("✅ test_pnl_by_strategy_7d passed")
     except Exception as e:
         print(f"❌ test_pnl_by_strategy_7d failed: {e}")
-    
+
     try:
         test_trades_recent()
         print("✅ test_trades_recent passed")
     except Exception as e:
         print(f"❌ test_trades_recent failed: {e}")
-    
+
     try:
         test_trades_recent_limit()
         print("✅ test_trades_recent_limit passed")
     except Exception as e:
         print(f"❌ test_trades_recent_limit failed: {e}")
-    
-    print("\n✅ Analytics Pack tests completed!")
 
+    print("\n✅ Analytics Pack tests completed!")

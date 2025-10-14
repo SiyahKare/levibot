@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from pathlib import Path
+
 import yaml
+
 
 def list_yields(fp: str | None = None) -> dict:
     p = Path(fp or "backend/configs/yields.yaml")

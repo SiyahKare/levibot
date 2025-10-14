@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import polars as pl
 
 
@@ -11,7 +12,9 @@ class TBParams:
     horizon_bars: int = 60
 
 
-def label_triple_barrier(df: pl.DataFrame, atr_col: str = "atr", params: TBParams | None = None) -> pl.Series:
+def label_triple_barrier(
+    df: pl.DataFrame, atr_col: str = "atr", params: TBParams | None = None
+) -> pl.Series:
     p = params or TBParams()
     close = df.get_column("close")
     atr = df.get_column(atr_col) if atr_col in df.columns else close.rolling_std(14)
@@ -32,5 +35,3 @@ def label_triple_barrier(df: pl.DataFrame, atr_col: str = "atr", params: TBParam
                 break
         labels.append(label)
     return pl.Series(labels)
-
-

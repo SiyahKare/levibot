@@ -1,22 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Any
+
 from ..infra.logger import log_event
-from .precision import MarketMeta, quantize_amount, passes_min_notional
+from .precision import MarketMeta, passes_min_notional, quantize_amount
 
 
 @dataclass
 class RiskParams:
     equity_usd: float
-    risk_per_trade: float      # 0.005 -> %0.5
+    risk_per_trade: float  # 0.005 -> %0.5
     max_leverage: float
-    max_pos_notional_pct: Optional[float] = None  # 0.25 -> equity'nin %25'i
-    max_pos_usd: Optional[float] = None          # mutlak üst sınır
-    hard_cap: float = 1.5                        # pulse hard cap
+    max_pos_notional_pct: float | None = None  # 0.25 -> equity'nin %25'i
+    max_pos_usd: float | None = None  # mutlak üst sınır
+    hard_cap: float = 1.5  # pulse hard cap
 
 
-def compute_stop_dist(entry: float, stop: Optional[float], atr: Optional[float], atr_k: float = 1.8) -> float:
+def compute_stop_dist(
+    entry: float, stop: float | None, atr: float | None, atr_k: float = 1.8
+) -> float:
     if stop is not None:
         return abs(entry - float(stop))
     if atr is not None:
@@ -28,13 +31,13 @@ def size_with_pulse(
     symbol: str,
     side: str,
     entry: float,
-    stop: Optional[float],
-    atr: Optional[float],
+    stop: float | None,
+    atr: float | None,
     pulse_factor: float,
     risk: RiskParams,
     meta: MarketMeta,
     mark_price: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Dönenler: {qty, base_qty, pulse_factor_applied, notional, guards:{...}, stop_dist}
     """
@@ -46,7 +49,7 @@ def size_with_pulse(
     qty = base_qty * pf
 
     notional = qty * float(mark_price)
-    guards: Dict[str, Any] = {}
+    guards: dict[str, Any] = {}
 
     if risk.max_pos_notional_pct:
         cap = float(risk.equity_usd) * float(risk.max_pos_notional_pct)
@@ -79,19 +82,3 @@ def size_with_pulse(
     }
     log_event("SIZING", {"symbol": symbol, "side": side, **result})
     return result
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

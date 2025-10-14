@@ -2,6 +2,7 @@
 Swing Engine Configuration
 Multi-day position trading (4H-1D timeframe)
 """
+
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -44,4 +45,3 @@ class StrategyConfig:
     recording: dict = field(
         default_factory=lambda: {"parquet": False, "path": "data/swing/"}
     )
-

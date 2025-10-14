@@ -1,6 +1,7 @@
 """
 RSI + MACD Strategy API Routes
 """
+
 import logging
 from pathlib import Path
 
@@ -30,20 +31,21 @@ def _get_engine() -> RsiMacdEngine:
 def _load_config(mode: str = "day") -> RsiMacdConfig:
     """Load config from YAML file"""
     config_path = Path(f"configs/rsi_macd.{mode}.yaml")
-    
+
     if not config_path.exists():
         logger.warning(f"Config not found: {config_path}, using defaults")
         return RsiMacdConfig(mode=mode)
-    
+
     with open(config_path) as f:
         data = yaml.safe_load(f)
-    
+
     return RsiMacdConfig.from_dict(data)
 
 
 # ─────────────────────────────────────────────────────────────────
 # Endpoints
 # ─────────────────────────────────────────────────────────────────
+
 
 @router.get("/health")
 def rsi_macd_health():
@@ -70,12 +72,12 @@ def rsi_macd_update_params(params: dict):
 def rsi_macd_run(action: str):
     """
     Start/stop the strategy.
-    
+
     Args:
         action: "start" | "stop"
     """
     engine = _get_engine()
-    
+
     if action == "start":
         return engine.start()
     elif action == "stop":
@@ -102,28 +104,22 @@ def rsi_macd_trades_recent(limit: int = 100):
 def rsi_macd_load_preset(mode: str):
     """
     Load a preset configuration.
-    
+
     Args:
         mode: "scalp" | "day" | "swing"
     """
     global _engine
-    
+
     if mode not in ["scalp", "day", "swing"]:
         raise HTTPException(status_code=400, detail=f"Invalid mode: {mode}")
-    
+
     # Stop existing engine if running
     if _engine and _engine._running:
         _engine.stop()
-    
+
     # Load new config and create engine
     config = _load_config(mode)
     _engine = RsiMacdEngine(config, mode="paper")
-    
+
     logger.info(f"Loaded RSI+MACD preset: {mode}")
-    return {
-        "status": "loaded",
-        "mode": mode,
-        "config": config.to_dict()
-    }
-
-
+    return {"status": "loaded", "mode": mode, "config": config.to_dict()}

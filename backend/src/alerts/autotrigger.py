@@ -1,18 +1,20 @@
 from __future__ import annotations
+
 import os
-from typing import Dict, Any, Optional
+from typing import Any
+
 from prometheus_client import Counter
 
-from .rules import load_rules, evaluate
-from .channels import deliver_alert_via, route_targets
 from ..infra.metrics import registry
+from .channels import deliver_alert_via, route_targets
+from .rules import evaluate, load_rules
 
 # Metric for auto-triggered alerts
 alerts_triggered_total = Counter(
     "levibot_alerts_triggered_total",
     "Total alerts auto-triggered",
     ["source"],
-    registry=registry
+    registry=registry,
 )
 
 
@@ -27,45 +29,43 @@ def min_confidence_threshold() -> float:
 
 
 def auto_trigger_from_signal(
-    event: Dict[str, Any],
-    queue,
-    rules_path: str = "configs/alerts.yaml"
-) -> Optional[Dict[str, str]]:
+    event: dict[str, Any], queue, rules_path: str = "configs/alerts.yaml"
+) -> dict[str, str] | None:
     """Auto-trigger alert if signal meets criteria.
-    
+
     Args:
         event: Signal event dict (event_type, payload, etc.)
         queue: WebhookQueue instance
         rules_path: Path to alert rules YAML
-    
+
     Returns:
         Dict with triggered info or None if not triggered
     """
     if not should_auto_trigger():
         return None
-    
+
     # Load rules and evaluate
     try:
         rules = load_rules(rules_path)
         matches = evaluate(event, rules)
     except Exception:
         return None
-    
+
     if not matches:
         return None
-    
+
     # Get signal details
     payload = event.get("payload", {})
     label = payload.get("label", "UNKNOWN")
     confidence = payload.get("confidence", 0.0)
     text = payload.get("text", "")
     symbol = event.get("symbol", "")
-    
+
     # Check confidence threshold
     min_conf = min_confidence_threshold()
     if confidence < min_conf:
         return None
-    
+
     # Build alert
     alert = {
         "title": f"{label} Signal Detected",
@@ -79,19 +79,20 @@ def auto_trigger_from_signal(
             "rule": matches[0].id,
         },
     }
-    
+
     # Deliver to all configured targets
     targets = route_targets()
     for target in targets:
         deliver_alert_via(target, alert, queue)
-    
+
     # Increment metric
     alerts_triggered_total.labels(source="auto").inc()
-    
+
     # Log to JSONL
     from ..app.routers.alerts import _log_alert
+
     _log_alert(alert)
-    
+
     return {
         "triggered": "true",
         "targets": ",".join(targets),

@@ -1,7 +1,6 @@
 import os
+
 import duckdb as d
-import numpy as np
-import pandas as pd
 
 try:
     import joblib  # type: ignore
@@ -24,7 +23,9 @@ def _load():
 
 def features_df(symbol: str, timeframe: str = "1m", lookback: int = 100):
     path = f"backend/data/parquet/ohlcv/{symbol}_{timeframe}.parquet"
-    df = d.sql(f"SELECT time, open, high, low, close FROM read_parquet('{path}') ORDER BY time DESC LIMIT {lookback}").df()
+    df = d.sql(
+        f"SELECT time, open, high, low, close FROM read_parquet('{path}') ORDER BY time DESC LIMIT {lookback}"
+    ).df()
     if df.empty:
         return None
     df = df.iloc[::-1].reset_index(drop=True)
@@ -55,5 +56,3 @@ def ml_score(symbol: str, timeframe: str = "1m") -> float:
     except Exception:
         return 0.5
     return max(0.0, min(1.0, p))
-
-

@@ -46,10 +46,10 @@ def place_cex_paper_order(
     fe: dict | None = None,
 ) -> PaperOrderResult:
     base_sym = symbol.replace("/", "")
-    
+
     # Notional clamp
     notional = clamp_notional(notional_usd)
-    
+
     risk_enabled = os.getenv("PAPER_RISK_DISABLE", "false").lower() != "true"
     ok, reason = (True, "ok") if not risk_enabled else _risk.allow(symbol, notional)
     if not ok:
@@ -59,19 +59,37 @@ def place_cex_paper_order(
             symbol=base_sym,
             trace_id=trace_id,
         )
-        return PaperOrderResult(ok=False, symbol=symbol, side=side, qty=0.0, price=0.0, filled=False, pnl_usd=0.0)
-    
+        return PaperOrderResult(
+            ok=False,
+            symbol=symbol,
+            side=side,
+            qty=0.0,
+            price=0.0,
+            filled=False,
+            pnl_usd=0.0,
+        )
+
     mark = (
         float(price)
         if price is not None
-        else (_fetch_ticker_mark(exchange, symbol) or _synthetic_mark(symbol.replace("/", "")))
+        else (
+            _fetch_ticker_mark(exchange, symbol)
+            or _synthetic_mark(symbol.replace("/", ""))
+        )
     )
     qty = max(1e-6, notional / max(mark, 1e-9))
     qty = float(f"{qty:.8f}")  # okunaklı
 
     log_event(
         "ORDER_NEW",
-        {"exchange": exchange, "symbol": symbol, "side": side, "qty": qty, "price": mark, "notional": notional},
+        {
+            "exchange": exchange,
+            "symbol": symbol,
+            "side": side,
+            "qty": qty,
+            "price": mark,
+            "notional": notional,
+        },
         symbol=base_sym,
         trace_id=trace_id,
     )
@@ -80,14 +98,26 @@ def place_cex_paper_order(
     pf_qty = float(f"{qty * 0.5:.8f}")
     log_event(
         "ORDER_PARTIAL_FILL",
-        {"exchange": exchange, "symbol": symbol, "side": side, "qty": pf_qty, "price": mark},
+        {
+            "exchange": exchange,
+            "symbol": symbol,
+            "side": side,
+            "qty": pf_qty,
+            "price": mark,
+        },
         symbol=base_sym,
         trace_id=trace_id,
     )
 
     log_event(
         "ORDER_FILLED",
-        {"exchange": exchange, "symbol": symbol, "side": side, "qty": qty, "price": mark},
+        {
+            "exchange": exchange,
+            "symbol": symbol,
+            "side": side,
+            "qty": qty,
+            "price": mark,
+        },
         symbol=base_sym,
         trace_id=trace_id,
     )
@@ -102,7 +132,13 @@ def place_cex_paper_order(
 
     log_event(
         "RISK_SLTP",
-        {"sl": sl, "tp": tp, "atr": meta.get("atr"), "policy": meta.get("policy"), "source": meta.get("source")},
+        {
+            "sl": sl,
+            "tp": tp,
+            "atr": meta.get("atr"),
+            "policy": meta.get("policy"),
+            "source": meta.get("source"),
+        },
         symbol=base_sym,
         trace_id=trace_id,
     )
@@ -114,9 +150,10 @@ def place_cex_paper_order(
         symbol=base_sym,
         trace_id=trace_id,
     )
-    
+
     if risk_enabled:
         _risk.record(symbol)
 
-    return PaperOrderResult(ok=True, symbol=symbol, side=side, qty=qty, price=mark, filled=True, pnl_usd=0.0)
-
+    return PaperOrderResult(
+        ok=True, symbol=symbol, side=side, qty=qty, price=mark, filled=True, pnl_usd=0.0
+    )

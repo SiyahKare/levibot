@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+import datetime as dt
+import hashlib
+
+import duckdb as d
 from apscheduler.schedulers.background import BackgroundScheduler
+
+from ..alerts.notify import send as tg_send
 from ..infra.logger import log_event
+from ..mev.arb_scan import scan_once
+from ..mev.snapshot import write_snapshots
 from ..reports.telegram_eval import eval_signals, save_eval_parquet
 from ..reports.telegram_reputation import compute_reputation, save_reputation_parquet
-from ..mev.snapshot import write_snapshots
-from ..mev.arb_scan import scan_once
-import hashlib, datetime as dt
-import duckdb as d
-from ..alerts.notify import send as tg_send
-from ..strategy.perp_breakout import run_tick as pb_tick
-from ..strategy.twap_rule_bot import run_tick as twap_tick
 
 
 def schedule_jobs() -> BackgroundScheduler:
@@ -23,7 +24,10 @@ def schedule_jobs() -> BackgroundScheduler:
             save_eval_parquet(rows)
             rep = compute_reputation("backend/data/logs/*/events-*.jsonl", days=14)
             save_reputation_parquet(rep)
-            log_event("TELEGRAM_REP_REFRESH", {"eval_rows": len(rows or []), "groups": len(rep or [])})
+            log_event(
+                "TELEGRAM_REP_REFRESH",
+                {"eval_rows": len(rows or []), "groups": len(rep or [])},
+            )
         except Exception as e:
             log_event("ERROR", {"scope": "telegram_rep_job", "err": str(e)})
 
@@ -87,7 +91,10 @@ def _register_burst_job(sched: BackgroundScheduler) -> None:
         ).df()
         for _, r in df.iterrows():
             try:
-                latest_age_min = (now - dt.datetime.fromisoformat(str(r.latest_ts).replace("Z", "+00:00"))).total_seconds() / 60.0
+                latest_age_min = (
+                    now
+                    - dt.datetime.fromisoformat(str(r.latest_ts).replace("Z", "+00:00"))
+                ).total_seconds() / 60.0
             except Exception:
                 continue
             if latest_age_min > 30:
@@ -115,5 +122,3 @@ def _register_burst_job(sched: BackgroundScheduler) -> None:
                 f"• Signals: {int(r.n)}  • Avg rep: {float(r.avg_rep):.2f}\n"
                 f"• Latest age: {latest_age_min:.0f} min"
             )
-
-

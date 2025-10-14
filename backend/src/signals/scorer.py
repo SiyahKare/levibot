@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import re
+
 from ..ml.signal_model import infer
 
 POS_PAT = re.compile(r"\b(buy|long)\b", re.I)
@@ -42,6 +44,3 @@ def score_signal(text: str):
     # normalized confidence (0..1) quick proxy
     conf = min(0.99, 0.5 + 0.1 * rule_strength + min(0.49, ml_conf / 10))
     return {"label": final, "confidence": round(conf, 2), "reasons": reasons}
-
-
-

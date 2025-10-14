@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+
 import polars as pl
 
-from .baseline import compute_baseline, BaselineSignal
-from .trend import trend_score
-from .ml_model import ml_score
+from ..app import config as app_cfg
 from ..features.telegram_bias import compute_telegram_bias_with_age
 from ..features.telegram_pulse import compute_pulse_factor
-from ..app import config as app_cfg
-from ..infra.logger import log_event
+from .baseline import BaselineSignal, compute_baseline
+from .ml_model import ml_score
+from .trend import trend_score
 
 
 @dataclass
@@ -25,14 +24,18 @@ def eth_led_altseason_trigger(meta: dict) -> bool:
     Placeholder: return True if ETH/BTC trend up and BTC.D down, TOTAL3 up.
     Expect meta dict with keys: ethbtc_trend, btc_dom_trend, total3_trend.
     """
-    return meta.get("ethbtc_trend", 0.0) > 0 and meta.get("btc_dom_trend", 0.0) < 0 and meta.get("total3_trend", 0.0) > 0
+    return (
+        meta.get("ethbtc_trend", 0.0) > 0
+        and meta.get("btc_dom_trend", 0.0) < 0
+        and meta.get("total3_trend", 0.0) > 0
+    )
 
 
 def combine_signals(
     df: pl.DataFrame,
-    ml_proba: Optional[float],
+    ml_proba: float | None,
     news_bias: float,
-    meta: Optional[dict] = None,
+    meta: dict | None = None,
 ) -> HybridSignal:
     # Gerçek skorlar: sembolden oku (fallback baseline)
     symbol = df.select(pl.first("symbol")).item() if "symbol" in df.columns else None
@@ -46,25 +49,51 @@ def combine_signals(
     else:
         base: BaselineSignal = compute_baseline(df)
         ml_component = (ml_proba or 0.5) - 0.5
-        side_bias = 1.0 if base.side == "long" else -1.0 if base.side == "short" else 0.0
+        side_bias = (
+            1.0 if base.side == "long" else -1.0 if base.side == "short" else 0.0
+        )
         base_score = side_bias * base.strength
     side_bias = 1.0 if base.side == "long" else -1.0 if base.side == "short" else 0.0
     base_score = side_bias * base.strength
     # Telegram bias: sembol df içinde var, config'ten yarı ömür ve min reputation çek
-    symbol = symbol or (df.select(pl.first("symbol")).item() if "symbol" in df.columns else None)
+    symbol = symbol or (
+        df.select(pl.first("symbol")).item() if "symbol" in df.columns else None
+    )
     tel_bias = 0.0
     latest_age_min = None
     if symbol:
         try:
-            half_life_min = app_cfg.load_features_config().get("telegram", {}).get("evaluation", {}).get("half_life_min", 120)
-            min_rep = app_cfg.load_features_config().get("telegram", {}).get("evaluation", {}).get("min_reputation", 0.35)
-            pulse_cfg = app_cfg.load_features_config().get("telegram", {}).get("evaluation", {}).get("pulse", {})
+            half_life_min = (
+                app_cfg.load_features_config()
+                .get("telegram", {})
+                .get("evaluation", {})
+                .get("half_life_min", 120)
+            )
+            min_rep = (
+                app_cfg.load_features_config()
+                .get("telegram", {})
+                .get("evaluation", {})
+                .get("min_reputation", 0.35)
+            )
+            pulse_cfg = (
+                app_cfg.load_features_config()
+                .get("telegram", {})
+                .get("evaluation", {})
+                .get("pulse", {})
+            )
         except Exception:
             half_life_min, min_rep = 120, 0.35
             pulse_cfg = {}
-        tel_bias, latest_age_min = compute_telegram_bias_with_age(symbol, half_life_min=half_life_min, min_rep=min_rep)
+        tel_bias, latest_age_min = compute_telegram_bias_with_age(
+            symbol, half_life_min=half_life_min, min_rep=min_rep
+        )
         # gate cfg
-        gate_cfg = app_cfg.load_features_config().get("telegram", {}).get("evaluation", {}).get("gate", {})
+        gate_cfg = (
+            app_cfg.load_features_config()
+            .get("telegram", {})
+            .get("evaluation", {})
+            .get("gate", {})
+        )
         min_abs = float(gate_cfg.get("min_abs_bias", 0.02))
         max_age = int(gate_cfg.get("max_age_min", half_life_min))
         gate_reason = None
@@ -102,12 +131,14 @@ def combine_signals(
         pulse_factor = min(pulse_factor, float(pulse_cfg.get("hard_cap", 1.5)))
         pulse_meta = {"factor": pulse_factor, "side": pulse_side, "age_min": pulse_age}
 
-    return HybridSignal(side=side, score=float(total), components={
-        "baseline": base_score,
-        "ml": ml_component,
-        "news": news_bias,
-        "telegram_bias": tel_bias,
-        "telegram_pulse": pulse_meta,
-    })
-
-
+    return HybridSignal(
+        side=side,
+        score=float(total),
+        components={
+            "baseline": base_score,
+            "ml": ml_component,
+            "news": news_bias,
+            "telegram_bias": tel_bias,
+            "telegram_pulse": pulse_meta,
+        },
+    )

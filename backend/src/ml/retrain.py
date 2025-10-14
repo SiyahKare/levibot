@@ -1,7 +1,9 @@
 from __future__ import annotations
-from pathlib import Path
+
 import json
 import time
+from pathlib import Path
+
 from .signal_model import train_and_save
 
 ART = Path("backend/artifacts")
@@ -23,6 +25,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

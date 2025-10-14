@@ -1,6 +1,7 @@
 """
 Strategy Registry
 """
+
 from typing import Dict
 
 from .base import StrategyEngine
@@ -22,7 +23,5 @@ def get(name: str) -> StrategyEngine:
 def list_all() -> list:
     """List all registered strategies"""
     return [
-        {"name": name, "health": engine.health()}
-        for name, engine in REGISTRY.items()
+        {"name": name, "health": engine.health()} for name, engine in REGISTRY.items()
     ]
-

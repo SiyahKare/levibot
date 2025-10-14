@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
+
 import duckdb as d
 import pandas as pd
 
@@ -11,7 +12,9 @@ def ohlcv_path(symbol: str, interval: str) -> str:
     return f"backend/data/parquet/ohlcv/{symbol}_{interval}.parquet"
 
 
-def eval_signals(day_glob: str, interval: str = "1m", horizon_min: int = 60) -> List[Dict[str, Any]]:
+def eval_signals(
+    day_glob: str, interval: str = "1m", horizon_min: int = 60
+) -> list[dict[str, Any]]:
     sig_sql = f"""
     SELECT ts, payload->>'chat_title' AS chat, payload->'signal'->>'symbol' AS symbol,
            payload->'signal'->>'side' AS side,
@@ -26,7 +29,7 @@ def eval_signals(day_glob: str, interval: str = "1m", horizon_min: int = 60) -> 
     if sigs.empty:
         return []
 
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for _, r in sigs.iterrows():
         sym, side = r.symbol, str(r.side).upper()
         try:
@@ -46,9 +49,21 @@ def eval_signals(day_glob: str, interval: str = "1m", horizon_min: int = 60) -> 
         ).df()
         if ohlcv.empty:
             continue
-        entry_px = float(r.entry) if pd.notna(r.entry) and r.entry else float(ohlcv.iloc[0].open)
-        tp_px = float(r.tp) if pd.notna(r.tp) and r.tp else (entry_px * (1 + (0.01 if side == "LONG" else -0.01)))
-        sl_px = float(r.sl) if pd.notna(r.sl) and r.sl else (entry_px * (1 - (0.008 if side == "LONG" else -0.008)))
+        entry_px = (
+            float(r.entry)
+            if pd.notna(r.entry) and r.entry
+            else float(ohlcv.iloc[0].open)
+        )
+        tp_px = (
+            float(r.tp)
+            if pd.notna(r.tp) and r.tp
+            else (entry_px * (1 + (0.01 if side == "LONG" else -0.01)))
+        )
+        sl_px = (
+            float(r.sl)
+            if pd.notna(r.sl) and r.sl
+            else (entry_px * (1 - (0.008 if side == "LONG" else -0.008)))
+        )
 
         hit_tp = False
         hit_sl = False
@@ -57,7 +72,7 @@ def eval_signals(day_glob: str, interval: str = "1m", horizon_min: int = 60) -> 
         for _, b in ohlcv.iterrows():
             high = float(b.high)
             low = float(b.low)
-            pnl_now = (high - entry_px if side == "LONG" else entry_px - low)
+            pnl_now = high - entry_px if side == "LONG" else entry_px - low
             mfe = max(mfe, pnl_now)
             mae = min(mae, (low - entry_px if side == "LONG" else entry_px - high))
             if side == "LONG":
@@ -100,26 +115,13 @@ def eval_signals(day_glob: str, interval: str = "1m", horizon_min: int = 60) -> 
     return out
 
 
-def save_eval_parquet(rows: List[Dict[str, Any]], out_path: str = "backend/data/derived/telegram_eval.parquet") -> str:
+def save_eval_parquet(
+    rows: list[dict[str, Any]],
+    out_path: str = "backend/data/derived/telegram_eval.parquet",
+) -> str:
     if not rows:
         return out_path
     p = Path(out_path)
     p.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_parquet(p)
     return str(p)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

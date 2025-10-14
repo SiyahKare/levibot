@@ -1,8 +1,11 @@
 import datetime as dt
+
 import duckdb as d
 
 
-def last_burst(symbol: str, *, window_min: int = 15, min_count: int = 3, min_rep: float = 0.5):
+def last_burst(
+    symbol: str, *, window_min: int = 15, min_count: int = 3, min_rep: float = 0.5
+):
     now = dt.datetime.utcnow()
     since = (now - dt.timedelta(minutes=window_min)).strftime("%Y-%m-%dT%H:%M:%SZ")
     df = d.sql(
@@ -61,19 +64,3 @@ def compute_pulse_factor(
         return 1.0, age_min, b["side"]
     pulse = 1.0 + (target_mult - 1.0) * (0.5 ** (age_min / float(decay_min)))
     return max(1.0, pulse), age_min, b["side"]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

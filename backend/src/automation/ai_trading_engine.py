@@ -4,6 +4,7 @@ AI-Powered Trading Engine
 Uses machine learning to predict price movements and make intelligent trading decisions.
 Combines technical analysis, ML predictions, and risk management.
 """
+
 from collections import deque
 from datetime import datetime
 
@@ -16,7 +17,9 @@ class PriceHistory:
     """Maintains rolling price history for technical analysis."""
 
     def __init__(self, max_len: int = 100):
-        self.prices: dict[str, deque[tuple[float, float]]] = {}  # symbol -> [(timestamp, price)]
+        self.prices: dict[str, deque[tuple[float, float]]] = (
+            {}
+        )  # symbol -> [(timestamp, price)]
         self.max_len = max_len
 
     def add(self, symbol: str, price: float) -> None:
@@ -27,7 +30,9 @@ class PriceHistory:
         timestamp = datetime.now().timestamp()
         self.prices[symbol].append((timestamp, price))
 
-    def get_returns(self, symbol: str, periods: list[int] = [1, 5, 10]) -> dict[str, float]:
+    def get_returns(
+        self, symbol: str, periods: list[int] = [1, 5, 10]
+    ) -> dict[str, float]:
         """Calculate returns over different periods."""
         if symbol not in self.prices or len(self.prices[symbol]) < max(periods) + 1:
             return {f"ret_{p}": 0.0 for p in periods}
@@ -51,7 +56,10 @@ class PriceHistory:
             return 0.0
 
         prices_list = [p[1] for p in list(self.prices[symbol])[-period:]]
-        returns = [(prices_list[i] - prices_list[i - 1]) / prices_list[i - 1] for i in range(1, len(prices_list))]
+        returns = [
+            (prices_list[i] - prices_list[i - 1]) / prices_list[i - 1]
+            for i in range(1, len(prices_list))
+        ]
 
         if not returns:
             return 0.0
@@ -139,34 +147,34 @@ class AITradingEngine:
             from pathlib import Path
 
             import httpx
-            
+
             # Check for kill switch
             kill_file = Path("backend/data/ml_kill_switch.flag")
             if kill_file.exists():
                 return 0.5  # Neutral when kill switch is on
-            
+
             # Call ML prediction API (internal, non-blocking)
             response = httpx.get(
                 "http://127.0.0.1:8000/ml/predict",
                 params={"symbol": symbol},
                 timeout=2.0,
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 # Use calibrated probability
                 return data.get("p_up", 0.5)
-        
+
         except Exception:
             pass
-        
+
         # Fallback to heuristic scoring if ML API unavailable
         return self._fallback_score(symbol)
-    
+
     def _fallback_score(self, symbol: str) -> float:
         """
         Fallback heuristic scoring when ML API is unavailable.
-        
+
         Uses multiple signals:
         - Short-term momentum
         - Medium-term trend
@@ -240,7 +248,9 @@ class AITradingEngine:
 
         return should_buy, ml_score, reasoning
 
-    def should_sell(self, symbol: str, entry_price: float, current_price: float) -> tuple[bool, str]:
+    def should_sell(
+        self, symbol: str, entry_price: float, current_price: float
+    ) -> tuple[bool, str]:
         """
         Decide whether to sell a position.
         Returns: (should_sell, reason)
@@ -277,7 +287,9 @@ class AITradingEngine:
 
             # Dynamic position sizing based on confidence
             base_notional = (self.min_notional + self.max_notional) / 2
-            confidence_multiplier = 0.7 + (confidence - self.min_confidence) * 2  # 0.7 to 1.7x
+            confidence_multiplier = (
+                0.7 + (confidence - self.min_confidence) * 2
+            )  # 0.7 to 1.7x
             notional = min(self.max_notional, base_notional * confidence_multiplier)
 
             qty = notional / price
@@ -365,8 +377,12 @@ class AITradingEngine:
             portfolio = get_paper_portfolio()
             open_positions = portfolio.get_positions()
 
-            print(f"\n⚡ AI Trading Cycle #{self.cycle_count} [{datetime.now().strftime('%H:%M:%S')}]")
-            print(f"   Open Positions: {len(open_positions)} | Trades Today: {self.trades_today}")
+            print(
+                f"\n⚡ AI Trading Cycle #{self.cycle_count} [{datetime.now().strftime('%H:%M:%S')}]"
+            )
+            print(
+                f"   Open Positions: {len(open_positions)} | Trades Today: {self.trades_today}"
+            )
 
             # 1. Check existing positions for exit signals
             for position in open_positions:
@@ -374,7 +390,9 @@ class AITradingEngine:
                 if not current_price:
                     continue
 
-                should_sell, reason = self.should_sell(position.symbol, position.entry_price, current_price)
+                should_sell, reason = self.should_sell(
+                    position.symbol, position.entry_price, current_price
+                )
 
                 if should_sell:
                     self.execute_sell(position.symbol, reason)
@@ -400,7 +418,9 @@ class AITradingEngine:
                 # Take top opportunity
                 if opportunities:
                     symbol, confidence, reasoning = opportunities[0]
-                    print(f"   🎯 Best Opportunity: {symbol} (confidence: {confidence:.2%})")
+                    print(
+                        f"   🎯 Best Opportunity: {symbol} (confidence: {confidence:.2%})"
+                    )
                     self.execute_buy(symbol, confidence, reasoning)
                 else:
                     print("   💤 No opportunities above confidence threshold")
@@ -422,4 +442,3 @@ def get_ai_engine() -> AITradingEngine:
     if _AI_ENGINE is None:
         _AI_ENGINE = AITradingEngine()
     return _AI_ENGINE
-

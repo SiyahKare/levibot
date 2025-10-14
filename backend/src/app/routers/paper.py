@@ -3,6 +3,7 @@ Paper Trading Portfolio API
 
 Provides endpoints for paper trading portfolio management and monitoring.
 """
+
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -21,9 +22,11 @@ router = APIRouter(prefix="/paper", tags=["paper"])
 
 class TradeRequest(BaseModel):
     """Test trade request model"""
+
     symbol: str
     side: Literal["buy", "sell"]
     notional_usd: float
+
 
 # Thread pool for MEXC price fetching
 _executor_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="mexc_price")
@@ -43,14 +46,14 @@ def _fetch_price_sync(symbol: str) -> float | None:
 def get_mexc_price_sync(symbol: str) -> float | None:
     """
     Fetch real-time price from MEXC.
-    
+
     **CURRENTLY DISABLED** - Always returns None (mock fallback)
-    
+
     TODO: Re-enable when MEXC stability issues are resolved
     """
     # DISABLED - Too many blocking issues
     return None
-    
+
     # try:
     #     # Run sync fetch in thread pool with timeout
     #     loop = asyncio.get_event_loop()
@@ -66,11 +69,16 @@ def get_mexc_price_sync(symbol: str) -> float | None:
 
 
 async def _ai_reason_safe(
-    symbol: str, side: str, qty: float, price: float, confidence: float, context: str = ""
+    symbol: str,
+    side: str,
+    qty: float,
+    price: float,
+    confidence: float,
+    context: str = "",
 ) -> str:
     """
     Generate AI trade reason with market context and safety fallbacks.
-    
+
     - Market context: last price, 1m return, spread
     - Budget tracking: monthly token limit
     - Timeout: configurable (default 1.2s)
@@ -79,15 +87,17 @@ async def _ai_reason_safe(
     try:
         from ...ai.openai_client import brief_reason_plus
         from ...infra.market_context import build_context
-        
+
         # Get market context
         ctx = await build_context(symbol)
-        
+
         # Run in executor to avoid blocking
         loop = asyncio.get_event_loop()
         reason = await loop.run_in_executor(
             None,
-            lambda: brief_reason_plus(symbol, side, qty, price, confidence, context[:240], ctx)
+            lambda: brief_reason_plus(
+                symbol, side, qty, price, confidence, context[:240], ctx
+            ),
         )
         return reason
     except TimeoutError:
@@ -102,23 +112,27 @@ async def _persist_buy_trade(
     """Persist BUY trade to database."""
     try:
         # Generate AI reason (with timeout)
-        reason = await _ai_reason_safe(symbol, "buy", qty, price, confidence, "paper_buy")
-        
+        reason = await _ai_reason_safe(
+            symbol, "buy", qty, price, confidence, "paper_buy"
+        )
+
         # Calculate fee (0.1% taker fee)
         fee = qty * price * 0.001
-        
+
         # Insert trade
-        await insert_trade({
-            "ts": datetime.utcnow(),
-            "symbol": symbol,
-            "side": "buy",
-            "qty": qty,
-            "price": price,
-            "fee": fee,
-            "strategy": strategy,
-            "reason": reason,
-            "confidence": confidence,
-        })
+        await insert_trade(
+            {
+                "ts": datetime.utcnow(),
+                "symbol": symbol,
+                "side": "buy",
+                "qty": qty,
+                "price": price,
+                "fee": fee,
+                "strategy": strategy,
+                "reason": reason,
+                "confidence": confidence,
+            }
+        )
     except Exception as e:
         print(f"⚠️  Failed to persist BUY trade: {e}")
 
@@ -131,22 +145,24 @@ async def _persist_sell_trade(
         # Generate AI reason (with timeout)
         context = f"pnl={pnl:.2f}"
         reason = await _ai_reason_safe(symbol, "sell", qty, price, confidence, context)
-        
+
         # Calculate fee (0.1% taker fee)
         fee = qty * price * 0.001
-        
+
         # Insert trade
-        await insert_trade({
-            "ts": datetime.utcnow(),
-            "symbol": symbol,
-            "side": "sell",
-            "qty": qty,
-            "price": price,
-            "fee": fee,
-            "strategy": strategy,
-            "reason": reason,
-            "confidence": confidence,
-        })
+        await insert_trade(
+            {
+                "ts": datetime.utcnow(),
+                "symbol": symbol,
+                "side": "sell",
+                "qty": qty,
+                "price": price,
+                "fee": fee,
+                "strategy": strategy,
+                "reason": reason,
+                "confidence": confidence,
+            }
+        )
     except Exception as e:
         print(f"⚠️  Failed to persist SELL trade: {e}")
 
@@ -157,7 +173,7 @@ async def _log_signal(symbol: str, side: str, confidence: float, strategy: str) 
         import time
 
         from ..routes.ops import _SIGNAL_LOG
-        
+
         signal = {
             "ts": time.time(),
             "symbol": symbol,
@@ -166,10 +182,10 @@ async def _log_signal(symbol: str, side: str, confidence: float, strategy: str) 
             "strategy": strategy,
             "source": "api",
         }
-        
+
         _SIGNAL_LOG.insert(0, signal)
         del _SIGNAL_LOG[100:]
-        
+
     except Exception as e:
         print(f"⚠️  Failed to log signal: {e}")
 
@@ -184,7 +200,7 @@ async def paper_health() -> dict[str, Any]:
 async def get_portfolio_stats() -> dict[str, Any]:
     """
     Get paper trading portfolio statistics.
-    
+
     Returns:
         - starting_balance: Initial capital
         - cash_balance: Available cash
@@ -207,7 +223,7 @@ async def get_portfolio_stats() -> dict[str, Any]:
 async def get_open_positions() -> dict[str, Any]:
     """
     Get all open paper trading positions with real-time prices.
-    
+
     Returns list of positions with:
         - symbol: Trading pair
         - side: long | short
@@ -219,7 +235,7 @@ async def get_open_positions() -> dict[str, Any]:
         - entry_time: Position open timestamp
     """
     portfolio = get_paper_portfolio()
-    
+
     # Mock prices as fallback
     mock_prices = {
         "BTCUSDT": 112000.0,
@@ -227,13 +243,13 @@ async def get_open_positions() -> dict[str, Any]:
         "SOLUSDT": 220.0,
         "BNBUSDT": 680.0,
     }
-    
+
     # Update positions with mock prices (MEXC disabled)
     for symbol in list(portfolio.positions.keys()):
         # Use mock prices only (MEXC disabled)
         current_price = mock_prices.get(symbol, portfolio.positions[symbol].entry_price)
         portfolio.update_position_price(symbol, current_price)
-    
+
     positions = portfolio.get_positions()
     return {"ok": True, "positions": positions, "count": len(positions)}
 
@@ -242,10 +258,10 @@ async def get_open_positions() -> dict[str, Any]:
 async def get_trade_history(limit: int = 50) -> dict[str, Any]:
     """
     Get recent closed trade history.
-    
+
     Args:
         limit: Max number of trades to return (default: 50)
-    
+
     Returns list of trades with:
         - trade_id: Unique trade ID
         - symbol: Trading pair
@@ -267,16 +283,16 @@ async def get_trade_history(limit: int = 50) -> dict[str, Any]:
 def test_trade(req: TradeRequest) -> dict[str, Any]:
     """
     Execute a test paper trade (simplified for testing).
-    
+
     Args:
         req: Trade request (symbol, side, notional_usd)
-    
+
     Returns:
         Trade execution result
     """
     try:
         portfolio = get_paper_portfolio()
-        
+
         # Mock prices as fallback
         mock_prices = {
             "BTCUSDT": 112000.0,
@@ -284,19 +300,19 @@ def test_trade(req: TradeRequest) -> dict[str, Any]:
             "SOLUSDT": 220.0,
             "BNBUSDT": 680.0,
         }
-        
+
         # Use mock prices only (MEXC disabled)
         price = mock_prices.get(req.symbol, 100.0)
-        
+
         qty = req.notional_usd / price
-        
+
         if req.side == "buy":
             success = portfolio.open_position(
                 symbol=req.symbol,
                 side="long",
                 qty=qty,
                 price=price,
-                notional=req.notional_usd
+                notional=req.notional_usd,
             )
             if success:
                 # Skip AI reason for now (too slow)
@@ -307,10 +323,10 @@ def test_trade(req: TradeRequest) -> dict[str, Any]:
                     "symbol": req.symbol,
                     "qty": qty,
                     "price": price,
-                    "notional": req.notional_usd
+                    "notional": req.notional_usd,
                 }
             return {"ok": False, "error": "Insufficient balance"}
-        
+
         elif req.side == "sell":
             # Close any long position
             if req.symbol in portfolio.positions:
@@ -321,12 +337,12 @@ def test_trade(req: TradeRequest) -> dict[str, Any]:
                         "ok": True,
                         "action": "closed",
                         "symbol": req.symbol,
-                        "pnl": pos.unrealized_pnl
+                        "pnl": pos.unrealized_pnl,
                     }
             return {"ok": False, "error": "No position to close"}
-        
+
         return {"ok": False, "error": "Invalid side"}
-    
+
     except Exception as e:
         return {"ok": False, "error": str(e), "type": type(e).__name__}
 
@@ -335,10 +351,10 @@ def test_trade(req: TradeRequest) -> dict[str, Any]:
 async def reset_portfolio(starting_balance: float = 10000.0) -> dict[str, Any]:
     """
     Reset paper trading portfolio to starting state.
-    
+
     Args:
         starting_balance: New starting balance (default: 10000)
-    
+
     WARNING: This will clear all positions and trade history!
     """
     portfolio = get_paper_portfolio()
@@ -360,18 +376,18 @@ async def place_order(
 ) -> dict[str, Any]:
     """
     Place a paper trading order (high-level interface).
-    
+
     Args:
         symbol: Trading pair (e.g., BTCUSDT)
         side: buy | sell
         notional_usd: Order size in USD
         strategy: Strategy name (default: manual)
         confidence: Signal confidence (0.0-1.0, default: 0.0)
-    
+
     Returns order result with position details or PnL.
     """
     portfolio = get_paper_portfolio()
-    
+
     # Fetch current price (mock for now, replace with real market data in production)
     # For paper trading, we'll use a fixed mock price per symbol
     mock_prices = {
@@ -381,27 +397,37 @@ async def place_order(
     }
     price = mock_prices.get(symbol, 100.0)
     qty = notional_usd / price
-    
+
     if side.lower() == "buy":
         # Open long position
         success = portfolio.open_position(symbol, "long", qty, price, notional_usd)
         if not success:
             return {"ok": False, "error": "Insufficient balance"}
-        
+
         # Log position opened
         log_event(
             "POSITION_OPENED",
-            {"symbol": symbol, "side": "buy", "qty": qty, "price": price, "notional": notional_usd},
+            {
+                "symbol": symbol,
+                "side": "buy",
+                "qty": qty,
+                "price": price,
+                "notional": notional_usd,
+            },
             symbol=symbol,
         )
-        
+
         # Log signal (if not manual)
         if strategy != "manual" and confidence > 0:
             asyncio.create_task(_log_signal(symbol, side, confidence, strategy))
-        
+
         # Persist trade to DB (fire-and-forget)
-        asyncio.create_task(_persist_buy_trade(symbol, qty, price, strategy=strategy, confidence=confidence))
-        
+        asyncio.create_task(
+            _persist_buy_trade(
+                symbol, qty, price, strategy=strategy, confidence=confidence
+            )
+        )
+
         return {
             "ok": True,
             "symbol": symbol,
@@ -410,13 +436,13 @@ async def place_order(
             "price": price,
             "pnl_usd": 0.0,
         }
-    
+
     else:  # sell
         # Close existing position
         trade = portfolio.close_position(symbol, price)
         if not trade:
             return {"ok": False, "error": "No position to close"}
-        
+
         # Log position closed with PnL
         log_event(
             "POSITION_CLOSED",
@@ -432,12 +458,19 @@ async def place_order(
             },
             symbol=symbol,
         )
-        
+
         # Persist trade to DB (fire-and-forget)
-        asyncio.create_task(_persist_sell_trade(
-            symbol, trade.qty, trade.exit_price, trade.pnl_usd, strategy=strategy, confidence=confidence
-        ))
-        
+        asyncio.create_task(
+            _persist_sell_trade(
+                symbol,
+                trade.qty,
+                trade.exit_price,
+                trade.pnl_usd,
+                strategy=strategy,
+                confidence=confidence,
+            )
+        )
+
         return {
             "ok": True,
             "symbol": symbol,
@@ -457,31 +490,37 @@ async def execute_trade(
 ) -> dict[str, Any]:
     """
     Execute a paper trade (open or close position).
-    
+
     Args:
         symbol: Trading pair (e.g., BTCUSDT)
         side: buy | sell
         qty: Quantity
         price: Execution price
-    
+
     Returns trade result with PnL if closing a position.
     """
     portfolio = get_paper_portfolio()
     notional = qty * price
-    
+
     if side.lower() == "buy":
         # Open long position
         success = portfolio.open_position(symbol, "long", qty, price, notional)
         if not success:
             return {"ok": False, "error": "Insufficient balance"}
-        
+
         # Log position opened
         log_event(
             "POSITION_OPENED",
-            {"symbol": symbol, "side": "long", "qty": qty, "price": price, "notional": notional},
+            {
+                "symbol": symbol,
+                "side": "long",
+                "qty": qty,
+                "price": price,
+                "notional": notional,
+            },
             symbol=symbol,
         )
-        
+
         return {
             "ok": True,
             "action": "opened",
@@ -491,13 +530,13 @@ async def execute_trade(
             "price": price,
             "notional": notional,
         }
-    
+
     else:  # sell
         # Close existing position
         trade = portfolio.close_position(symbol, price)
         if not trade:
             return {"ok": False, "error": "No position to close"}
-        
+
         # Log position closed with PnL
         log_event(
             "POSITION_CLOSED",
@@ -512,7 +551,7 @@ async def execute_trade(
             },
             symbol=symbol,
         )
-        
+
         return {
             "ok": True,
             "action": "closed",
@@ -529,7 +568,7 @@ async def execute_trade(
 async def get_performance_chart() -> dict[str, Any]:
     """
     Get portfolio equity curve for charting.
-    
+
     Returns:
         - equity_curve: List of {timestamp, equity} points
         - trades_timeline: List of trades with timestamps
@@ -537,22 +576,22 @@ async def get_performance_chart() -> dict[str, Any]:
     portfolio = get_paper_portfolio()
     stats = portfolio.get_stats()
     trades = portfolio.get_recent_trades(100)
-    
+
     # Build equity curve from trade history
-    equity_curve = [
-        {"timestamp": "start", "equity": stats["starting_balance"]}
-    ]
-    
+    equity_curve = [{"timestamp": "start", "equity": stats["starting_balance"]}]
+
     running_equity = stats["starting_balance"]
     for trade in reversed(trades):  # Oldest first
         running_equity += trade["pnl_usd"]
-        equity_curve.append({
-            "timestamp": trade["exit_time"],
-            "equity": running_equity,
-            "pnl": trade["pnl_usd"],
-            "symbol": trade["symbol"],
-        })
-    
+        equity_curve.append(
+            {
+                "timestamp": trade["exit_time"],
+                "equity": running_equity,
+                "pnl": trade["pnl_usd"],
+                "symbol": trade["symbol"],
+            }
+        )
+
     return {
         "ok": True,
         "equity_curve": equity_curve,
@@ -565,15 +604,14 @@ async def get_performance_chart() -> dict[str, Any]:
 async def get_summary() -> dict[str, Any]:
     """
     Get comprehensive paper trading summary.
-    
+
     Combines portfolio stats, positions, and recent trades.
     """
     portfolio = get_paper_portfolio()
-    
+
     return {
         "ok": True,
         "stats": portfolio.get_stats(),
         "positions": portfolio.get_positions(),
         "recent_trades": portfolio.get_recent_trades(10),
     }
-

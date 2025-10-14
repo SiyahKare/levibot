@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import os
-import requests
-from .binance_sig import sign_params, auth_params
-from ..infra.logger import log_event
 
+import requests
+
+from ..infra.logger import log_event
+from .binance_sig import auth_params, sign_params
 
 BASE = "https://api.binance.com"
 
@@ -17,6 +18,7 @@ def _server_timestamp() -> int:
     except Exception:
         # fallback to local time
         import time as _t
+
         return int(_t.time() * 1000)
 
 
@@ -45,7 +47,9 @@ def twap_new_order(
         body["positionSide"] = position_side.upper()
     if limit_price:
         body["limitPrice"] = limit_price
-    secret = os.environ.get("BINANCE_API_SECRET") or os.environ.get("LEVI_ONUR_BINANCE_SECRET", "")
+    secret = os.environ.get("BINANCE_API_SECRET") or os.environ.get(
+        "LEVI_ONUR_BINANCE_SECRET", ""
+    )
     params = auth_params(body, int(os.getenv("BINANCE_RECV_WINDOW", "5000")))
     params["timestamp"] = _server_timestamp()
     qp = sign_params(params, secret)
@@ -58,7 +62,9 @@ def twap_new_order(
 
 
 def algo_open_orders() -> dict:
-    secret = os.environ.get("BINANCE_API_SECRET") or os.environ.get("LEVI_ONUR_BINANCE_SECRET", "")
+    secret = os.environ.get("BINANCE_API_SECRET") or os.environ.get(
+        "LEVI_ONUR_BINANCE_SECRET", ""
+    )
     params = auth_params()
     params["timestamp"] = _server_timestamp()
     qp = sign_params(params, secret)
@@ -72,7 +78,9 @@ def algo_open_orders() -> dict:
 
 def spot_account_info() -> dict:
     """Simple signed call to verify API key/secret work (Spot account endpoint)."""
-    secret = os.environ.get("BINANCE_API_SECRET") or os.environ.get("LEVI_ONUR_BINANCE_SECRET", "")
+    secret = os.environ.get("BINANCE_API_SECRET") or os.environ.get(
+        "LEVI_ONUR_BINANCE_SECRET", ""
+    )
     params = auth_params()
     params["timestamp"] = _server_timestamp()
     qp = sign_params(params, secret)
@@ -81,5 +89,3 @@ def spot_account_info() -> dict:
     data = r.json()
     r.raise_for_status()
     return {"ok": True, "account_keys": list(data.keys())[:5]}
-
-

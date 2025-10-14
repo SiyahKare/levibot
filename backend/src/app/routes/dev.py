@@ -2,6 +2,7 @@
 Dev/Debug API Routes
 Testing and debugging endpoints
 """
+
 from typing import Literal
 
 from fastapi import APIRouter, Query
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/dev", tags=["dev"])
 
 class NormalizeRequest(BaseModel):
     """Request model for order normalization"""
+
     symbol: str
     side: Literal["BUY", "SELL"]
     quote_usd: float
@@ -21,16 +23,20 @@ class NormalizeRequest(BaseModel):
 
 
 @router.get("/filters")
-async def get_symbol_filters(symbol: str = Query(..., description="Symbol to get filters for (e.g., BTCUSDT, BTC/USDT, btc/usdt)")):
+async def get_symbol_filters(
+    symbol: str = Query(
+        ..., description="Symbol to get filters for (e.g., BTCUSDT, BTC/USDT, btc/usdt)"
+    )
+):
     """
     Get MEXC exchange filters for a symbol (with normalization)
-    
+
     Supports multiple formats:
     - BTCUSDT
     - BTC/USDT
     - btc/usdt
     - BTC/USDT:USDT
-    
+
     Returns:
         {
             "ok": true,
@@ -48,20 +54,20 @@ async def get_symbol_filters(symbol: str = Query(..., description="Symbol to get
         }
     """
     from ...exchange.mexc_filters import normalize_symbol
-    
+
     cache = get_filters_cache()
     filters = await cache.get_filters(symbol)
-    
+
     if not filters:
         return {
             "ok": False,
             "symbol_input": symbol,
-            "error": "Filters not found for symbol. Try: BTCUSDT, BTC/USDT, or check if symbol exists on MEXC."
+            "error": "Filters not found for symbol. Try: BTCUSDT, BTC/USDT, or check if symbol exists on MEXC.",
         }
-    
+
     # Get normalized symbol for display
     normalized = normalize_symbol(symbol, cache._symbol_map) or symbol
-    
+
     return {
         "ok": True,
         "symbol_input": symbol,
@@ -73,8 +79,8 @@ async def get_symbol_filters(symbol: str = Query(..., description="Symbol to get
             "min_qty": filters.min_qty,
             "max_qty": filters.max_qty,
             "price_precision": filters.price_precision,
-            "quantity_precision": filters.quantity_precision
-        }
+            "quantity_precision": filters.quantity_precision,
+        },
     }
 
 
@@ -82,7 +88,7 @@ async def get_symbol_filters(symbol: str = Query(..., description="Symbol to get
 async def normalize_order_endpoint(req: NormalizeRequest):
     """
     Normalize an order to MEXC exchange filters (dry-run)
-    
+
     Request:
         {
             "symbol": "BTC/USDT",
@@ -90,7 +96,7 @@ async def normalize_order_endpoint(req: NormalizeRequest):
             "quote_usd": 150.0,
             "mid_price": 62850.0  // optional
         }
-    
+
     Returns:
         {
             "ok": true,
@@ -110,9 +116,9 @@ async def normalize_order_endpoint(req: NormalizeRequest):
         symbol=req.symbol,
         side=req.side,
         quote_usd=req.quote_usd,
-        mid_price=req.mid_price
+        mid_price=req.mid_price,
     )
-    
+
     return {
         "ok": order.is_valid,
         "order": {
@@ -123,8 +129,8 @@ async def normalize_order_endpoint(req: NormalizeRequest):
             "notional": order.notional,
             "quote_usd": order.quote_usd,
             "is_valid": order.is_valid,
-            "reject_reason": order.reject_reason
-        }
+            "reject_reason": order.reject_reason,
+        },
     }
 
 
@@ -132,4 +138,3 @@ async def normalize_order_endpoint(req: NormalizeRequest):
 def dev_health():
     """Dev endpoint health check"""
     return {"ok": True, "message": "Dev endpoints active"}
-

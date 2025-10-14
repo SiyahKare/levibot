@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-import os
-import json
 import datetime as dt
-from pathlib import Path
+import json
+import os
 from os import getenv
-import zstandard as zstd
+from pathlib import Path
+
 import boto3
+import zstandard as zstd
 
-
-BASE_DATA_DIR = Path(getenv("LEVI_DATA_DIR") or (Path(__file__).resolve().parents[2] / "data"))
+BASE_DATA_DIR = Path(
+    getenv("LEVI_DATA_DIR") or (Path(__file__).resolve().parents[2] / "data")
+)
 LOG_ROOT = BASE_DATA_DIR / "logs"
 S3_BUCKET = os.getenv("S3_LOG_BUCKET", "levibot-logs")
 
@@ -18,7 +20,7 @@ def compress_day(day: str) -> Path:
     day_dir = LOG_ROOT / day  # "YYYY-MM-DD"
     if not day_dir.exists():
         raise FileNotFoundError(f"no logs for {day}")
-    out = (LOG_ROOT / f"{day}.zst")  # data/logs/2025-09-12.zst
+    out = LOG_ROOT / f"{day}.zst"  # data/logs/2025-09-12.zst
     cctx = zstd.ZstdCompressor(level=10)
     with open(out, "wb") as f_out:
         with cctx.stream_writer(f_out) as compressor:
@@ -32,11 +34,15 @@ def compress_day(day: str) -> Path:
 def upload_s3(zst_path: Path, day: str) -> str:
     s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION"))
     key = f"{day}/{zst_path.name}"
-    s3.upload_file(str(zst_path), S3_BUCKET, key, ExtraArgs={"ContentType": "application/zstd"})
+    s3.upload_file(
+        str(zst_path), S3_BUCKET, key, ExtraArgs={"ContentType": "application/zstd"}
+    )
     s3.put_object(
         Bucket=S3_BUCKET,
         Key=f"{day}/manifest.json",
-        Body=json.dumps({"date": day, "object": key}, ensure_ascii=False).encode("utf-8"),
+        Body=json.dumps({"date": day, "object": key}, ensure_ascii=False).encode(
+            "utf-8"
+        ),
         ContentType="application/json",
     )
     return f"s3://{S3_BUCKET}/{key}"
@@ -63,5 +69,3 @@ def gc_local(retain_days: int = 30):
                 d.rmdir()
             except Exception:
                 pass
-
-

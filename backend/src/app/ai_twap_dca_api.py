@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from ..strategy.ai_twap_dca import REGISTRY, AiTwapDcaParams
 
+from ..strategy.ai_twap_dca import REGISTRY, AiTwapDcaParams
 
 router = APIRouter()
 
@@ -50,20 +50,3 @@ def cancel(task_id: str) -> dict:
 @router.get("/strategy/ai-twap-dca/status")
 def status(task_id: str | None = None) -> dict:
     return REGISTRY.get_status(task_id)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

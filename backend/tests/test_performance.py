@@ -1,7 +1,10 @@
 from __future__ import annotations
-import os
+
 import json
+import os
+
 from fastapi.testclient import TestClient
+
 from backend.src.app.main import app
 
 # Not: Bu testler "benchmark" fixture'ını kullanır (pytest-benchmark)
@@ -12,29 +15,36 @@ from backend.src.app.main import app
 
 client = TestClient(app)
 
+
 def _score_once():
     r = client.post("/signals/score?text=BUY%20BTCUSDT%20@%2060000")
     return r.status_code
+
 
 def _dex_quote_once():
     r = client.get("/dex/quote?sell=ETH&buy=USDC&amount=0.1")
     return r.status_code
 
+
 def _readyz_once():
     r = client.get("/readyz")
     return r.status_code
+
 
 def test_readyz_bench(benchmark):
     code = benchmark(_readyz_once)
     assert code == 200
 
+
 def test_score_bench(benchmark):
     code = benchmark(_score_once)
     assert code == 200
 
+
 def test_dex_quote_bench(benchmark):
     code = benchmark(_dex_quote_once)
     assert code == 200
+
 
 def test_score_p99_budget():
     """
@@ -42,6 +52,7 @@ def test_score_p99_budget():
     Çevresel değişkenle ayarlanabilir.
     """
     import time
+
     budget_ms = float(os.getenv("PERF_P99_BUDGET_MS", "120.0"))
     samples = []
     for _ in range(30):

@@ -15,7 +15,7 @@ from .routers.risk import router as risk_router
 def load_config() -> dict:
     """
     Load application configuration.
-    
+
     TODO: Implement proper config loading from:
     - Environment variables
     - YAML config files
@@ -64,22 +64,22 @@ def load_config() -> dict:
 async def lifespan(app: FastAPI):
     """
     Application lifespan manager.
-    
+
     Handles startup and shutdown of engine manager.
     """
     # Startup
     print("🚀 Starting LeviBot Engine Manager...")
-    
+
     config = load_config()
     manager = init_engine_manager(config)
-    
+
     symbols = config.get("symbols_to_trade", [])
     await manager.start_all(symbols)
-    
+
     print("✅ LeviBot Engine Manager ready")
-    
+
     yield
-    
+
     # Shutdown
     print("🛑 Shutting down LeviBot Engine Manager...")
     await manager.stop_all()

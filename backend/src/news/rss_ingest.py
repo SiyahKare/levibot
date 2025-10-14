@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, List
+
 import feedparser
 
 
@@ -16,15 +17,18 @@ class NewsItem:
 
 
 DEFAULT_FEEDS = [
-    ("Binance Announcements", "https://www.binance.com/en/support/announcement/c-48?navId=48&hl=en&rss=1"),
+    (
+        "Binance Announcements",
+        "https://www.binance.com/en/support/announcement/c-48?navId=48&hl=en&rss=1",
+    ),
     ("CoinDesk", "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml"),
     ("SEC Calendar", "https://www.sec.gov/rss/news/press.xml"),
 ]
 
 
-def parse_feed(url: str, source_name: str) -> List[NewsItem]:
+def parse_feed(url: str, source_name: str) -> list[NewsItem]:
     parsed = feedparser.parse(url)
-    items: List[NewsItem] = []
+    items: list[NewsItem] = []
     for e in parsed.entries:
         published = None
         if getattr(e, "published_parsed", None):
@@ -43,10 +47,8 @@ def parse_feed(url: str, source_name: str) -> List[NewsItem]:
     return items
 
 
-def fetch_all(feeds: Iterable[tuple[str, str]] = DEFAULT_FEEDS) -> List[NewsItem]:
-    out: List[NewsItem] = []
+def fetch_all(feeds: Iterable[tuple[str, str]] = DEFAULT_FEEDS) -> list[NewsItem]:
+    out: list[NewsItem] = []
     for name, url in feeds:
         out.extend(parse_feed(url, name))
     return out
-
-

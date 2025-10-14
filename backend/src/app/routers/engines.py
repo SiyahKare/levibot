@@ -2,7 +2,6 @@
 FastAPI endpoints for engine management.
 """
 
-
 from fastapi import APIRouter, HTTPException
 
 from ...engine.manager import get_engine_manager
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/engines", tags=["engines"])
 async def get_all_engine_status() -> dict:
     """
     Get status of all engines.
-    
+
     Returns:
         {
           "total": 12,
@@ -37,10 +36,10 @@ async def get_engine_status(symbol: str) -> dict:
     try:
         manager = get_engine_manager()
         status = manager.get_engine_status(symbol)
-        
+
         if status is None:
             raise HTTPException(404, f"Engine {symbol} not found")
-        
+
         return status
     except RuntimeError:
         raise HTTPException(503, "Engine manager not initialized")
@@ -85,4 +84,3 @@ async def restart_engine(symbol: str) -> dict:
         raise HTTPException(503, "Engine manager not initialized")
     except Exception as e:
         raise HTTPException(500, str(e))
-

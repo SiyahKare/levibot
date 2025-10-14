@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any
+
 import duckdb as d
 import pandas as pd
-from pathlib import Path
 
 
-def compute_reputation(day_glob: str, eval_parquet: str = "backend/data/derived/telegram_eval.parquet", days: int = 14) -> List[Dict[str, Any]]:
+def compute_reputation(
+    day_glob: str,
+    eval_parquet: str = "backend/data/derived/telegram_eval.parquet",
+    days: int = 14,
+) -> list[dict[str, Any]]:
     try:
         df = d.sql(
             f"""
@@ -23,17 +28,24 @@ def compute_reputation(day_glob: str, eval_parquet: str = "backend/data/derived/
         ).df()
     except Exception:
         return []
-    rep: List[Dict[str, Any]] = []
+    rep: list[dict[str, Any]] = []
     for _, r in df.iterrows():
         med_mae = float(r.med_mae) if r.med_mae is not None else 1.0
         mfe_mae = float(r.med_mfe) / (med_mae + 1e-9)
-        score = 0.5 * float(r.hit) + 0.3 * max(min(float(r.avg_rr) / 1.5, 1.0), 0.0) + 0.2 * max(min(mfe_mae / 1.2, 1.0), 0.0)
+        score = (
+            0.5 * float(r.hit)
+            + 0.3 * max(min(float(r.avg_rr) / 1.5, 1.0), 0.0)
+            + 0.2 * max(min(mfe_mae / 1.2, 1.0), 0.0)
+        )
         score = max(0.0, min(1.0, score))
         rep.append({"chat": r.chat, "reputation": score, "signals": int(r.n)})
     return rep
 
 
-def save_reputation_parquet(rows: List[Dict[str, Any]], out_path: str = "backend/data/derived/telegram_reputation.parquet") -> str:
+def save_reputation_parquet(
+    rows: list[dict[str, Any]],
+    out_path: str = "backend/data/derived/telegram_reputation.parquet",
+) -> str:
     p = Path(out_path)
     p.parent.mkdir(parents=True, exist_ok=True)
     if not rows:

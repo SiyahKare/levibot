@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from typing import Dict, List, Optional
 import json
 import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
 
 from ..infra.logger import JsonlEventLogger
 
 
 @dataclass
 class Wallet:
-    id: str            # filename stem or custom id
+    id: str  # filename stem or custom id
     address: str
-    label: Optional[str] = None
-    networks: Optional[List[str]] = None
+    label: str | None = None
+    networks: list[str] | None = None
 
 
 class WalletRegistry:
     def __init__(self, root: Path | None = None) -> None:
         self.root = root or Path("backend/wallets")
-        self._wallets: Dict[str, Wallet] = {}
+        self._wallets: dict[str, Wallet] = {}
         self._loaded = False
 
     def _load(self) -> None:
@@ -43,11 +42,11 @@ class WalletRegistry:
             except Exception:
                 continue
 
-    def list(self) -> Dict[str, dict]:
+    def list(self) -> dict[str, dict]:
         self._load()
         return {k: asdict(v) for k, v in self._wallets.items()}
 
-    def get(self, wallet_id: str) -> Optional[Wallet]:
+    def get(self, wallet_id: str) -> Wallet | None:
         self._load()
         return self._wallets.get(wallet_id)
 
@@ -65,7 +64,7 @@ class L2Farmer:
         action: str,
         amount: float | None = None,
         dry_run: bool = True,
-        extra: Optional[dict] = None,
+        extra: dict | None = None,
     ) -> dict:
         w = self.registry.get(wallet_id)
         if not w:
@@ -93,7 +92,7 @@ class L2Farmer:
         recipe: str = "default",
         dry_run: bool = True,
     ) -> dict:
-        seq_map: Dict[str, List[dict]] = {
+        seq_map: dict[str, list[dict]] = {
             "zksync": [
                 {"protocol": "syncswap", "action": "swap", "amount": 10.0},
                 {"protocol": "mute", "action": "lp_add", "amount": 5.0},
@@ -125,20 +124,3 @@ class L2Farmer:
 
 REGISTRY = WalletRegistry()
 FARMER = L2Farmer(REGISTRY)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

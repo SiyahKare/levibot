@@ -1,24 +1,24 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class ServiceStatus(BaseModel):
     running: bool
-    started_at: Optional[datetime] = None
+    started_at: datetime | None = None
     open_positions: int = 0
-    equity: Optional[float] = None
-    daily_dd_pct: Optional[float] = None
+    equity: float | None = None
+    daily_dd_pct: float | None = None
 
 
 class StartRequest(BaseModel):
-    user_id: Optional[str] = Field(None, description="Which user initiates the run")
+    user_id: str | None = Field(None, description="Which user initiates the run")
 
 
 class StopRequest(BaseModel):
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class SetLeverageRequest(BaseModel):
@@ -27,10 +27,8 @@ class SetLeverageRequest(BaseModel):
 
 
 class ConfigSnapshot(BaseModel):
-    users: Dict
-    risk: Dict
-    symbols: Dict
-    features: Dict
-    model: Dict
-
-
+    users: dict
+    risk: dict
+    symbols: dict
+    features: dict
+    model: dict

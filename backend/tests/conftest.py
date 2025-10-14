@@ -30,4 +30,3 @@ def global_tmp_dirs(tmp_path_factory):
         os.environ["DATA_DIR"] = orig_data
     else:
         os.environ.pop("DATA_DIR", None)
-

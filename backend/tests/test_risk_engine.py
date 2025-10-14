@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.src.core.risk import RiskEngine, RiskConfig
+from backend.src.core.risk import RiskConfig, RiskEngine
 
 
 def test_cooldown_blocks_second_order():
@@ -18,6 +18,3 @@ def test_sl_tp_fallback_and_sign():
     assert sl_buy < 100 and tp_buy > 100
     sl_sell, tp_sell = r.sl_tp("sell", 100.0, atr=None)
     assert sl_sell > 100 and tp_sell < 100
-
-
-

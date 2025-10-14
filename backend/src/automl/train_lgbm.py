@@ -94,4 +94,3 @@ def train_and_dump(features_path: str, out_dir: str, n_trials: int = 32) -> str:
     print(f"[LGBM] Trained model: score={best_score:.4f}, params={best_params}")
 
     return str(model_path)
-

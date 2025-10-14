@@ -2,6 +2,7 @@
 Daytrade Engine Configuration
 Intraday momentum strategy (5m-15m timeframe)
 """
+
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -40,4 +41,3 @@ class StrategyConfig:
     recording: dict = field(
         default_factory=lambda: {"parquet": False, "path": "data/day/"}
     )
-

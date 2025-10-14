@@ -61,10 +61,3 @@ Focus on:
 - Notable wins/losses
 - Key patterns
 """
-
-
-
-
-
-
-

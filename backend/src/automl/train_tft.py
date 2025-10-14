@@ -48,4 +48,3 @@ def train_and_dump(features_path: str, out_dir: str) -> str:
     print(f"[TFT] Trained model: score={model_meta['score']:.4f}")
 
     return str(model_path)
-

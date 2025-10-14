@@ -1,6 +1,7 @@
 """
 TimescaleDB Async Connection Pool
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -20,13 +21,13 @@ _lock = asyncio.Lock()
 async def get_pool() -> asyncpg.Pool | None:
     """Get or create connection pool."""
     global _pool
-    
+
     if not settings.PG_DSN:
         return None
-    
+
     if asyncpg is None:
         raise ImportError("asyncpg not installed. Run: pip install asyncpg")
-    
+
     if _pool is None:
         async with _lock:
             if _pool is None:  # Double-check locking
@@ -36,24 +37,24 @@ async def get_pool() -> asyncpg.Pool | None:
                     max_size=10,
                     command_timeout=5.0,
                 )
-    
+
     return _pool
 
 
 async def write_ticks_batch(records: list[tuple]) -> None:
     """
     Batch insert market ticks.
-    
+
     Args:
         records: List of tuples (ts, venue, symbol, last, bid, ask, mark, volume, src)
     """
     if not records:
         return
-    
+
     pool = await get_pool()
     if not pool:
         return  # No DB configured
-    
+
     try:
         async with pool.acquire() as con:
             await con.executemany(
@@ -68,12 +69,14 @@ async def write_ticks_batch(records: list[tuple]) -> None:
         print(f"[DB] Error writing ticks batch: {e}")
 
 
-async def write_equity_snapshot(ts: float, balance: float, realized: float, unrealized: float, drawdown: float) -> None:
+async def write_equity_snapshot(
+    ts: float, balance: float, realized: float, unrealized: float, drawdown: float
+) -> None:
     """Write equity curve snapshot."""
     pool = await get_pool()
     if not pool:
         return
-    
+
     try:
         async with pool.acquire() as con:
             await con.execute(
@@ -81,7 +84,12 @@ async def write_equity_snapshot(ts: float, balance: float, realized: float, unre
                 INSERT INTO equity_curve (ts, balance, realized, unrealized, drawdown, equity)
                 VALUES (to_timestamp($1), $2, $3, $4, $5, $6)
                 """,
-                ts, balance, realized, unrealized, drawdown, balance + unrealized,
+                ts,
+                balance,
+                realized,
+                unrealized,
+                drawdown,
+                balance + unrealized,
             )
     except Exception as e:
         print(f"[DB] Error writing equity snapshot: {e}")
@@ -92,7 +100,7 @@ async def write_signal(signal: dict[str, Any]) -> None:
     pool = await get_pool()
     if not pool:
         return
-    
+
     try:
         async with pool.acquire() as con:
             await con.execute(
@@ -120,10 +128,3 @@ async def close_pool() -> None:
     if _pool:
         await _pool.close()
         _pool = None
-
-
-
-
-
-
-

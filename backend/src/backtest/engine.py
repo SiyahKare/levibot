@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+
 import polars as pl
 
 
@@ -9,7 +10,7 @@ import polars as pl
 class BTResult:
     equity_curve: pl.DataFrame
     trades: pl.DataFrame
-    metrics: Dict[str, float]
+    metrics: dict[str, float]
 
 
 class WalkForwardBacktester:
@@ -20,7 +21,7 @@ class WalkForwardBacktester:
     def run(
         self,
         ohlcv: pl.DataFrame,
-        signal_fn: Callable[[pl.DataFrame], Dict[str, float]],
+        signal_fn: Callable[[pl.DataFrame], dict[str, float]],
         initial_equity: float = 10_000.0,
     ) -> BTResult:
         equity = initial_equity
@@ -36,7 +37,7 @@ class WalkForwardBacktester:
             elif sig.get("side") == "short":
                 pnl = float((close[i - 1] / close[i]) - 1.0)
             pnl -= self.fee + self.slip
-            equity *= (1.0 + pnl)
+            equity *= 1.0 + pnl
             curve.append({"idx": i, "equity": equity})
             if sig.get("side") in ("long", "short"):
                 trades.append({"i": i, "side": sig.get("side"), "ret": pnl})
@@ -49,5 +50,3 @@ class WalkForwardBacktester:
             "avg_trade": float(trades_df["ret"].mean() if len(trades) else 0.0),
         }
         return BTResult(equity_curve=curve_df, trades=trades_df, metrics=metrics)
-
-

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from ..exec.router_binance_algo_rest import twap_new_order, algo_open_orders, spot_account_info
 
+from ..exec.router_binance_algo_rest import (
+    algo_open_orders,
+    spot_account_info,
+    twap_new_order,
+)
 
 router = APIRouter()
 
@@ -17,7 +21,9 @@ def exec_algo_twap(
     limit_price: float | None = None,
 ):
     try:
-        return twap_new_order(symbol, side, quantity, duration_sec, position_side, limit_price)
+        return twap_new_order(
+            symbol, side, quantity, duration_sec, position_side, limit_price
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -36,5 +42,3 @@ def exec_binance_spot_account():
         return spot_account_info()
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-

@@ -16,7 +16,14 @@ router = APIRouter()
 @router.get("/telegram/signals")
 def telegram_signals(limit: int = Query(50, le=500)):
     # Günlük log dosyaları ve geçmiş günler için glob kullan
-    pattern = str(duckinfra.Path(__file__).resolve().parents[3] / "backend" / "data" / "logs" / "*" / "events-*.jsonl")
+    pattern = str(
+        duckinfra.Path(__file__).resolve().parents[3]
+        / "backend"
+        / "data"
+        / "logs"
+        / "*"
+        / "events-*.jsonl"
+    )
     files = sorted(glob.glob(pattern))
     if not files:
         return []
@@ -42,8 +49,17 @@ def telegram_signals(limit: int = Query(50, le=500)):
 
 @router.get("/telegram/reputation")
 def telegram_reputation(days: int = 14):
-    pattern = str(duckinfra.Path(__file__).resolve().parents[3] / "backend" / "data" / "logs" / "*" / "events-*.jsonl")
-    rep = compute_reputation(pattern, eval_parquet="backend/data/derived/telegram_eval.parquet", days=days)
+    pattern = str(
+        duckinfra.Path(__file__).resolve().parents[3]
+        / "backend"
+        / "data"
+        / "logs"
+        / "*"
+        / "events-*.jsonl"
+    )
+    rep = compute_reputation(
+        pattern, eval_parquet="backend/data/derived/telegram_eval.parquet", days=days
+    )
     return {"window_days": days, "groups": rep}
 
 
@@ -74,10 +90,10 @@ def telegram_ai_brain_ask(payload: dict[str, Any]):
 def telegram_status():
     """Get Telegram bot status and configuration (safe for client)."""
     import os
-    
+
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     alert_chat_id = os.getenv("TELEGRAM_ALERT_CHAT_ID")
-    
+
     return {
         "ok": True,
         "bot_configured": bool(bot_token),
@@ -92,12 +108,13 @@ def telegram_test_alert(payload: dict[str, Any]):
     message = str(payload.get("message", "")).strip()
     if not message:
         raise HTTPException(status_code=400, detail="message is required")
-    
+
     try:
         from ..alerts.notify import send as send_telegram
+
         send_telegram(message)
         return {"ok": True, "message": "Test alert sent"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send test alert: {str(e)}")
-
-
+        raise HTTPException(
+            status_code=500, detail=f"Failed to send test alert: {str(e)}"
+        )

@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import os
+from typing import Any
+
 import requests
-from typing import List, Dict, Any
 
 from ..infra.logger import log_event
-from .traits import floor_usd as fetch_floor_usd, traits_freq
-
+from .traits import floor_usd as fetch_floor_usd
+from .traits import traits_freq
 
 BASE = "https://api.reservoir.tools"
 APIKEY = os.getenv("RESERVOIR_API_KEY", "")
 
 
-def fetch_listings(collection: str, limit: int = 50) -> List[Dict[str, Any]]:
+def fetch_listings(collection: str, limit: int = 50) -> list[dict[str, Any]]:
     r = requests.get(
         f"{BASE}/orders/asks/v5",
         headers={"x-api-key": APIKEY} if APIKEY else {},
@@ -33,10 +34,10 @@ def scan_collection(collection: str, floor_min_usd: float, rare_min: float) -> N
         try:
             ask = float(o["price"]["amount"]["usd"])
             # kaba rarity: ilk birkaç trait frekansının tersine orantılı skor
-            traits = (o.get("criteria", {})
-                      .get("data", {})
-                      .get("token", {})
-                      .get("attributes") or [])
+            traits = (
+                o.get("criteria", {}).get("data", {}).get("token", {}).get("attributes")
+                or []
+            )
             if traits:
                 inv = 0.0
                 for t in traits[:5]:
@@ -65,5 +66,3 @@ def scan_collection(collection: str, floor_min_usd: float, rare_min: float) -> N
 
 
 __all__ = ["scan_collection", "fetch_listings"]
-
-

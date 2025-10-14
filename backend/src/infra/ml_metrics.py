@@ -1,6 +1,7 @@
 """
 ML-specific Prometheus metrics
 """
+
 from prometheus_client import Counter, Gauge, Histogram
 
 from .metrics import registry

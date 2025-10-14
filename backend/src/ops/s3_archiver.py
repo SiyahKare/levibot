@@ -1,15 +1,20 @@
 from __future__ import annotations
-import os, sys, gzip, shutil, time
-from pathlib import Path
+
+import gzip
+import os
+import shutil
+import sys
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from pathlib import Path
 
 try:
     import boto3  # type: ignore
-except Exception as e:
-    print("boto3 missing: pip install boto3", file=sys.stderr); raise
+except Exception:
+    print("boto3 missing: pip install boto3", file=sys.stderr)
+    raise
 
 BASE = Path(__file__).resolve().parents[3] / "backend" / "data" / "logs"
+
 
 def _env(name: str, default: str | None = None) -> str:
     v = os.getenv(name, default)
@@ -17,10 +22,11 @@ def _env(name: str, default: str | None = None) -> str:
         raise SystemExit(f"missing env: {name}")
     return v
 
-def discover_days(keep_days: int) -> Tuple[List[Path], List[Path]]:
+
+def discover_days(keep_days: int) -> tuple[list[Path], list[Path]]:
     """Return (archive_days, delete_days).
-       archive_days: günün kendisi hariç son 'keep_days' içindeki *tamamlanan* günler
-       delete_days: keep_days'den daha eski tüm günler
+    archive_days: günün kendisi hariç son 'keep_days' içindeki *tamamlanan* günler
+    delete_days: keep_days'den daha eski tüm günler
     """
     if not BASE.exists():
         return ([], [])
@@ -42,6 +48,7 @@ def discover_days(keep_days: int) -> Tuple[List[Path], List[Path]]:
             to_delete.append(d)
     return (to_archive, to_delete)
 
+
 def compress_day(day_dir: Path) -> Path:
     """Concatenate all events-*.jsonl → events.jsonl.gz and return path."""
     target = day_dir.with_suffix(".jsonl.gz")  # e.g. 2025-10-05.jsonl.gz
@@ -53,35 +60,52 @@ def compress_day(day_dir: Path) -> Path:
     tmp.rename(target)
     return target
 
+
 def upload_s3(local_gz: Path, bucket: str, prefix: str) -> str:
     key = f"{prefix.rstrip('/')}/{local_gz.name}"
-    s3 = boto3.client("s3",
+    s3 = boto3.client(
+        "s3",
         endpoint_url=os.getenv("AWS_ENDPOINT_URL", None),
         aws_access_key_id=_env("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=_env("AWS_SECRET_ACCESS_KEY"),
         region_name=os.getenv("AWS_REGION", "eu-central-1"),
     )
     # multipart upload otomatik: client.upload_file
-    s3.upload_file(str(local_gz), bucket, key, ExtraArgs={"ContentType": "application/gzip"})
+    s3.upload_file(
+        str(local_gz), bucket, key, ExtraArgs={"ContentType": "application/gzip"}
+    )
     return key
+
 
 def remove_local(day_dir: Path, gz_file: Path) -> None:
     # güvenli sil: önce klasörü, sonra gz
     for fp in day_dir.glob("*"):
-        try: fp.unlink()
-        except: pass
-    try: day_dir.rmdir()
-    except: pass
-    try: gz_file.unlink()  # gzip'i de siliyoruz (isteğe bağlı, S3'te var artık)
-    except: pass
+        try:
+            fp.unlink()
+        except:
+            pass
+    try:
+        day_dir.rmdir()
+    except:
+        pass
+    try:
+        gz_file.unlink()  # gzip'i de siliyoruz (isteğe bağlı, S3'te var artık)
+    except:
+        pass
 
-def prune_old(delete_days: List[Path]) -> None:
+
+def prune_old(delete_days: list[Path]) -> None:
     for d in delete_days:
         for fp in d.glob("*"):
-            try: fp.unlink()
-            except: pass
-        try: d.rmdir()
-        except: pass
+            try:
+                fp.unlink()
+            except:
+                pass
+        try:
+            d.rmdir()
+        except:
+            pass
+
 
 def main() -> int:
     bucket = _env("S3_LOG_BUCKET")
@@ -90,7 +114,9 @@ def main() -> int:
     dry_run = os.getenv("ARCHIVE_DRY_RUN", "false").lower() == "true"
 
     to_archive, to_delete = discover_days(keep_days)
-    print(f"[archiver] keep_days={keep_days} archive={len(to_archive)} delete={len(to_delete)} dry_run={dry_run}")
+    print(
+        f"[archiver] keep_days={keep_days} archive={len(to_archive)} delete={len(to_delete)} dry_run={dry_run}"
+    )
 
     for day_dir in to_archive:
         print(f"[archiver] compressing {day_dir} ...")
@@ -107,6 +133,7 @@ def main() -> int:
         print(f"[archiver] pruning {len(to_delete)} old day(s)")
         prune_old(to_delete)
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

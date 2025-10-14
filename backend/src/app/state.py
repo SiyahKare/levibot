@@ -2,17 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Optional
 
 
 @dataclass
 class RuntimeState:
     running: bool = False
-    started_at: Optional[datetime] = None
-    equity: Optional[float] = None
-    daily_dd_pct: Optional[float] = None
+    started_at: datetime | None = None
+    equity: float | None = None
+    daily_dd_pct: float | None = None
     open_positions: int = 0
-    user_leverage: Dict[str, int] = field(default_factory=dict)
+    user_leverage: dict[str, int] = field(default_factory=dict)
 
     def start(self) -> None:
         if not self.running:
@@ -24,5 +23,3 @@ class RuntimeState:
 
 
 STATE = RuntimeState()
-
-

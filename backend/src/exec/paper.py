@@ -50,11 +50,3 @@ def place_paper_order(req: PaperOrderRequest) -> PaperOrderResult:
         filled=True,
         pnl_usd=0.0,
     )
-
-
-
-
-
-
-
-
