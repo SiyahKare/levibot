@@ -1,1 +1,1 @@
-/Users/onur/levibot/backend/data/models/2025-10-13/BTCUSDT/lgbm.pkl
+/Users/onur/levibot/backend/data/models/2025-10-14/lgbm.pkl
