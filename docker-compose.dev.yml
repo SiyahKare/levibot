@@ -4,8 +4,8 @@ services:
   # Backend API
   api:
     build:
-      context: ./backend
-      dockerfile: ../docker/app.Dockerfile
+      context: .
+      dockerfile: ./docker/app.Dockerfile
     image: levibot/api:dev
     container_name: levibot-api
     environment:
@@ -36,7 +36,7 @@ services:
   panel:
     build:
       context: ./frontend/panel
-      dockerfile: ../../docker/panel.Dockerfile
+      dockerfile: Dockerfile
     image: levibot/panel:dev
     container_name: levibot-panel
     environment:
@@ -49,7 +49,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    command: pnpm dev --host 0.0.0.0 --port 5173
     restart: unless-stopped
     volumes:
       - ./frontend/panel/src:/app/src       # Hot reload for development

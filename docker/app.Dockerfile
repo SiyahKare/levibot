@@ -13,28 +13,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
-COPY backend/requirements.txt ./requirements.txt
+COPY backend/requirements.txt ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
   pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY backend/ ./backend/
-COPY apps/ ./apps/
+COPY backend/src ./src
+COPY backend/config ./config
 
 # Create necessary directories
-RUN mkdir -p /app/backend/data/models \
-  /app/backend/data/logs \
-  /app/backend/data/cache
+RUN mkdir -p ./data/models \
+  ./data/logs \
+  ./data/cache
 
-# Expose Prometheus metrics ports
-EXPOSE 9100 9101
+# Expose API port
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:9100/metrics', timeout=5)" || exit 1
+  CMD curl -f http://localhost:8000/health || exit 1
 
 # Default command (override in docker-compose)
-CMD ["python", "-m", "apps.signal_engine"]
+CMD ["uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 

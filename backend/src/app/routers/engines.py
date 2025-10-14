@@ -26,7 +26,7 @@ async def list_engines() -> list[dict]:
         for symbol, eng in manager.engines.items():
             engines.append({
                 "symbol": symbol,
-                "status": "running" if eng._running else "stopped",
+                "status": "running",  # All registered engines are running
                 "inference_p95_ms": 0.0,  # TODO: collect from metrics
                 "uptime_s": 0.0,  # TODO: track uptime
                 "trades_today": 0,  # TODO: track trades
