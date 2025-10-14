@@ -8,3 +8,8 @@
 {"ts":"2025-10-14 03:28:41,018","level":"INFO","symbol":"engine.BTC/USDT","msg":"Connecting to market data for BTC/USDT"}
 {"ts":"2025-10-14 03:28:41,319","level":"INFO","symbol":"engine.BTC/USDT","msg":"Stopping engine for BTC/USDT"}
 {"ts":"2025-10-14 03:28:41,328","level":"INFO","symbol":"engine.BTC/USDT","msg":"Engine BTC/USDT stopped"}
+{"ts":"2025-10-14 11:27:27,711","level":"INFO","symbol":"engine.BTC/USDT","msg":"Starting engine for BTC/USDT"}
+{"ts":"2025-10-14 11:27:27,712","level":"INFO","symbol":"engine.BTC/USDT","msg":"ML components initialized for BTC/USDT"}
+{"ts":"2025-10-14 11:27:27,712","level":"INFO","symbol":"engine.BTC/USDT","msg":"Connecting to market data for BTC/USDT"}
+{"ts":"2025-10-14 11:27:58,734","level":"INFO","symbol":"engine.BTC/USDT","msg":"Stopping engine for BTC/USDT"}
+{"ts":"2025-10-14 11:27:58,753","level":"INFO","symbol":"engine.BTC/USDT","msg":"Engine BTC/USDT stopped"}

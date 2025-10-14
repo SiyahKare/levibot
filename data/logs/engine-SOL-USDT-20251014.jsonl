@@ -8,3 +8,8 @@
 {"ts":"2025-10-14 03:28:41,019","level":"INFO","symbol":"engine.SOL/USDT","msg":"Connecting to market data for SOL/USDT"}
 {"ts":"2025-10-14 03:28:41,320","level":"INFO","symbol":"engine.SOL/USDT","msg":"Stopping engine for SOL/USDT"}
 {"ts":"2025-10-14 03:28:41,331","level":"INFO","symbol":"engine.SOL/USDT","msg":"Engine SOL/USDT stopped"}
+{"ts":"2025-10-14 11:27:27,711","level":"INFO","symbol":"engine.SOL/USDT","msg":"Starting engine for SOL/USDT"}
+{"ts":"2025-10-14 11:27:27,712","level":"INFO","symbol":"engine.SOL/USDT","msg":"ML components initialized for SOL/USDT"}
+{"ts":"2025-10-14 11:27:27,712","level":"INFO","symbol":"engine.SOL/USDT","msg":"Connecting to market data for SOL/USDT"}
+{"ts":"2025-10-14 11:27:58,736","level":"INFO","symbol":"engine.SOL/USDT","msg":"Stopping engine for SOL/USDT"}
+{"ts":"2025-10-14 11:27:58,757","level":"INFO","symbol":"engine.SOL/USDT","msg":"Engine SOL/USDT stopped"}

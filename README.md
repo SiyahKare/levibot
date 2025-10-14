@@ -191,7 +191,19 @@ _Production models + Real data: ccxt/MEXC, LGBM/TFT training, Backtesting, Testn
 - **[sprint/S10_TASKS.yaml](./sprint/S10_TASKS.yaml)** - 📋 Sprint-10 Task Tracker
 - **[sprint/SPRINT9_COMPLETION_FINAL.md](./sprint/SPRINT9_COMPLETION_FINAL.md)** - 🎊 Sprint-9 Complete (100%)
 
-**Epic-1: Multi-Engine (COMPLETE ✅)**
+**Sprint-10 Progress: 1/5 Epics Complete** 🚀
+
+**Epic-A: Real Data Ingestion (COMPLETE ✅)**
+- **[sprint/EPIC_A_CCXT_GUIDE.md](./sprint/EPIC_A_CCXT_GUIDE.md)** - 📘 Implementation Guide
+- **[sprint/EPIC_A_CCXT_COMPLETE.md](./sprint/EPIC_A_CCXT_COMPLETE.md)** - ✅ Completion Summary
+- Mock Soak: **PASS** (0% drop, 0 errors, Q95=0.3)
+
+**Data Flow:**
+```
+MEXC (ccxt.pro WS) → MarketFeeder (gap-fill) → Symbol-specific Engine Queue → Ensemble/Risk
+```
+
+**Epic-1: Multi-Engine (Sprint-9 ✅)**
 
 - **[sprint/EPIC1_ENGINE_MANAGER_GUIDE.md](./sprint/EPIC1_ENGINE_MANAGER_GUIDE.md)** - 🔥 Implementation Guide
 - **[sprint/EPIC1_QUICKSTART.md](./sprint/EPIC1_QUICKSTART.md)** - ⚡ Quick Start

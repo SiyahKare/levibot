@@ -8,3 +8,8 @@
 {"ts":"2025-10-14 03:28:41,018","level":"INFO","symbol":"engine.ETH/USDT","msg":"Connecting to market data for ETH/USDT"}
 {"ts":"2025-10-14 03:28:41,320","level":"INFO","symbol":"engine.ETH/USDT","msg":"Stopping engine for ETH/USDT"}
 {"ts":"2025-10-14 03:28:41,330","level":"INFO","symbol":"engine.ETH/USDT","msg":"Engine ETH/USDT stopped"}
+{"ts":"2025-10-14 11:27:27,711","level":"INFO","symbol":"engine.ETH/USDT","msg":"Starting engine for ETH/USDT"}
+{"ts":"2025-10-14 11:27:27,712","level":"INFO","symbol":"engine.ETH/USDT","msg":"ML components initialized for ETH/USDT"}
+{"ts":"2025-10-14 11:27:27,712","level":"INFO","symbol":"engine.ETH/USDT","msg":"Connecting to market data for ETH/USDT"}
+{"ts":"2025-10-14 11:27:58,736","level":"INFO","symbol":"engine.ETH/USDT","msg":"Stopping engine for ETH/USDT"}
+{"ts":"2025-10-14 11:27:58,774","level":"INFO","symbol":"engine.ETH/USDT","msg":"Engine ETH/USDT stopped"}

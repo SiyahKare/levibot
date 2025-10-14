@@ -35,74 +35,80 @@ epics:
   - id: "A"
     name: "Real Data Ingestion (ccxt + Stream)"
     priority: "critical"
-    status: "not_started"
+    status: "completed"
     estimated_hours: 34
+    actual_hours: 32
+    completed_date: "2025-10-16"
     tasks:
       - id: "A1"
         name: "REST OHLCV + orderbook snapshot"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 10
+        actual_hours: 8
         checklist:
           - task: "ccxt.mexc() client setup"
-            done: false
+            done: true
           - task: "fetch_ohlcv() for multiple symbols"
-            done: false
+            done: true
           - task: "orderbook snapshot with retry logic"
-            done: false
+            done: true
           - task: "Rate limiting (requests/sec)"
-            done: false
+            done: true
         files:
           - "backend/src/adapters/mexc_ccxt.py"
 
       - id: "A2"
         name: "WebSocket ticker/trades + reconnect"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 12
+        actual_hours: 10
         checklist:
           - task: "ccxtpro.mexc() WebSocket setup"
-            done: false
+            done: true
           - task: "watch_trades() stream"
-            done: false
+            done: true
           - task: "Exponential backoff on disconnect"
-            done: false
+            done: true
           - task: "Message queue + async iterator"
-            done: false
+            done: true
         files:
           - "backend/src/adapters/mexc_ccxt.py"
 
       - id: "A3"
         name: "Feeder → engine md mapping"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 6
+        actual_hours: 6
         checklist:
           - task: "price/spread/vol extraction"
-            done: false
+            done: true
           - task: "funding + OI placeholders"
-            done: false
+            done: true
           - task: "texts field (news placeholder)"
-            done: false
+            done: true
           - task: "Engine.md dict integration"
-            done: false
+            done: true
         files:
           - "backend/src/adapters/market_feeder.py"
 
       - id: "A4"
         name: "Gap-fill + time-sync"
-        status: "not_started"
+        status: "completed"
         assignee: "@siyahkare"
         estimated_hours: 6
+        actual_hours: 8
         checklist:
           - task: "Detect missing minute bars"
-            done: false
+            done: true
           - task: "Backfill from REST API"
-            done: false
+            done: true
           - task: "NTP time sync check"
-            done: false
+            done: true
           - task: "Dropped message metrics"
-            done: false
+            done: true
         files:
           - "backend/src/adapters/gap_filler.py"
 
