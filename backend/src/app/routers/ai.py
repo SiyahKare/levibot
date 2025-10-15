@@ -205,11 +205,15 @@ async def ai_predict(
             status_code=500, detail=f"Model inference failed: {str(e)}"
         ) from e
 
+    # Get current market price from latest bar
+    current_price = bars[-1][4] if bars else latest.get("close", 0.0)
+
     return {
         "symbol": symbol,
         "timeframe": timeframe,
         "horizon": horizon,
         "timestamp": datetime.now(UTC).isoformat(),
+        "_current_price": float(current_price),  # Current market price from MEXC
         **prediction,
     }
 

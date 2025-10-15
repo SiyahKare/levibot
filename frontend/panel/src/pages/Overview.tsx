@@ -121,6 +121,10 @@ export default function Overview() {
     refreshInterval: 10_000,
   });
 
+  const { data: engines } = useSWR("/engines", api.enginesList, {
+    refreshInterval: 5_000,
+  });
+
   const stats = summary?.stats || {};
   const equity = stats.total_equity ?? 0;
   const pnl = stats.total_pnl ?? 0;
@@ -141,11 +145,24 @@ export default function Overview() {
       </div>
 
       {/* Main Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Paper Trading Start */}
+        <div className="p-6 rounded-2xl shadow bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+          <div className="text-sm text-blue-700 font-medium mb-1">
+            💰 Paper Start
+          </div>
+          <div className="text-3xl font-bold text-blue-900">
+            $1,000.00
+          </div>
+          <div className="text-xs text-blue-600 mt-1">
+            Simulated Capital
+          </div>
+        </div>
+
         {/* Equity */}
         <div className="p-6 rounded-2xl shadow bg-white border border-zinc-200">
           <div className="text-sm text-zinc-500 font-medium mb-1">
-            Portfolio Equity
+            Current Equity
           </div>
           <div className="text-3xl font-bold text-zinc-900">
             $
@@ -153,6 +170,9 @@ export default function Overview() {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
+          </div>
+          <div className="text-xs text-zinc-500 mt-1">
+            🔴 LIVE Paper Trading
           </div>
         </div>
 
@@ -195,17 +215,41 @@ export default function Overview() {
               AI Signal (60s)
             </h3>
             <span className="text-xs text-zinc-500">
-              {ai?.model || "loading..."}
+              {ai?.symbol || "BTCUSDT"}
             </span>
           </div>
           {ai ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {/* Current Price & Target */}
+              <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
+                <div>
+                  <div className="text-xs text-zinc-500 mb-1">Current Price</div>
+                  <div className="text-lg font-bold text-zinc-900">
+                    ${(ai._current_price || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="text-zinc-300">→</div>
+                <div>
+                  <div className="text-xs text-zinc-500 mb-1">Price Target</div>
+                  <div className={`text-lg font-bold ${
+                    (ai.price_target || 0) > (ai._current_price || 0) 
+                      ? "text-emerald-600" 
+                      : "text-rose-600"
+                  }`}>
+                    ${(ai.price_target || 0).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Probability */}
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-zinc-900">
                   {Math.round((ai.prob_up || 0) * 100)}%
                 </span>
-                <span className="text-lg text-zinc-600">↑ bullish</span>
+                <span className="text-lg text-zinc-600">↑ {ai.side || "flat"}</span>
               </div>
+              
+              {/* Confidence Bar */}
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
                   <div
@@ -240,14 +284,26 @@ export default function Overview() {
 
       {/* Quick Actions */}
       <div className="p-6 rounded-2xl shadow bg-zinc-50 border border-zinc-200">
-        <h3 className="text-sm font-semibold text-zinc-700 mb-3">
-          Quick Stats
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-zinc-700">
+            Quick Stats
+          </h3>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="flex items-center gap-1 text-emerald-600">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+              Live Trading
+            </span>
+            <span className="text-zinc-400">|</span>
+            <span className="text-zinc-600">
+              {engines?.running?.length || 0} Engines Running
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
             <div className="text-zinc-500">Starting Balance</div>
             <div className="font-semibold text-zinc-900">
-              ${stats.starting_balance?.toFixed(2) || "0.00"}
+              ${stats.starting_balance?.toFixed(2) || "1000.00"}
             </div>
           </div>
           <div>
@@ -266,6 +322,12 @@ export default function Overview() {
             <div className="text-zinc-500">Profit Factor</div>
             <div className="font-semibold text-zinc-900">
               {stats.profit_factor?.toFixed(2) || "0.00"}
+            </div>
+          </div>
+          <div>
+            <div className="text-zinc-500">Active Symbols</div>
+            <div className="font-semibold text-blue-600">
+              {engines?.running?.map((e: any) => e.symbol.split('/')[0]).join(', ') || 'BTC, ETH, SOL'}
             </div>
           </div>
         </div>
