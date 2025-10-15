@@ -7,7 +7,9 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import AIBrain from "@/pages/AIBrain";
 import Alerts from "@/pages/Alerts";
 import Analytics from "@/pages/Analytics";
+import BacktestRunner from "@/pages/BacktestRunner";
 import Daytrade from "@/pages/Daytrade";
+import EnginesManager from "@/pages/EnginesManager";
 import EventsTimeline from "@/pages/EventsTimeline";
 import Integrations from "@/pages/Integrations";
 import MEVFeed from "@/pages/MEVFeed";
@@ -30,8 +32,6 @@ import TelegramSettings from "@/pages/TelegramSettings";
 import TelegramSignals from "@/pages/TelegramSignals";
 import Trades from "@/pages/Trades";
 import Watchlist from "@/pages/Watchlist";
-import EnginesManager from "@/pages/EnginesManager";
-import BacktestRunner from "@/pages/BacktestRunner";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 

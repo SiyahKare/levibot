@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { DarkModeToggle } from "./DarkModeToggle";
+import DarkModeToggle from "./DarkModeToggle";
 import { ReplayBadge } from "./ReplayBadge";
 
 interface NavItem {
@@ -19,26 +19,31 @@ const navItems: NavItem[] = [
   { label: "Overview", path: "/", icon: "🏠", category: "Core" },
   { label: "ML Dashboard", path: "/ml", icon: "🧠", category: "Core" },
   { label: "Paper Trading", path: "/paper", icon: "💰", category: "Core" },
-  
+
   // Trading
   { label: "Scalp", path: "/scalp", icon: "⚡", category: "Trading" },
   { label: "Daytrade", path: "/daytrade", icon: "📈", category: "Trading" },
   { label: "Swing", path: "/swing", icon: "🌊", category: "Trading" },
   { label: "RSI+MACD", path: "/rsi-macd", icon: "🎯", category: "Trading" },
-  
+
   // Analysis
   { label: "Signals", path: "/signals", icon: "📡", category: "Analysis" },
   { label: "Analytics", path: "/analytics", icon: "📊", category: "Analysis" },
   { label: "AI Brain", path: "/ai-brain", icon: "🤖", category: "Analysis" },
   { label: "Watchlist", path: "/watchlist", icon: "👁️", category: "Analysis" },
-  
+
   // Management
   { label: "Engines", path: "/engines", icon: "🔧", category: "Management" },
   { label: "Backtest", path: "/backtest", icon: "📊", category: "Management" },
-  { label: "Strategies", path: "/strategies", icon: "📋", category: "Management" },
+  {
+    label: "Strategies",
+    path: "/strategies",
+    icon: "📋",
+    category: "Management",
+  },
   { label: "Risk", path: "/risk", icon: "🛡️", category: "Management" },
   { label: "Trades", path: "/trades", icon: "💼", category: "Management" },
-  
+
   // Advanced
   { label: "Alerts", path: "/alerts", icon: "🔔", category: "Advanced" },
   { label: "Telegram", path: "/telegram", icon: "✈️", category: "Advanced" },
@@ -46,7 +51,12 @@ const navItems: NavItem[] = [
   { label: "OnChain", path: "/onchain", icon: "⛓️", category: "Advanced" },
   { label: "MEV", path: "/mev", icon: "⚡", category: "Advanced" },
   { label: "NFT", path: "/nft", icon: "🖼️", category: "Advanced" },
-  { label: "Integrations", path: "/integrations", icon: "🔌", category: "Advanced" },
+  {
+    label: "Integrations",
+    path: "/integrations",
+    icon: "🔌",
+    category: "Advanced",
+  },
   { label: "Ops", path: "/ops", icon: "⚙️", category: "Advanced" },
 ];
 
@@ -157,7 +167,7 @@ export function Sidebar() {
           {categories.map((category) => {
             const items = groupedItems[category] || [];
             if (items.length === 0) return null;
-            
+
             const isExpanded = expandedCategories.has(category);
 
             return (
@@ -225,4 +235,3 @@ export function Sidebar() {
     </>
   );
 }
-
