@@ -121,9 +121,12 @@ export default function Overview() {
     refreshInterval: 10_000,
   });
 
-  const { data: engines } = useSWR("/engines", api.enginesList, {
+  const { data: enginesList } = useSWR("/engines", api.engines.list, {
     refreshInterval: 5_000,
   });
+
+  // Filter running engines
+  const runningEngines = enginesList?.filter((e: any) => e.status === "running") || [];
 
   const stats = summary?.stats || {};
   const equity = stats.total_equity ?? 0;
@@ -151,12 +154,8 @@ export default function Overview() {
           <div className="text-sm text-blue-700 font-medium mb-1">
             💰 Paper Start
           </div>
-          <div className="text-3xl font-bold text-blue-900">
-            $1,000.00
-          </div>
-          <div className="text-xs text-blue-600 mt-1">
-            Simulated Capital
-          </div>
+          <div className="text-3xl font-bold text-blue-900">$1,000.00</div>
+          <div className="text-xs text-blue-600 mt-1">Simulated Capital</div>
         </div>
 
         {/* Equity */}
@@ -223,7 +222,9 @@ export default function Overview() {
               {/* Current Price & Target */}
               <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
                 <div>
-                  <div className="text-xs text-zinc-500 mb-1">Current Price</div>
+                  <div className="text-xs text-zinc-500 mb-1">
+                    Current Price
+                  </div>
                   <div className="text-lg font-bold text-zinc-900">
                     ${(ai._current_price || 0).toLocaleString()}
                   </div>
@@ -231,11 +232,13 @@ export default function Overview() {
                 <div className="text-zinc-300">→</div>
                 <div>
                   <div className="text-xs text-zinc-500 mb-1">Price Target</div>
-                  <div className={`text-lg font-bold ${
-                    (ai.price_target || 0) > (ai._current_price || 0) 
-                      ? "text-emerald-600" 
-                      : "text-rose-600"
-                  }`}>
+                  <div
+                    className={`text-lg font-bold ${
+                      (ai.price_target || 0) > (ai._current_price || 0)
+                        ? "text-emerald-600"
+                        : "text-rose-600"
+                    }`}
+                  >
                     ${(ai.price_target || 0).toLocaleString()}
                   </div>
                 </div>
@@ -246,9 +249,11 @@ export default function Overview() {
                 <span className="text-3xl font-bold text-zinc-900">
                   {Math.round((ai.prob_up || 0) * 100)}%
                 </span>
-                <span className="text-lg text-zinc-600">↑ {ai.side || "flat"}</span>
+                <span className="text-lg text-zinc-600">
+                  ↑ {ai.side || "flat"}
+                </span>
               </div>
-              
+
               {/* Confidence Bar */}
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
@@ -285,9 +290,7 @@ export default function Overview() {
       {/* Quick Actions */}
       <div className="p-6 rounded-2xl shadow bg-zinc-50 border border-zinc-200">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-zinc-700">
-            Quick Stats
-          </h3>
+          <h3 className="text-sm font-semibold text-zinc-700">Quick Stats</h3>
           <div className="flex items-center gap-2 text-xs">
             <span className="flex items-center gap-1 text-emerald-600">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
@@ -295,7 +298,7 @@ export default function Overview() {
             </span>
             <span className="text-zinc-400">|</span>
             <span className="text-zinc-600">
-              {engines?.running?.length || 0} Engines Running
+              {runningEngines.length} Engines Running
             </span>
           </div>
         </div>
@@ -327,7 +330,11 @@ export default function Overview() {
           <div>
             <div className="text-zinc-500">Active Symbols</div>
             <div className="font-semibold text-blue-600">
-              {engines?.running?.map((e: any) => e.symbol.split('/')[0]).join(', ') || 'BTC, ETH, SOL'}
+              {runningEngines.length > 0
+                ? runningEngines
+                    .map((e: any) => e.symbol.split("/")[0])
+                    .join(", ")
+                : "None"}
             </div>
           </div>
         </div>
