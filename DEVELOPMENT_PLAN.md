@@ -40,6 +40,7 @@
 **Mantık:** Repo-genelinde quality gates + minimal güvenlik
 
 #### Tasks:
+
 - [ ] **Backend CI/CD** (`.github/workflows/backend-ci.yml`)
   - [ ] ruff (lint + format check)
   - [ ] mypy (type checking, strict mode)
@@ -61,6 +62,7 @@
   - [ ] `.env.docker` permissions audit (chmod 600)
 
 #### DoD (Definition of Done):
+
 ✅ All CI pipelines green  
 ✅ Protected branch rules enabled (`main` requires CI pass)  
 ✅ JWT login working (test: `POST /auth/login`)  
@@ -74,6 +76,7 @@
 **Mantık:** Model güvenliği için foundation
 
 #### Tasks:
+
 - [ ] **Feature Store Schema v1**
   - [ ] DuckDB schema freeze: `features.yml` + data dictionary
   - [ ] Parquet export for training snapshots
@@ -95,6 +98,7 @@
   - [ ] Symlink `features_latest.parquet`
 
 #### DoD:
+
 ✅ `features.yml` committed + CI validates schema  
 ✅ Data snapshot JSON auto-generated on training  
 ✅ Model card v2 template filled for 1 sample model  
@@ -108,6 +112,7 @@
 **Mantık:** Gerçek model, kalibrasyon, latency ölçümü
 
 #### Tasks:
+
 - [ ] **Optuna Hyperparameter Tuning**
   - [ ] 200+ trials, early stopping (patience=50)
   - [ ] Metrics: logloss + custom (profit-weighted)
@@ -129,6 +134,7 @@
   - [ ] Rollback script: `scripts/rollback_model.sh {prev_run_id}`
 
 #### DoD:
+
 ✅ LGBM accuracy ≥65% (validation)  
 ✅ Calibration ECE < 0.1  
 ✅ Inference p95 ≤ 80ms (CPU, no cache)  
@@ -142,6 +148,7 @@
 **Mantık:** Proper TFT + drift hooks
 
 #### Tasks:
+
 - [ ] **Sequence Dataset Builder**
   - [ ] Sliding window: seq_len=60, horizon=5
   - [ ] Time-based split (no shuffle)
@@ -162,6 +169,7 @@
   - [ ] Add: seq_len, horizon, hidden_size
 
 #### DoD:
+
 ✅ TFT training completes with early stopping  
 ✅ Real inference working (not placeholder)  
 ✅ Inference p95 ≤ 40ms  
@@ -175,6 +183,7 @@
 **Mantık:** Gerçekçi friction, benchmark karşılaştırması, CI guard
 
 #### Tasks:
+
 - [ ] **Vectorized Backtest Runner**
   - [ ] 90-day window (or max available)
   - [ ] Realistic fees: 10 bps maker, 15 bps taker
@@ -200,6 +209,7 @@
   - [ ] Alert: auto-rollback candidate
 
 #### DoD:
+
 ✅ Backtest runs for BTC/ETH/SOL (90d)  
 ✅ HTML reports generated + saved  
 ✅ Strategy Sharpe ≥ B&H + 0.5 (incremental target)  
@@ -213,6 +223,7 @@
 **Mantık:** Chaos testing, alerts tuning, backups
 
 #### Tasks:
+
 - [ ] **Kill Switch Chaos Test**
   - [ ] Inject: burst 100 errors in 10s
   - [ ] Inject: MD throttle (simulate MEXC 429)
@@ -237,6 +248,7 @@
   - [ ] Add: rollback procedures
 
 #### DoD:
+
 ✅ Chaos test passed (MTTR < 2 min)  
 ✅ All 15+ alerts configured + tested  
 ✅ Runbook links added to alerts  
@@ -250,6 +262,7 @@
 **Mantık:** Live test, post-mortem, production readiness decision
 
 #### Tasks:
+
 - [ ] **24h Paper Trading Run**
   - [ ] 3-5 symbols (BTC, ETH, SOL, BNB, ADA)
   - [ ] Monitor checkpoints: T+1h, T+6h, T+12h, T+24h
@@ -281,6 +294,7 @@
   - [ ] On-call rotation defined
 
 #### DoD:
+
 ✅ 24h run completes without crashes  
 ✅ Post-mortem report published  
 ✅ GO/NO-GO decision documented  
@@ -291,31 +305,31 @@
 
 ## 🎯 Revize KPI/SLO'lar (Enterprise-Grade)
 
-| Kategori          | SLO/Target              | Ölçüm Metodu                          | Not                                      |
-|-------------------|-------------------------|---------------------------------------|------------------------------------------|
-| **Inference p95** | **< 80ms (CPU)**        | Prometheus histogram                  | Cache off ölçümü ayrı sakla              |
-| **Drop rate**     | **≤ 0.1%**              | SSE/MD disconnect count               | Transient retry'ler ayrı izle            |
-| **Error rate**    | **< 0.5% (5m window)**  | Failed requests / total               | Circuit breaker threshold: 5%            |
-| **Kill MTTR**     | **< 2 min**             | Chaos test measurement                | From trigger to all engines stopped      |
-| **Backtest**      | **Sharpe ≥ B&H + 0.5**  | 90-day rolling window                 | Incremental target (not absolute 2.0)    |
-| **Drift PSI**     | **< 0.2 (daily)**       | Feature distribution comparison       | Alert + investigate if breached          |
-| **Uptime**        | **≥ 99%**               | API `/health` availability            | Excludes planned maintenance             |
-| **Coverage**      | **≥ 75% (backend)**     | pytest-cov                            | CI gate                                  |
-|                   | **≥ 50% (frontend)**    | Vitest coverage                       | CI gate                                  |
+| Kategori          | SLO/Target             | Ölçüm Metodu                    | Not                                   |
+| ----------------- | ---------------------- | ------------------------------- | ------------------------------------- |
+| **Inference p95** | **< 80ms (CPU)**       | Prometheus histogram            | Cache off ölçümü ayrı sakla           |
+| **Drop rate**     | **≤ 0.1%**             | SSE/MD disconnect count         | Transient retry'ler ayrı izle         |
+| **Error rate**    | **< 0.5% (5m window)** | Failed requests / total         | Circuit breaker threshold: 5%         |
+| **Kill MTTR**     | **< 2 min**            | Chaos test measurement          | From trigger to all engines stopped   |
+| **Backtest**      | **Sharpe ≥ B&H + 0.5** | 90-day rolling window           | Incremental target (not absolute 2.0) |
+| **Drift PSI**     | **< 0.2 (daily)**      | Feature distribution comparison | Alert + investigate if breached       |
+| **Uptime**        | **≥ 99%**              | API `/health` availability      | Excludes planned maintenance          |
+| **Coverage**      | **≥ 75% (backend)**    | pytest-cov                      | CI gate                               |
+|                   | **≥ 50% (frontend)**   | Vitest coverage                 | CI gate                               |
 
 ---
 
 ## 🧨 Riskler & Önlemler
 
-| Risk                              | Impact | Prob | Mitigation                                                              |
-|-----------------------------------|--------|------|-------------------------------------------------------------------------|
-| **API rate limit / borsa kesinti**| HIGH   | MED  | Exponential backoff, circuit breaker, 30s TTL cache (optional)          |
-| **Data leakage**                  | CRIT   | LOW  | Time-based split enforced, CI guard tests, manual feature audit         |
-| **Model regression**              | HIGH   | MED  | Nightly backtest CI gate, auto-rollback symlink, A/B test in prod       |
-| **Saat senkronu / drift**         | MED    | LOW  | NTP validation, bar alignment unit tests                                |
-| **Güvenlik breach**               | CRIT   | LOW  | JWT/RBAC, IP allowlist, audit log, secrets KMS, penetration test (Q2)  |
-| **LGBM/TFT accuracy < 65%**       | HIGH   | MED  | More features, longer training, ensemble weighting, sentiment integration|
-| **Latency spike > 100ms**         | MED    | MED  | Caching, async processing, load balancing, profiling (py-spy)          |
+| Risk                               | Impact | Prob | Mitigation                                                                |
+| ---------------------------------- | ------ | ---- | ------------------------------------------------------------------------- |
+| **API rate limit / borsa kesinti** | HIGH   | MED  | Exponential backoff, circuit breaker, 30s TTL cache (optional)            |
+| **Data leakage**                   | CRIT   | LOW  | Time-based split enforced, CI guard tests, manual feature audit           |
+| **Model regression**               | HIGH   | MED  | Nightly backtest CI gate, auto-rollback symlink, A/B test in prod         |
+| **Saat senkronu / drift**          | MED    | LOW  | NTP validation, bar alignment unit tests                                  |
+| **Güvenlik breach**                | CRIT   | LOW  | JWT/RBAC, IP allowlist, audit log, secrets KMS, penetration test (Q2)     |
+| **LGBM/TFT accuracy < 65%**        | HIGH   | MED  | More features, longer training, ensemble weighting, sentiment integration |
+| **Latency spike > 100ms**          | MED    | MED  | Caching, async processing, load balancing, profiling (py-spy)             |
 
 ---
 

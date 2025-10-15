@@ -4,13 +4,13 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
 
 jobs:
   lint-and-test:
@@ -26,8 +26,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -78,7 +78,6 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: levibot-backend:ci
-          format: 'table'
-          exit-code: '0'  # TODO: Change to '1' after fixing critical/high vulns
-          severity: 'CRITICAL,HIGH'
-
+          format: "table"
+          exit-code: "0" # TODO: Change to '1' after fixing critical/high vulns
+          severity: "CRITICAL,HIGH"

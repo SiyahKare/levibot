@@ -14,6 +14,7 @@ from .routers.analytics import router as analytics_router
 from .routers.auth import router as auth_router
 from .routers.backtest import router as backtest_router
 from .routers.engines import router as engines_router
+from .routers.events import router as events_router
 from .routers.live import router as live_router
 from .routers.metrics import router as metrics_router
 from .routers.ops import router as ops_router
@@ -144,6 +145,7 @@ app.include_router(ai_router)
 app.include_router(analytics_router)
 app.include_router(ops_router)
 app.include_router(signal_log_router)
+app.include_router(events_router)  # Events from JSONL logs
 
 
 @app.get("/")
