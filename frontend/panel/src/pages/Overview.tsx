@@ -126,7 +126,8 @@ export default function Overview() {
   });
 
   // Filter running engines
-  const runningEngines = enginesList?.filter((e: any) => e.status === "running") || [];
+  const runningEngines =
+    enginesList?.filter((e: any) => e.status === "running") || [];
 
   const stats = summary?.stats || {};
   const equity = stats.total_equity ?? 0;
