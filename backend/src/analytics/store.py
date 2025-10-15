@@ -83,9 +83,14 @@ def recent(limit: int = 100) -> list[dict]:
 
     out = []
     for r in rows:
+        # Convert timestamp to both ISO format and unix timestamp
+        ts_iso = r[0].isoformat() if r[0] else None
+        ts_unix = int(r[0].timestamp()) if r[0] else None
+        
         out.append(
             {
-                "ts": r[0].isoformat() if r[0] else None,
+                "ts": ts_unix,  # Unix timestamp for frontend compatibility
+                "ts_iso": ts_iso,  # ISO format for debugging
                 "symbol": r[1],
                 "prob_up": r[2],
                 "confidence": r[3],
