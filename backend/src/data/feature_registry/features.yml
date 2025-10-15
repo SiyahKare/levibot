@@ -1,0 +1,140 @@
+# Feature Store Schema v1
+# Defines data types, nullability, and validation rules for ML features
+
+version: 1
+
+entities:
+  - name: symbol_timeseries
+    primary_key: [symbol, ts]
+    description: "Per-symbol, per-timestamp features (1m bars aligned UTC)"
+
+features:
+  # Raw bar data
+  - name: ts
+    dtype: int64
+    nullable: false
+    description: "Unix timestamp (seconds since epoch, UTC)"
+    
+  - name: symbol
+    dtype: string
+    nullable: false
+    description: "Trading symbol (e.g., BTCUSDT)"
+    
+  - name: open
+    dtype: float64
+    nullable: false
+    source: bars
+    description: "Open price"
+    
+  - name: high
+    dtype: float64
+    nullable: false
+    source: bars
+    description: "High price"
+    
+  - name: low
+    dtype: float64
+    nullable: false
+    source: bars
+    description: "Low price"
+    
+  - name: close
+    dtype: float64
+    nullable: false
+    source: bars
+    description: "Close price"
+    
+  - name: volume
+    dtype: float64
+    nullable: false
+    source: bars
+    description: "Volume"
+
+  # Technical indicators (computed)
+  - name: ret_1m
+    dtype: float32
+    nullable: false
+    transformation: "pct_change(1)"
+    description: "1-minute return (close[t] / close[t-1] - 1)"
+    
+  - name: sma_20
+    dtype: float32
+    nullable: true
+    transformation: "rolling_mean(close, 20)"
+    description: "20-period simple moving average"
+    
+  - name: sma_20_gap
+    dtype: float32
+    nullable: true
+    transformation: "(close - sma_20) / sma_20"
+    description: "Gap from SMA-20 (normalized)"
+    
+  - name: sma_50
+    dtype: float32
+    nullable: true
+    transformation: "rolling_mean(close, 50)"
+    description: "50-period simple moving average"
+    
+  - name: sma_50_gap
+    dtype: float32
+    nullable: true
+    transformation: "(close - sma_50) / sma_50"
+    description: "Gap from SMA-50 (normalized)"
+    
+  - name: rsi_14
+    dtype: float32
+    nullable: true
+    transformation: "rsi(close, 14)"
+    description: "14-period RSI"
+    
+  - name: vol_z
+    dtype: float32
+    nullable: true
+    transformation: "zscore(volume, 20)"
+    description: "Volume Z-score (20-period)"
+    
+  - name: atr_14
+    dtype: float32
+    nullable: true
+    transformation: "atr(high, low, close, 14)"
+    description: "14-period ATR"
+
+  # Labels (future-looking, MUST be generated with time-based split)
+  - name: target_up_h5
+    dtype: int8
+    nullable: false
+    transformation: "int(close[t+5] > close[t])"
+    description: "Label: 1 if close[t+5] > close[t], else 0 (FUTURE LEAK RISK!)"
+    future_offset: 5
+    
+  - name: target_ret_h5
+    dtype: float32
+    nullable: false
+    transformation: "(close[t+5] / close[t]) - 1"
+    description: "Future return at t+5 (FUTURE LEAK RISK!)"
+    future_offset: 5
+
+constraints:
+  - name: time_monotonic
+    check: "ts is strictly increasing per symbol"
+    severity: error
+    
+  - name: no_future_leak
+    check: "features at t must not use bars > t (except labels)"
+    severity: error
+    
+  - name: no_missing_close
+    check: "close must not be null"
+    severity: error
+    
+  - name: positive_volume
+    check: "volume >= 0"
+    severity: warning
+
+meta:
+  timezone: "UTC"
+  timeframe: "1m"
+  created: "2025-10-15"
+  updated: "2025-10-15"
+  owner: "ml-team"
+

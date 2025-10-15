@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Model Card v2",
+  "description": "Metadata for trained ML models (LGBM, TFT, etc.)",
+  "type": "object",
+  "required": ["version", "model_name", "train", "metrics", "created_at"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "2",
+      "description": "Model card schema version"
+    },
+    "model_name": {
+      "type": "string",
+      "description": "Model identifier (e.g., lgbm_prod, tft_prod)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Model training timestamp (ISO 8601)"
+    },
+    "train": {
+      "type": "object",
+      "required": ["snapshot_id", "range", "rows"],
+      "properties": {
+        "snapshot_id": {
+          "type": "string",
+          "description": "Training data snapshot ID"
+        },
+        "range": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": {"type": "string", "format": "date-time"},
+            "end": {"type": "string", "format": "date-time"}
+          }
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total training rows"
+        },
+        "class_balance": {
+          "type": "object",
+          "properties": {
+            "pos": {"type": "number"},
+            "neg": {"type": "number"}
+          },
+          "description": "Class distribution (for classification)"
+        },
+        "symbols": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Training symbols"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["accuracy"],
+      "properties": {
+        "accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "precision": {"type": "number", "minimum": 0, "maximum": 1},
+        "recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "auc_roc": {"type": "number", "minimum": 0, "maximum": 1},
+        "auc_pr": {"type": "number", "minimum": 0, "maximum": 1},
+        "kappa": {"type": "number", "minimum": -1, "maximum": 1},
+        "calibration_ece": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Expected Calibration Error"
+        }
+      }
+    },
+    "latency_ms": {
+      "type": "object",
+      "properties": {
+        "p50": {"type": "number", "minimum": 0},
+        "p90": {"type": "number", "minimum": 0},
+        "p95": {"type": "number", "minimum": 0},
+        "p99": {"type": "number", "minimum": 0},
+        "mean": {"type": "number", "minimum": 0},
+        "samples": {"type": "integer", "minimum": 0}
+      },
+      "description": "Inference latency benchmark (milliseconds)"
+    },
+    "leakage_checks": {
+      "type": "object",
+      "properties": {
+        "future_info": {
+          "type": "boolean",
+          "description": "No future information in features"
+        },
+        "time_split": {
+          "type": "boolean",
+          "description": "Time-based train/val/test split enforced"
+        },
+        "feature_audit": {
+          "type": "boolean",
+          "description": "Manual feature audit passed"
+        }
+      },
+      "description": "Data leakage validation checks"
+    },
+    "feature_importance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "gain"],
+        "properties": {
+          "name": {"type": "string"},
+          "gain": {"type": "number", "minimum": 0},
+          "split": {"type": "integer", "minimum": 0}
+        }
+      },
+      "description": "Top feature importances"
+    },
+    "hyperparameters": {
+      "type": "object",
+      "description": "Model hyperparameters (model-specific structure)"
+    },
+    "model_file": {
+      "type": "string",
+      "description": "Relative path to model file (e.g., lgbm.pkl)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form notes about this model"
+    }
+  }
+}
+
