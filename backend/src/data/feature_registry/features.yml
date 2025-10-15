@@ -14,36 +14,36 @@ features:
     dtype: int64
     nullable: false
     description: "Unix timestamp (seconds since epoch, UTC)"
-    
+
   - name: symbol
     dtype: string
     nullable: false
     description: "Trading symbol (e.g., BTCUSDT)"
-    
+
   - name: open
     dtype: float64
     nullable: false
     source: bars
     description: "Open price"
-    
+
   - name: high
     dtype: float64
     nullable: false
     source: bars
     description: "High price"
-    
+
   - name: low
     dtype: float64
     nullable: false
     source: bars
     description: "Low price"
-    
+
   - name: close
     dtype: float64
     nullable: false
     source: bars
     description: "Close price"
-    
+
   - name: volume
     dtype: float64
     nullable: false
@@ -56,43 +56,43 @@ features:
     nullable: false
     transformation: "pct_change(1)"
     description: "1-minute return (close[t] / close[t-1] - 1)"
-    
+
   - name: sma_20
     dtype: float32
     nullable: true
     transformation: "rolling_mean(close, 20)"
     description: "20-period simple moving average"
-    
+
   - name: sma_20_gap
     dtype: float32
     nullable: true
     transformation: "(close - sma_20) / sma_20"
     description: "Gap from SMA-20 (normalized)"
-    
+
   - name: sma_50
     dtype: float32
     nullable: true
     transformation: "rolling_mean(close, 50)"
     description: "50-period simple moving average"
-    
+
   - name: sma_50_gap
     dtype: float32
     nullable: true
     transformation: "(close - sma_50) / sma_50"
     description: "Gap from SMA-50 (normalized)"
-    
+
   - name: rsi_14
     dtype: float32
     nullable: true
     transformation: "rsi(close, 14)"
     description: "14-period RSI"
-    
+
   - name: vol_z
     dtype: float32
     nullable: true
     transformation: "zscore(volume, 20)"
     description: "Volume Z-score (20-period)"
-    
+
   - name: atr_14
     dtype: float32
     nullable: true
@@ -106,7 +106,7 @@ features:
     transformation: "int(close[t+5] > close[t])"
     description: "Label: 1 if close[t+5] > close[t], else 0 (FUTURE LEAK RISK!)"
     future_offset: 5
-    
+
   - name: target_ret_h5
     dtype: float32
     nullable: false
@@ -118,15 +118,15 @@ constraints:
   - name: time_monotonic
     check: "ts is strictly increasing per symbol"
     severity: error
-    
+
   - name: no_future_leak
     check: "features at t must not use bars > t (except labels)"
     severity: error
-    
+
   - name: no_missing_close
     check: "close must not be null"
     severity: error
-    
+
   - name: positive_volume
     check: "volume >= 0"
     severity: warning
@@ -137,4 +137,3 @@ meta:
   created: "2025-10-15"
   updated: "2025-10-15"
   owner: "ml-team"
-

@@ -6,8 +6,6 @@ Implements Platt scaling and Isotonic regression.
 from __future__ import annotations
 
 import numpy as np
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import brier_score_loss
 
 
 def calibrate_probabilities(
@@ -98,8 +96,8 @@ def plot_calibration_curve(
         n_bins: Number of bins
         save_path: Path to save plot (optional)
     """
-    from sklearn.calibration import calibration_curve
     import matplotlib.pyplot as plt
+    from sklearn.calibration import calibration_curve
 
     fraction_of_positives, mean_predicted_value = calibration_curve(
         y_true, y_prob, n_bins=n_bins, strategy="uniform"

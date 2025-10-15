@@ -117,7 +117,7 @@ class FeatureSchemaValidator:
                         errors.append(msg)
 
         if strict and errors:
-            raise ValueError(f"Schema validation failed:\n" + "\n".join(errors))
+            raise ValueError("Schema validation failed:\n" + "\n".join(errors))
 
         return errors
 

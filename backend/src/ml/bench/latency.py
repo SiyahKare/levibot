@@ -6,7 +6,8 @@ Measures inference time (p50, p95, p99, etc.).
 from __future__ import annotations
 
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -57,7 +58,7 @@ def benchmark_latency(
         "samples": n_samples,
     }
 
-    print(f"✅ Benchmark complete:")
+    print("✅ Benchmark complete:")
     print(f"   Mean: {stats['mean']:.2f} ms")
     print(f"   P50:  {stats['p50']:.2f} ms")
     print(f"   P95:  {stats['p95']:.2f} ms")

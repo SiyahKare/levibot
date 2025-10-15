@@ -10,13 +10,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+
+# Add parent to path for imports
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 
-# Add parent to path for imports
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.src.data.feature_registry.validator import validate_features
@@ -63,7 +64,7 @@ async def fetch_and_process(
     df_bars = pd.DataFrame(bars, columns=["ts", "open", "high", "low", "close", "volume"])
     
     # Compute features
-    print(f"   🔧 Computing features...")
+    print("   🔧 Computing features...")
     df_features = minute_features(df_bars, horizon=horizon)
     
     # Add symbol column
@@ -128,10 +129,10 @@ def create_snapshot(
             df = asyncio.run(fetch_and_process(symbol, days, horizon))
             
             # Validate schema
-            print(f"   🔍 Validating schema...")
+            print("   🔍 Validating schema...")
             try:
                 validate_features(df)
-                print(f"   ✅ Schema validation passed")
+                print("   ✅ Schema validation passed")
             except ValueError as e:
                 print(f"   ⚠️ Schema validation warning: {e}")
                 # Continue anyway (warnings only)
