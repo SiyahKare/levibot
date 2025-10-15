@@ -8,11 +8,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..engine.manager import get_engine_manager, init_engine_manager
+from .routers.ai import router as ai_router
+from .routers.analytics import router as analytics_router
 from .routers.backtest import router as backtest_router
 from .routers.engines import router as engines_router
 from .routers.live import router as live_router
 from .routers.metrics import router as metrics_router
+from .routers.ops import router as ops_router
 from .routers.risk import router as risk_router
+from .routers.signal_log import router as signal_log_router
 from .routers.stream import router as stream_router
 
 
@@ -120,6 +124,12 @@ app.include_router(risk_router)
 app.include_router(metrics_router)
 app.include_router(live_router)
 app.include_router(stream_router)
+
+# AI & Analytics routers
+app.include_router(ai_router)
+app.include_router(analytics_router)
+app.include_router(ops_router)
+app.include_router(signal_log_router)
 
 
 @app.get("/")

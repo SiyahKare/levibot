@@ -1,3 +1,0 @@
-{"title": "Test Alert", "summary": "This is a test alert", "severity": "high", "source": "test", "labels": {"key": "value"}, "url": null, "timestamp": "2025-10-09T03:34:39.016019+00:00"}
-{"title": "Test Alert", "summary": "This is a test alert", "severity": "high", "source": "test", "labels": {"key": "value"}, "url": null, "timestamp": "2025-10-09T03:37:42.243622+00:00"}
-{"title": "Test Alert", "summary": "This is a test alert", "severity": "high", "source": "test", "labels": {"key": "value"}, "url": null, "timestamp": "2025-10-09T03:47:17.419198+00:00"}

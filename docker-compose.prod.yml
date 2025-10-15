@@ -1,60 +1,145 @@
-version: "3.9"
 services:
-  redis:
-    image: redis:7
-    restart: unless-stopped
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   api:
+    image: levibot/api:${VERSION:-latest}
     build:
-      context: .
-      dockerfile: ops/api.Dockerfile
+      context: ./backend
+      dockerfile: ../docker/app.Dockerfile
+    command: >
+      gunicorn -k uvicorn.workers.UvicornWorker
+      -w 2
+      --worker-connections 100
+      --max-requests 1000
+      --max-requests-jitter 100
+      --timeout 30
+      --keep-alive 5
+      --access-logfile -
+      --error-logfile -
+      --bind 0.0.0.0:8000
+      src.app.main:app
     env_file:
-      - .env.prod
-    depends_on:
-      redis:
-        condition: service_healthy
-    expose:
-      - "8000"
-    restart: unless-stopped
+      - .env.docker
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - ANALYTICS_DB=/app/data/analytics.duckdb
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/configs:/app/configs:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - web
+      - internal
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   panel:
+    image: levibot/panel:${VERSION:-latest}
     build:
       context: ./frontend/panel
-      dockerfile: ../../ops/panel.Dockerfile
-    env_file:
-      - .env.prod
-    depends_on:
-      - api
-    restart: "no"   # static build → nginx serve eder
-    volumes:
-      - panelbuild:/mnt/panel
+      dockerfile: ../../docker/panel.Dockerfile
+    command: sh -c "pnpm build && pnpm preview --host 0.0.0.0 --port 5173"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=https://your.domain.com/api
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    networks:
+      - web
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
-  nginx:
-    image: nginx:1.27
+  proxy:
+    image: caddy:2-alpine
+    volumes:
+      - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
     depends_on:
       api:
         condition: service_healthy
       panel:
-        condition: service_completed_successfully
-    ports:
-      - "80:80"
+        condition: service_started
+    networks:
+      - web
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  prometheus:
+    image: prom/prometheus:latest
     volumes:
-      - panelbuild:/usr/share/nginx/html:ro
-      - ./ops/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - internal
     restart: unless-stopped
 
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./ops/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./ops/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=https://your.domain.com/grafana
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+    networks:
+      - internal
+      - web
+    restart: unless-stopped
+
+networks:
+  web:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true
+
 volumes:
-  redisdata:
-  panelbuild:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

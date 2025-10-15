@@ -2,6 +2,7 @@
 Ensemble predictor: LightGBM + TFT + Sentiment fusion.
 """
 
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -150,6 +151,8 @@ class EnsemblePredictor:
         self,
         features: dict[str, float],
         sentiment: float,
+        symbol: str = "UNKNOWN",
+        log_to_analytics: bool = True,
     ) -> dict[str, Any]:
         """
         Generate trading signal using ensemble.
@@ -157,12 +160,15 @@ class EnsemblePredictor:
         Args:
             features: Feature dictionary (vol, spread, funding, etc.)
             sentiment: Sentiment score (-1.0 to 1.0)
+            symbol: Trading symbol for logging
+            log_to_analytics: Whether to log prediction to DuckDB
 
         Returns:
             {
                 "prob_up": 0.65,        # Probability of price increase
                 "side": "long",         # long/short/flat
                 "confidence": 0.30,     # 0-1 confidence score
+                "price_target": 0.0,    # Target price (if available)
             }
         """
         # Ensure models are loaded
@@ -189,12 +195,40 @@ class EnsemblePredictor:
         else:
             side = "flat"
 
-        return {
+        # Calculate price target (simple: close + expected move)
+        close_price = features.get("close", 0.0)
+        expected_move = features.get("sma20_gap", 0.0) * 0.1  # 10% of SMA gap
+        price_target = close_price + expected_move if side == "long" else close_price - abs(expected_move)
+
+        result = {
             "prob_up": round(prob_up, 4),
             "side": side,
             "confidence": round(confidence, 4),
+            "price_target": round(price_target, 4),
             # Debug info
             "_prob_lgbm": round(prob_lgbm, 4),
             "_prob_tft": round(prob_tft, 4),
             "_prob_sent": round(prob_sent, 4),
         }
+
+        # Log to analytics store (DuckDB)
+        if log_to_analytics:
+            try:
+                from ...analytics.store import log_prediction
+
+                log_prediction(
+                    {
+                        "ts": datetime.now(UTC),
+                        "symbol": symbol,
+                        "prob_up": result["prob_up"],
+                        "confidence": result["confidence"],
+                        "side": result["side"],
+                        "source": "ensemble",
+                        "price_target": result["price_target"],
+                    }
+                )
+            except Exception:
+                # Don't fail prediction if logging fails
+                pass
+
+        return result

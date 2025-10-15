@@ -1,0 +1,88 @@
+# LeviBot Production Caddy Configuration
+
+{
+	# Global options
+	email admin@your.domain.com
+	admin off
+}
+
+your.domain.com {
+	# Enable compression
+	encode zstd gzip
+
+	# Security headers
+	header {
+		# HSTS
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		# XSS Protection
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		X-XSS-Protection "1; mode=block"
+		# CSP
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:"
+		# Remove server header
+		-Server
+	}
+
+	# Rate limiting (basic)
+	rate_limit {
+		zone api_zone {
+			key {remote_host}
+			events 100
+			window 1m
+		}
+	}
+
+	# API routes
+	handle_path /api/* {
+		reverse_proxy api:8000 {
+			# Health check
+			health_uri /health
+			health_interval 10s
+			health_timeout 5s
+
+			# Load balancing (if scaling)
+			lb_policy least_conn
+
+			# Timeouts
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+			}
+
+			# Headers
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Grafana
+	handle_path /grafana/* {
+		reverse_proxy grafana:3000
+	}
+
+	# Panel (frontend)
+	handle /* {
+		reverse_proxy panel:5173 {
+			# WebSocket support for HMR (preview mode)
+			header_up Upgrade {>Upgrade}
+			header_up Connection {>Connection}
+		}
+	}
+
+	# Logs
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+		format json
+	}
+}
+
+# Health check endpoint (internal)
+:8080 {
+	respond /health 200
+}
+
