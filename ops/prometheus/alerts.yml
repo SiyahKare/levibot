@@ -164,3 +164,77 @@ groups:
         annotations:
           summary: "ML prediction latency high"
           description: "Prediction p95 latency: {{ $value | humanizeDuration }} (threshold: 50ms)"
+
+  # Chaos & Recovery Alerts (Gün-6)
+  - name: levibot_chaos
+    interval: 30s
+    rules:
+      # MTTR Exceeded
+      - alert: MTTRExceeded
+        expr: levi_recovery_duration_seconds > 120
+        for: 1m
+        labels:
+          severity: critical
+          component: ops
+        annotations:
+          summary: "MTTR exceeded 2 minutes"
+          description: "Recovery took {{ $value | humanizeDuration }} (target: <2min)"
+          runbook: "https://docs.levibot.io/runbooks/mttr-exceeded"
+
+      # Engine Restart Failed
+      - alert: EngineRestartFailed
+        expr: increase(levi_engine_restart_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: engine
+        annotations:
+          summary: "Engine restart failed"
+          description: "{{ $value }} engine restart failures in 5m"
+          runbook: "https://docs.levibot.io/runbooks/engine-restart-failed"
+
+      # WS Reconnect Slow
+      - alert: WSReconnectSlow
+        expr: levi_ws_reconnect_duration_seconds > 5
+        for: 1m
+        labels:
+          severity: warning
+          component: datafeed
+        annotations:
+          summary: "WebSocket reconnect slow"
+          description: "WS reconnect took {{ $value | humanizeDuration }} (target: <5s)"
+          runbook: "https://docs.levibot.io/runbooks/ws-reconnect-slow"
+
+      # Chaos Test Failure
+      - alert: ChaosTestFailed
+        expr: levi_chaos_test_pass_rate < 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: ops
+        annotations:
+          summary: "Chaos test pass rate below 90%"
+          description: "Chaos pass rate: {{ $value | humanizePercentage }} (target: ≥90%)"
+
+      # Audit Log Missing
+      - alert: AuditLogMissing
+        expr: time() - levi_last_audit_log_ts > 3600
+        for: 10m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "Audit logs not being written"
+          description: "Last audit log {{ $value | humanizeDuration }} ago"
+
+      # Kill Switch Latency High
+      - alert: KillSwitchLatencyHigh
+        expr: levi_kill_switch_latency_ms > 500
+        for: 2m
+        labels:
+          severity: critical
+          component: ops
+        annotations:
+          summary: "Kill switch latency exceeds 500ms"
+          description: "Kill switch latency: {{ $value }}ms (target: <500ms)"
+          runbook: "https://docs.levibot.io/runbooks/kill-switch-latency"
