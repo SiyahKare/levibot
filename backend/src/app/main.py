@@ -4,12 +4,14 @@ FastAPI main application with engine manager integration.
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..engine.manager import get_engine_manager, init_engine_manager
+from .middleware.rate_limit import rate_limit_middleware
 from .routers.ai import router as ai_router
 from .routers.analytics import router as analytics_router
+from .routers.auth import router as auth_router
 from .routers.backtest import router as backtest_router
 from .routers.engines import router as engines_router
 from .routers.live import router as live_router
@@ -117,7 +119,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Rate limiting middleware (applies to /ai/predict)
+@app.middleware("http")
+async def rate_limit_ai_predict(request: Request, call_next):
+    """Apply rate limiting to /ai/predict endpoint."""
+    if request.url.path == "/ai/predict":
+        await rate_limit_middleware(request)
+    response = await call_next(request)
+    return response
+
+
 # Register routers
+app.include_router(auth_router)  # Auth must be first (no dependencies)
 app.include_router(engines_router)
 app.include_router(backtest_router)
 app.include_router(risk_router)

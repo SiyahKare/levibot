@@ -2,6 +2,7 @@ fastapi==0.114.2
 uvicorn[standard]==0.30.6
 pydantic==2.8.2
 httpx==0.27.2
+pyjwt==2.9.0  # JWT authentication
 aiogram==3.12.0
 openai==1.54.3
 ccxt[async]==4.3.96
