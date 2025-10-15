@@ -1,4 +1,4 @@
-"""Thread-safe TFT inference wrapper."""
+"""Thread-safe TFT inference wrapper with warm-up pool."""
 
 from __future__ import annotations
 
@@ -7,27 +7,67 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn as nn
+
+# Import SimpleTFT architecture (same as training)
+# For production, this would be imported from train_tft_prod
+class SimpleTFT(nn.Module):
+    """Simplified TFT architecture."""
+
+    def __init__(
+        self,
+        input_size: int,
+        seq_len: int,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+    ):
+        super().__init__()
+        self.seq_len = seq_len
+        self.hidden_size = hidden_size
+
+        self.lstm = nn.LSTM(
+            input_size,
+            hidden_size,
+            num_layers=2,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(hidden_size, 64),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, 1),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        lstm_out, _ = self.lstm(x)
+        last_hidden = lstm_out[:, -1, :]
+        proba = self.fc(last_hidden)
+        return proba
 
 
 class TFTProd:
     """Thread-safe singleton wrapper for production TFT inference."""
 
     _lock = threading.Lock()
-    _ckpt_meta = None
+    _model: nn.Module | None = None
+    _seq_len: int = 64
+    _n_features: int = 5
 
     @classmethod
     def load(cls, path: str = "backend/data/models/best_tft.pt"):
         """
-        Load TFT checkpoint metadata (thread-safe).
+        Load TFT model (thread-safe).
 
         Args:
-            path: Path to TFT export file (relative to project root or absolute)
+            path: Path to TFT model file (relative to project root or absolute)
 
         Returns:
-            Checkpoint metadata dictionary
+            Loaded model
         """
         with cls._lock:
-            if cls._ckpt_meta is None:
+            if cls._model is None:
                 # Resolve path: try relative to /app (Docker) or as-is
                 resolved_path = Path(path)
                 if not resolved_path.exists():
@@ -36,9 +76,34 @@ class TFTProd:
                 if not resolved_path.exists():
                     # Try data/models (relative to /app)
                     resolved_path = Path("data/models") / Path(path).name
-                
-                cls._ckpt_meta = torch.load(str(resolved_path), weights_only=False)
-        return cls._ckpt_meta
+
+                print(f"🔧 Loading TFT model from: {resolved_path}")
+
+                # Load model
+                cls._model = SimpleTFT(
+                    input_size=cls._n_features,
+                    seq_len=cls._seq_len,
+                    hidden_size=128,
+                    dropout=0.1,
+                )
+
+                # Load weights
+                state_dict = torch.load(str(resolved_path), weights_only=True)
+                cls._model.load_state_dict(state_dict)
+                cls._model.eval()
+
+                # Set single thread for consistent latency
+                torch.set_num_threads(1)
+
+                # Warm-up (precompile JIT, cache)
+                warmup_input = torch.randn(1, cls._seq_len, cls._n_features)
+                for _ in range(10):
+                    with torch.no_grad():
+                        _ = cls._model(warmup_input)
+
+                print("✅ TFT model loaded and warmed up!")
+
+        return cls._model
 
     @classmethod
     def predict_proba_up(cls, seq_window: np.ndarray) -> float:
@@ -46,19 +111,19 @@ class TFTProd:
         Predict probability of upward price movement.
 
         Args:
-            seq_window: Sequence window array (L, F)
+            seq_window: Sequence window array (seq_len, n_features)
 
         Returns:
             Probability (0.0 - 1.0) of upward movement
-
-        Note:
-            Placeholder implementation. Real implementation would:
-            - Load model from checkpoint: LightningModule.load_from_checkpoint(cls._ckpt_meta["best_ckpt"])
-            - Run forward pass: model(torch.from_numpy(seq_window).unsqueeze(0))
         """
-        cls.load()
+        model = cls.load()
 
-        # Simple heuristic: trend from first to last close
-        diff = float(seq_window[-1][0] - seq_window[0][0])
-        return float(0.5 + max(min(diff, 1.0), -1.0) * 0.01)
+        # Convert to tensor
+        x = torch.from_numpy(seq_window).float().unsqueeze(0)  # (1, seq_len, n_features)
+
+        # Inference
+        with torch.no_grad():
+            proba = model(x).squeeze().item()
+
+        return float(proba)
 

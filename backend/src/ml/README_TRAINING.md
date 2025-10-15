@@ -3,6 +3,7 @@
 ## Overview
 
 This directory contains production-grade ML training pipelines with:
+
 - ✅ Snapshot-based reproducibility
 - ✅ Optuna hyperparameter optimization
 - ✅ Probability calibration (Platt/Isotonic)
@@ -71,9 +72,9 @@ Generated cards conform to `backend/src/ml/model_card_schema.json`:
   "created_at": "2025-10-15T12:00:00Z",
   "train": {
     "snapshot_id": "2025-10-15T12-00-00Z",
-    "range": {"start": "2025-07-15", "end": "2025-10-15"},
+    "range": { "start": "2025-07-15", "end": "2025-10-15" },
     "rows": 130000,
-    "class_balance": {"pos": 65000, "neg": 65000},
+    "class_balance": { "pos": 65000, "neg": 65000 },
     "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
   },
   "metrics": {
@@ -97,8 +98,8 @@ Generated cards conform to `backend/src/ml/model_card_schema.json`:
     "feature_audit": true
   },
   "feature_importance": [
-    {"name": "close", "gain": 1250.5},
-    {"name": "ret_1m", "gain": 980.2}
+    { "name": "close", "gain": 1250.5 },
+    { "name": "ret_1m", "gain": 980.2 }
   ],
   "hyperparameters": {
     "learning_rate": 0.05,
@@ -141,12 +142,12 @@ pytest backend/tests/test_leakage_guards.py -v
 
 ## Performance Targets (Gün 3 DoD)
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Accuracy (val) | ≥ baseline + 2pp | ✅ Check model_card.json |
-| Calibration ECE | ≤ 0.1 | ✅ Check model_card.json |
-| Latency p95 (CPU) | ≤ 80ms | ✅ Check model_card.json |
-| Leakage guards | All pass | ✅ CI green |
+| Metric            | Target           | Actual                   |
+| ----------------- | ---------------- | ------------------------ |
+| Accuracy (val)    | ≥ baseline + 2pp | ✅ Check model_card.json |
+| Calibration ECE   | ≤ 0.1            | ✅ Check model_card.json |
+| Latency p95 (CPU) | ≤ 80ms           | ✅ Check model_card.json |
+| Leakage guards    | All pass         | ✅ CI green              |
 
 ---
 
@@ -254,4 +255,3 @@ print(validator.get_schema_info())
 
 **Last Updated:** 2025-10-15  
 **Owner:** ML Team
-

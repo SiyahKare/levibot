@@ -15,12 +15,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+
+# Add parent to path for imports
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 import joblib
 import lightgbm as lgb
-import numpy as np
 import optuna
 import pandas as pd
 from sklearn.metrics import (
@@ -31,8 +33,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-# Add parent to path for imports
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.src.data.feature_registry.validator import validate_features
@@ -40,7 +40,6 @@ from backend.src.ml.bench.latency import benchmark_latency
 from backend.src.ml.postproc.calibration import (
     calibrate_probabilities,
     expected_calibration_error,
-    plot_calibration_curve,
 )
 
 # Feature columns (update based on features.yml)
@@ -134,7 +133,7 @@ def time_based_split(
             "POTENTIAL DATA LEAKAGE!"
         )
 
-    print(f"✅ Time-based split validated (no leakage)")
+    print("✅ Time-based split validated (no leakage)")
     print(f"   Train: {len(train_df):,} rows (max ts: {train_max_ts})")
     print(f"   Val:   {len(val_df):,} rows (min ts: {val_min_ts})")
 
@@ -269,7 +268,7 @@ def evaluate_model(model: lgb.Booster, val_df: pd.DataFrame) -> dict:
     ece = expected_calibration_error(y_val.values, y_pred_proba)
     metrics["calibration_ece_before"] = ece
 
-    print(f"\n📊 Validation Metrics:")
+    print("\n📊 Validation Metrics:")
     for k, v in metrics.items():
         print(f"   {k}: {v:.4f}")
 
@@ -305,7 +304,7 @@ def calibrate_model(
 
 def benchmark_model_latency(model: lgb.Booster, sample_input: pd.DataFrame) -> dict:
     """Benchmark inference latency."""
-    print(f"\n⏱️ Benchmarking inference latency...")
+    print("\n⏱️ Benchmarking inference latency...")
 
     def predict_fn(x):
         return model.predict(x, num_iteration=model.best_iteration)
@@ -465,10 +464,10 @@ def main():
     df, manifest = load_snapshot(snapshot_dir)
 
     # Validate schema
-    print(f"\n🔍 Validating feature schema...")
+    print("\n🔍 Validating feature schema...")
     try:
         validate_features(df)
-        print(f"   ✅ Schema validation passed")
+        print("   ✅ Schema validation passed")
     except ValueError as e:
         print(f"   ❌ Schema validation failed: {e}")
         return 1
@@ -493,7 +492,7 @@ def main():
     latency_stats = benchmark_model_latency(model, X_sample)
 
     # Generate Model Card v2
-    print(f"\n📝 Generating Model Card v2...")
+    print("\n📝 Generating Model Card v2...")
     model_card = generate_model_card_v2(
         model,
         manifest,
@@ -513,7 +512,7 @@ def main():
 
     paths = save_artifacts(model, model_card, output_dir)
 
-    print(f"\n✅ Training complete!")
+    print("\n✅ Training complete!")
     print(f"   Model: {paths['model']}")
     print(f"   Card: {paths['card']}")
     print(f"   Best symlink: {paths['best_model_link']}")
