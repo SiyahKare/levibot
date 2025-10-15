@@ -4,8 +4,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from backend.src.ml.tft.infer_tft import TFTProd
 from backend.src.ml.bench.latency import benchmark_latency
+from backend.src.ml.tft.infer_tft import TFTProd
 
 
 @pytest.mark.skipif(

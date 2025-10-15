@@ -14,7 +14,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import chi2
 
 
 def calculate_psi(
@@ -162,7 +161,7 @@ def detect_drift(
     }
 
     # Print summary
-    print(f"📊 Drift Summary:")
+    print("📊 Drift Summary:")
     print(f"   Max PSI: {max_psi:.3f} (threshold: {psi_threshold})")
     print(f"   Mean JS: {mean_js:.3f} (threshold: {js_threshold})")
     print(f"   Status: {report['status'].upper()}")

@@ -27,11 +27,11 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from backend.src.data.feature_registry.validator import validate_features
-from backend.src.ml.bench.latency import benchmark_latency
-
 # Placeholder - will use simple MLP for now (real TFT is complex)
 import torch.nn as nn
+
+from backend.src.data.feature_registry.validator import validate_features
+from backend.src.ml.bench.latency import benchmark_latency
 
 
 class SimpleTFT(nn.Module):

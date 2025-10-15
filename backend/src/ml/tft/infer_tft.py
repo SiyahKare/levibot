@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
 # Import SimpleTFT architecture (same as training)
 # For production, this would be imported from train_tft_prod
 class SimpleTFT(nn.Module):

@@ -11,13 +11,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import torch
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backend.src.ml.tft.infer_tft import TFTProd
 from backend.src.ml.bench.latency import benchmark_latency
+from backend.src.ml.tft.infer_tft import TFTProd
 
 
 def main():

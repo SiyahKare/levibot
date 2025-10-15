@@ -97,14 +97,14 @@ Simplified TFT (LSTM-based):
 
 ## Performance Targets (Gün 4 DoD)
 
-| Metric            | Target     | Check                    |
-| ----------------- | ---------- | ------------------------ |
-| Accuracy (val)    | ≥ 0.60     | ✅ Check model_card.json |
-| Latency p95 (CPU) | ≤ 40ms     | ✅ Check model_card.json |
-| PSI (max)         | ≤ 0.25     | ✅ Check drift report    |
-| JS divergence     | ≤ 0.3      | ✅ Check drift report    |
-| Leakage guards    | All pass   | ✅ CI green              |
-| Symlink deploy    | Ready      | ✅ best_tft.pt exists    |
+| Metric            | Target   | Check                    |
+| ----------------- | -------- | ------------------------ |
+| Accuracy (val)    | ≥ 0.60   | ✅ Check model_card.json |
+| Latency p95 (CPU) | ≤ 40ms   | ✅ Check model_card.json |
+| PSI (max)         | ≤ 0.25   | ✅ Check drift report    |
+| JS divergence     | ≤ 0.3    | ✅ Check drift report    |
+| Leakage guards    | All pass | ✅ CI green              |
+| Symlink deploy    | Ready    | ✅ best_tft.pt exists    |
 
 ---
 
@@ -113,6 +113,7 @@ Simplified TFT (LSTM-based):
 ### Metrics
 
 - **PSI (Population Stability Index)**:
+
   - < 0.1: No change
   - 0.1 - 0.25: Moderate (investigate)
   - \> 0.25: Significant (retrain)
@@ -243,4 +244,3 @@ backend/
 ---
 
 **Status**: ✅ Production-ready, reproducible, rollback-ready!
-

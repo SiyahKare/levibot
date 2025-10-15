@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pytest
 
-from backend.src.ml.tft.drift import calculate_psi, calculate_js_divergence, detect_drift
+from backend.src.ml.tft.drift import calculate_js_divergence, calculate_psi, detect_drift
 
 
 def test_psi_identical_distributions():

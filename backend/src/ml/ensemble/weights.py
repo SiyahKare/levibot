@@ -97,11 +97,11 @@ def optimize_ensemble_weights(
         "auc_roc": roc_auc_score(y_true, ensemble_proba_final),
     }
 
-    print(f"✅ Best weights found:")
+    print("✅ Best weights found:")
     print(f"   LGBM: {best_weights['lgbm']:.3f}")
     print(f"   TFT: {best_weights['tft']:.3f}")
     print(f"   Sentiment: {best_weights['sentiment']:.3f}")
-    print(f"📊 Validation metrics:")
+    print("📊 Validation metrics:")
     print(f"   Accuracy: {metrics['accuracy']:.4f}")
     print(f"   F1: {metrics['f1']:.4f}")
     print(f"   AUC-ROC: {metrics['auc_roc']:.4f}")
