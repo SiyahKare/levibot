@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import threading
 from pathlib import Path
-from typing import Optional
 
 import joblib
 
@@ -14,8 +12,8 @@ class LGBMProd:
     """Thread-safe singleton wrapper for production LGBM inference."""
 
     _lock = threading.Lock()
-    _model: Optional[any] = None
-    _model_path: Optional[str] = None
+    _model: any | None = None
+    _model_path: str | None = None
 
     @classmethod
     def load(cls, path: str = "backend/data/models/best_lgbm.pkl"):

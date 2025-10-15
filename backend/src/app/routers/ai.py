@@ -99,6 +99,36 @@ async def ai_models():
     }
 
 
+@router.post("/select")
+async def ai_select(body: dict):
+    """
+    Select active model for predictions.
+    
+    Currently, only "ensemble" is supported. This endpoint validates
+    the selection and returns success. Future: switch between LGBM/TFT/Ensemble.
+    
+    Request body:
+        {"name": "ensemble"}
+    
+    Returns:
+        {"ok": true, "current": "ensemble", "message": "Model selected"}
+    """
+    model_name = body.get("name", "ensemble")
+    
+    # Validate model name
+    valid_models = ["ensemble", "lgbm", "tft"]
+    if model_name not in valid_models:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Invalid model: {model_name}. Valid: {valid_models}")
+    
+    # For now, always use ensemble (model switching can be added later)
+    return {
+        "ok": True,
+        "current": "ensemble",
+        "message": f"Model '{model_name}' selected (currently all use ensemble)"
+    }
+
+
 @router.get("/predict")
 async def ai_predict(
     symbol: str = Query(..., min_length=3, description="Trading symbol (e.g. BTC/USDT)"),
