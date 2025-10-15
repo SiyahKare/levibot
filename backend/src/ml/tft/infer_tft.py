@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -20,14 +21,23 @@ class TFTProd:
         Load TFT checkpoint metadata (thread-safe).
 
         Args:
-            path: Path to TFT export file
+            path: Path to TFT export file (relative to project root or absolute)
 
         Returns:
             Checkpoint metadata dictionary
         """
         with cls._lock:
             if cls._ckpt_meta is None:
-                cls._ckpt_meta = torch.load(path, weights_only=False)
+                # Resolve path: try relative to /app (Docker) or as-is
+                resolved_path = Path(path)
+                if not resolved_path.exists():
+                    # Try relative to /app in Docker
+                    resolved_path = Path(f"/app/{path}")
+                if not resolved_path.exists():
+                    # Try data/models (relative to /app)
+                    resolved_path = Path("data/models") / Path(path).name
+                
+                cls._ckpt_meta = torch.load(str(resolved_path), weights_only=False)
         return cls._ckpt_meta
 
     @classmethod

@@ -69,13 +69,33 @@ async def ai_models():
             if lgbm_card and tft_card:
                 break
 
+    # Frontend-compatible format
+    available_models = ["ensemble"]
+    if lgbm_card:
+        available_models.append("lgbm")
+    if tft_card:
+        available_models.append("tft")
+
     return {
-        "lgbm": lgbm_card,
-        "tft": tft_card,
-        "ensemble": {
-            "weights": {"lgbm": 0.5, "tft": 0.3, "sentiment": 0.2},
-            "threshold": 0.55,
-        },
+        "ok": True,
+        "models": available_models,
+        "current": "ensemble",
+        "meta": {
+            "lgbm": lgbm_card or {
+                "version": "not_found",
+                "status": "Model files not found - upload trained model",
+                "found": False,
+            },
+            "tft": tft_card or {
+                "version": "not_found", 
+                "status": "Model files not found - upload trained model",
+                "found": False,
+            },
+            "ensemble": {
+                "weights": {"lgbm": 0.5, "tft": 0.3, "sentiment": 0.2},
+                "threshold": 0.55,
+            },
+        }
     }
 
 

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import threading
+from pathlib import Path
 from typing import Optional
 
 import joblib
@@ -21,14 +23,23 @@ class LGBMProd:
         Load model (once, thread-safe).
 
         Args:
-            path: Path to joblib-serialized model
+            path: Path to joblib-serialized model (relative to project root or absolute)
 
         Returns:
             Loaded model instance
         """
         with cls._lock:
             if cls._model is None or cls._model_path != path:
-                cls._model = joblib.load(path)
+                # Resolve path: try relative to /app (Docker) or as-is
+                resolved_path = Path(path)
+                if not resolved_path.exists():
+                    # Try relative to /app in Docker
+                    resolved_path = Path(f"/app/{path}")
+                if not resolved_path.exists():
+                    # Try data/models (relative to /app)
+                    resolved_path = Path("data/models") / Path(path).name
+                
+                cls._model = joblib.load(str(resolved_path))
                 cls._model_path = path
         return cls._model
 
