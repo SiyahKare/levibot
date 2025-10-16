@@ -2,6 +2,7 @@
  * Overview Page
  * Main dashboard with equity, PnL, AI signals, and live status
  */
+import { FibonacciCard } from "@/components/FibonacciCard";
 import { ReplayBadge } from "@/components/ReplayBadge";
 import { SSEStatus } from "@/components/SSEStatus";
 import { api } from "@/lib/api";
@@ -346,6 +347,9 @@ export default function Overview() {
 
       {/* Recent Predictions */}
       <RecentPreds />
+
+      {/* Fibonacci Retracement */}
+      <FibonacciCard symbol="BTC/USDT" timeframe="1m" window={2880} />
 
       {/* Last Signals */}
       <div className="p-6 rounded-2xl shadow bg-white border border-zinc-200">
