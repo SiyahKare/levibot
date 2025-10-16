@@ -1,0 +1,14 @@
+{
+  "type": "lgbm_mock",
+  "params": {
+    "num_leaves": 9,
+    "learning_rate": 0.12934560878460524,
+    "max_depth": 3,
+    "min_child_samples": 49,
+    "subsample": 0.8079244613642069,
+    "colsample_bytree": 0.9398222737548921
+  },
+  "score": 0.24308333333333332,
+  "n_samples": 1440,
+  "n_features": 9
+}

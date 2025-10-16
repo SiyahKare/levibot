@@ -28,7 +28,9 @@ export function FibonacciCard({
   if (error) {
     return (
       <div className="p-6 rounded-2xl shadow bg-white border border-zinc-200">
-        <div className="text-sm text-red-500">Failed to load Fibonacci levels</div>
+        <div className="text-sm text-red-500">
+          Failed to load Fibonacci levels
+        </div>
       </div>
     );
   }
@@ -133,14 +135,17 @@ export function FibonacciCard({
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-xs font-mono ${
-                        isGolden ? "text-yellow-600 font-semibold" : "text-zinc-600"
+                        isGolden
+                          ? "text-yellow-600 font-semibold"
+                          : "text-zinc-600"
                       }`}
                     >
                       {level}
                       {isGolden && " 🌟"}
                     </span>
                     <span className="text-sm text-zinc-900">
-                      ${price.toLocaleString(undefined, {
+                      $
+                      {price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -172,4 +177,3 @@ export function FibonacciCard({
     </div>
   );
 }
-

@@ -1,0 +1,7 @@
+{
+  "type": "tft_mock",
+  "score": 0.52,
+  "n_samples": 1440,
+  "hidden_size": 64,
+  "attention_heads": 4
+}
