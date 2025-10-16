@@ -1,0 +1,118 @@
+# Feature Registry v1
+# Production feature schema for LeviBot ML pipeline
+version: "1.0"
+created_at: "2025-10-16"
+
+features:
+  # Price features
+  - name: close
+    type: float
+    description: "Close price"
+    nullable: false
+    range: [0, 1000000]
+
+  - name: open
+    type: float
+    description: "Open price"
+    nullable: false
+    range: [0, 1000000]
+
+  - name: high
+    type: float
+    description: "High price"
+    nullable: false
+    range: [0, 1000000]
+
+  - name: low
+    type: float
+    description: "Low price"
+    nullable: false
+    range: [0, 1000000]
+
+  - name: volume
+    type: float
+    description: "Trading volume"
+    nullable: false
+    range: [0, 1e12]
+
+  # Technical indicators
+  - name: rsi
+    type: float
+    description: "RSI(14)"
+    nullable: false
+    range: [0, 100]
+
+  - name: macd
+    type: float
+    description: "MACD line"
+    nullable: true
+    range: [-1000, 1000]
+
+  - name: macd_signal
+    type: float
+    description: "MACD signal line"
+    nullable: true
+    range: [-1000, 1000]
+
+  - name: bb_upper
+    type: float
+    description: "Bollinger Band upper"
+    nullable: true
+    range: [0, 1000000]
+
+  - name: bb_lower
+    type: float
+    description: "Bollinger Band lower"
+    nullable: true
+    range: [0, 1000000]
+
+  - name: sma20_gap
+    type: float
+    description: "Gap between close and SMA20"
+    nullable: true
+    range: [-10000, 10000]
+
+  # Volatility
+  - name: atr
+    type: float
+    description: "Average True Range"
+    nullable: true
+    range: [0, 10000]
+
+  # Fibonacci features
+  - name: dist_to_0.382
+    type: float
+    description: "Distance to Fibonacci 38.2% level (normalized)"
+    nullable: false
+    range: [-1.0, 1.0]
+
+  - name: dist_to_0.5
+    type: float
+    description: "Distance to Fibonacci 50% level (normalized)"
+    nullable: false
+    range: [-1.0, 1.0]
+
+  - name: dist_to_0.618
+    type: float
+    description: "Distance to Fibonacci 61.8% level (normalized)"
+    nullable: false
+    range: [-1.0, 1.0]
+
+  - name: fib_zone
+    type: int
+    description: "Fibonacci zone (-1: below 61.8%, 0: between, 1: above 38.2%)"
+    nullable: false
+    range: [-1, 1]
+
+  - name: fib_slope
+    type: float
+    description: "Slope of Fibonacci mid-zone (momentum indicator)"
+    nullable: false
+    range: [-0.1, 0.1]
+
+  # Target
+  - name: target
+    type: int
+    description: "Binary target (0/1)"
+    nullable: false
+    range: [0, 1]

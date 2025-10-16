@@ -21,6 +21,7 @@ from .routers.ops import router as ops_router
 from .routers.risk import router as risk_router
 from .routers.signal_log import router as signal_log_router
 from .routers.stream import router as stream_router
+from .routers.ta import router as ta_router
 
 
 def load_config() -> dict:
@@ -146,6 +147,7 @@ app.include_router(analytics_router)
 app.include_router(ops_router)
 app.include_router(signal_log_router)
 app.include_router(events_router)  # Events from JSONL logs
+app.include_router(ta_router)  # Technical Analysis (Fibonacci, etc.)
 
 
 @app.get("/")

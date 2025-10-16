@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple
 
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -99,7 +99,7 @@ def to_parquet(
 
 def time_based_split(
     df: pd.DataFrame, val_days: int
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Split DataFrame into train/val based on time (leak-safe).
 
@@ -133,4 +133,78 @@ def guard_no_future_leak(train: pd.DataFrame, val: pd.DataFrame):
     assert (
         train["ts"].max() < val["ts"].min()
     ), f"Leakage: train ts max ({train['ts'].max()}) >= val ts min ({val['ts'].min()})"
+
+
+# ============================================================================
+# Fibonacci Retracement Features
+# ============================================================================
+
+FIB_LEVELS = [0.236, 0.382, 0.5, 0.618, 0.786]
+
+
+def compute_fib_levels(high: float, low: float) -> dict:
+    """
+    Compute Fibonacci retracement levels between swing high and low.
+    
+    Args:
+        high: Swing high price
+        low: Swing low price
+        
+    Returns:
+        Dictionary of Fibonacci levels {"0.236": price, "0.382": price, ...}
+    """
+    diff = high - low
+    return {str(level): high - diff * level for level in FIB_LEVELS}
+
+
+def add_fibonacci_features(df: pd.DataFrame, lookback: int = 2880) -> pd.DataFrame:
+    """
+    Add Fibonacci retracement features to OHLCV DataFrame.
+    
+    Features:
+    - dist_to_0.382: Distance to 38.2% level (normalized as fraction of price)
+    - dist_to_0.5: Distance to 50% level
+    - dist_to_0.618: Distance to 61.8% level (golden ratio)
+    - fib_zone: Which zone price is in (-1: below 61.8%, 0: between, 1: above 38.2%)
+    - fib_slope: Slope of mid-zone (momentum indicator)
+    
+    Args:
+        df: DataFrame with columns ['high', 'low', 'close']
+        lookback: Rolling window for swing high/low detection (default: 2880 = 2 days @ 1m)
+        
+    Returns:
+        DataFrame with Fibonacci features added (first lookback+30 rows dropped for leak safety)
+        
+    Note:
+        Implements leak guard by dropping first lookback+30 bars where rolling calcs are incomplete.
+    """
+    # Calculate rolling swing high/low
+    highs = df['high'].rolling(lookback, min_periods=lookback).max()
+    lows = df['low'].rolling(lookback, min_periods=lookback).min()
+    
+    # Compute Fibonacci levels
+    lvl_382 = highs - (highs - lows) * 0.382
+    lvl_500 = highs - (highs - lows) * 0.5
+    lvl_618 = highs - (highs - lows) * 0.618
+    
+    # Normalized distances (as fraction of price)
+    df['dist_to_0.382'] = (df['close'] - lvl_382) / df['close']
+    df['dist_to_0.5'] = (df['close'] - lvl_500) / df['close']
+    df['dist_to_0.618'] = (df['close'] - lvl_618) / df['close']
+    
+    # Fibonacci zone indicator
+    # 1: above 38.2% (potential overbought)
+    # 0: between 38.2% and 61.8% (mean reversion zone)
+    # -1: below 61.8% (potential oversold)
+    df['fib_zone'] = np.where(
+        (df['close'] >= lvl_618) & (df['close'] <= lvl_382), 0,
+        np.where(df['close'] < lvl_618, -1, 1)
+    )
+    
+    # Fibonacci slope (momentum of mid-zone)
+    zone_mid = (lvl_382 + lvl_618) / 2.0
+    df['fib_slope'] = zone_mid.diff(30) / df['close']
+    
+    # Leak guard: drop first lookback + 30 bars
+    return df.iloc[lookback + 30:].copy()
 

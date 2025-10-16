@@ -131,6 +131,38 @@ services:
     networks:
       - levibot
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: levibot-prom
+    volumes:
+      - ./ops/prometheus:/etc/prometheus
+      - prom_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - levibot
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: levibot-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./ops/grafana:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - levibot
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
 networks:
   levibot:
     driver: bridge
@@ -139,4 +171,8 @@ volumes:
   redis_data:
     driver: local
   timescale_data:
+    driver: local
+  prom_data:
+    driver: local
+  grafana_data:
     driver: local
