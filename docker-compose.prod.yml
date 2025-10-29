@@ -2,15 +2,15 @@ services:
   api:
     image: levibot/api:${VERSION:-latest}
     build:
-      context: ./backend
-      dockerfile: ../docker/app.Dockerfile
+      context: .
+      dockerfile: docker/app.Dockerfile
     command: >
       gunicorn -k uvicorn.workers.UvicornWorker
       -w 2
       --worker-connections 100
       --max-requests 1000
       --max-requests-jitter 100
-      --timeout 30
+      --timeout 120
       --keep-alive 5
       --access-logfile -
       --error-logfile -
@@ -22,6 +22,8 @@ services:
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
       - ANALYTICS_DB=/app/data/analytics.duckdb
+    ports:
+      - "8000:8000"
     volumes:
       - ./backend/data:/app/data
       - ./backend/configs:/app/configs:ro
@@ -50,11 +52,11 @@ services:
         max-file: "3"
 
   panel:
-    image: levibot/panel:${VERSION:-latest}
     build:
       context: ./frontend/panel
-      dockerfile: ../../docker/panel.Dockerfile
-    command: sh -c "pnpm build && pnpm preview --host 0.0.0.0 --port 5173"
+      dockerfile: ../../ops/panel.Dockerfile
+    volumes:
+      - panel_dist:/mnt/panel
     environment:
       - NODE_ENV=production
       - VITE_API_URL=https://your.domain.com/api
@@ -73,28 +75,17 @@ services:
         max-file: "2"
 
   proxy:
-    image: caddy:2-alpine
+    image: nginx:alpine
     volumes:
-      - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./ops/nginx.conf:/etc/nginx/nginx.conf:ro
+      - panel_dist:/usr/share/nginx/html:ro
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"  # HTTP/3
+      - "3000:80"
     depends_on:
-      api:
-        condition: service_healthy
-      panel:
-        condition: service_started
+      - panel
     networks:
       - web
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   prometheus:
     image: prom/prometheus:latest
@@ -142,4 +133,6 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  panel_dist:
     driver: local

@@ -8,14 +8,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..engine.manager import get_engine_manager, init_engine_manager
+from ..ga.api_router import router as ga_router
 from .middleware.rate_limit import rate_limit_middleware
-from .routers.ai import router as ai_router
+from .routers.ai_simple import router as ai_router
 from .routers.analytics import router as analytics_router
 from .routers.auth import router as auth_router
 from .routers.backtest import router as backtest_router
 from .routers.engines import router as engines_router
 from .routers.events import router as events_router
 from .routers.live import router as live_router
+from .routers.market_data import router as market_data_router
 from .routers.metrics import router as metrics_router
 from .routers.ops import router as ops_router
 from .routers.risk import router as risk_router
@@ -91,11 +93,24 @@ async def lifespan(app: FastAPI):
 
     print("✅ LeviBot Engine Manager ready")
 
+    # Start Market Data Service
+    print("🚀 Starting Market Data Service...")
+    from ..services.market_data_service import start_market_data_service
+
+    await start_market_data_service()
+    print("✅ Market Data Service ready")
+
     yield
 
     # Shutdown
     print("🛑 Shutting down LeviBot Engine Manager...")
     await manager.stop_all()
+
+    print("🛑 Shutting down Market Data Service...")
+    from ..services.market_data_service import stop_market_data_service
+
+    await stop_market_data_service()
+
     print("✅ Shutdown complete")
 
 
@@ -134,20 +149,24 @@ async def rate_limit_ai_predict(request: Request, call_next):
 
 # Register routers
 app.include_router(auth_router)  # Auth must be first (no dependencies)
-app.include_router(engines_router)
+app.include_router(engines_router, prefix="/engines")
 app.include_router(backtest_router)
 app.include_router(risk_router)
 app.include_router(metrics_router)
 app.include_router(live_router)
 app.include_router(stream_router)
+app.include_router(market_data_router, prefix="/market-data", tags=["Market Data"])
 
 # AI & Analytics routers
-app.include_router(ai_router)
+app.include_router(ai_router, prefix="/ai", tags=["AI"])
 app.include_router(analytics_router)
 app.include_router(ops_router)
 app.include_router(signal_log_router)
 app.include_router(events_router)  # Events from JSONL logs
-app.include_router(ta_router)  # Technical Analysis (Fibonacci, etc.)
+app.include_router(
+    ta_router, prefix="/ta", tags=["Technical Analysis"]
+)  # Technical Analysis (Fibonacci, etc.)
+app.include_router(ga_router)  # Genetic Algorithm optimization
 
 
 @app.get("/")
@@ -172,3 +191,51 @@ async def root():
 async def health():
     """Kubernetes-style health check."""
     return {"status": "healthy"}
+
+
+@app.get("/healthz")
+async def healthz():
+    """Alternative health check endpoint."""
+    return {"status": "healthy"}
+
+
+@app.get("/automation/status")
+async def automation_status():
+    """Automation status stub."""
+    return {"enabled": False, "last_run": None}
+
+
+@app.get("/metrics")
+async def metrics():
+    """Metrics stub (Prometheus format would be here)."""
+    return {"requests_total": 0, "errors_total": 0}
+
+
+@app.get("/strategy/")
+async def strategy_list():
+    """Available strategies stub."""
+    return {"strategies": ["rsi_macd", "sma_cross", "fib_rsi"]}
+
+
+@app.get("/paper/portfolio")
+async def paper_portfolio():
+    """Paper trading portfolio stub."""
+    return {"equity": 1000.0, "cash": 1000.0, "positions": []}
+
+
+@app.get("/paper/positions")
+async def paper_positions():
+    """Paper trading positions stub."""
+    return {"positions": []}
+
+
+@app.get("/paper/trades")
+async def paper_trades(limit: int = 20):
+    """Paper trading trades stub."""
+    return {"trades": []}
+
+
+@app.get("/analytics/pnl/by_strategy")
+async def analytics_pnl_by_strategy(window: str = "24h"):
+    """PnL by strategy stub."""
+    return {"strategies": []}

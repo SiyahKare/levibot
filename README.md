@@ -27,6 +27,56 @@
 
 ---
 
+## Quickstart (90s)
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env  # RPC_BASE_SEPOLIA / SAFE_ADDRESS / SESSION_PK / CHAIN_ID doldur (yoksa submit=mock)
+make api_miniface     # http://localhost:8000/docs
+```
+
+### Smoke
+
+```bash
+# health
+curl -s localhost:8000/healthz | jq .
+
+# signals
+curl -sX POST localhost:8000/signals/run -H 'content-type: application/json' \
+ -d '{"strategy":"sma","params":{"fast":10,"slow":50},"fee_bps":10}' | jq .
+
+# dry-run
+curl -sX POST localhost:8000/exec/dry-run -H 'content-type: application/json' \
+ -d '{"orders":[{"pair":"BTCUSDT","side":"BUY","qty":0.1,"kind":"MARKET","reason":"demo"}],"slippage_bps":25}' | jq .
+
+# submit
+curl -sX POST localhost:8000/exec/submit -H 'content-type: application/json' \
+ -d '{"orders":[{"pair":"BTCUSDT","side":"BUY","qty":0.1,"kind":"MARKET","reason":"demo"}],"network":"base-sepolia"}' | jq .
+# tx_hash gerçek (env doluysa) ya da 0xMOCK (env boşsa)
+```
+
+### Telemetry
+
+- `/metrics` → Prometheus formatı
+- `/healthz` → liveness
+- `/readyz` → readiness (RPC varsa kontrol eder)
+
+### SLO & Error Budget
+
+**Service Level Objectives:**
+- **Latency:** p95 `/signals/run` < **300ms**
+- **Availability:** Error rate < **1%** (5xx responses)
+- **Error Budget:** Daily allowance of **14 errors** (1% of ~1400 requests)
+
+**Monitoring:** `/metrics` endpoint exposes `levi_requests_total` and `levi_latency_seconds` for Prometheus scraping. Future: Grafana alerts on SLO violations.
+
+### Legacy Routes
+
+`/backtest/run` → **/signals/run** (DEPRECATE: **2025-11-30**). Tüm legacy çağrılar `X-Deprecated: true` header’ı taşır.
+
+---
+
 ## ⚡ Hızlı Başlangıç (5 Dakika)
 
 ```bash

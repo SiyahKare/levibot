@@ -29,11 +29,12 @@ _con: duckdb.DuckDBPyConnection | None = None
 def _conn() -> duckdb.DuckDBPyConnection:
     """Get or create DuckDB connection (thread-safe singleton)."""
     global _con
-    if _con is None:
-        _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _con = duckdb.connect(str(_DB_PATH))
-        _con.execute(_INIT_SQL)
-    return _con
+    with _lock:
+        if _con is None:
+            _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+            _con = duckdb.connect(str(_DB_PATH))
+            _con.execute(_INIT_SQL)
+        return _con
 
 
 def log_prediction(item: dict[str, Any]) -> None:
@@ -77,16 +78,18 @@ def recent(limit: int = 100) -> list[dict]:
         List of prediction dictionaries
     """
     with _lock:
-        rows = _conn().execute(
-            "SELECT * FROM predictions ORDER BY ts DESC LIMIT ?", [int(limit)]
-        ).fetchall()
+        rows = (
+            _conn()
+            .execute("SELECT * FROM predictions ORDER BY ts DESC LIMIT ?", [int(limit)])
+            .fetchall()
+        )
 
     out = []
     for r in rows:
         # Convert timestamp to both ISO format and unix timestamp
         ts_iso = r[0].isoformat() if r[0] else None
         ts_unix = int(r[0].timestamp()) if r[0] else None
-        
+
         out.append(
             {
                 "ts": ts_unix,  # Unix timestamp for frontend compatibility
@@ -100,4 +103,3 @@ def recent(limit: int = 100) -> list[dict]:
             }
         )
     return out
-

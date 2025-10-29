@@ -25,6 +25,15 @@ export function FibonacciCard({
     { refreshInterval: 30_000 } // Refresh every 30s
   );
 
+  // Debug logging
+  console.log("FibonacciCard debug:", {
+    symbol,
+    timeframe,
+    window,
+    fib,
+    error,
+  });
+
   if (error) {
     return (
       <div className="p-6 rounded-2xl shadow bg-white border border-zinc-200">

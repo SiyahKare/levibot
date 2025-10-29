@@ -30,6 +30,12 @@ const navItems: NavItem[] = [
   { label: "Signals", path: "/signals", icon: "📡", category: "Analysis" },
   { label: "Analytics", path: "/analytics", icon: "📊", category: "Analysis" },
   { label: "AI Brain", path: "/ai-brain", icon: "🤖", category: "Analysis" },
+  {
+    label: "Technical Analysis",
+    path: "/technical",
+    icon: "📈",
+    category: "Analysis",
+  },
   { label: "Watchlist", path: "/watchlist", icon: "👁️", category: "Analysis" },
 
   // Management

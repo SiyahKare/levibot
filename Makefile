@@ -1,4 +1,16 @@
-.PHONY: help init lint format test cov docker up down logs clean
+up: ## Docker compose ile tüm servisleri başlat
+	@echo "🐳 Starting all services..."
+	docker compose up -d --build
+
+logs: ## API servisinin loglarını takip et
+	@echo "📋 Following API logs..."
+	docker compose logs -f api
+
+down: ## Tüm servisleri durdur
+	@echo "🛑 Stopping all services..."
+	docker compose down
+
+.PHONY: help init lint format test cov docker up down logs clean cursor
 
 help:  ## Bu yardım mesajını göster
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -85,6 +97,42 @@ clean:  ## Cache ve geçici dosyaları temizle
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	find . -type f -name ".coverage" -delete 2>/dev/null || true
 	@echo "✅ Cleanup complete!"
+
+api_miniface:  ## Minimal API (3 endpoint) ile ayağa kalk
+	uvicorn apps.executor.main:app --factory --port 8000
+
+smoke_miniface:  ## Minimal yüzey smoke
+	pytest -q tests/test_backtest_smoke.py -q || true
+	pytest -q tests/test_risk_engine.py -q || true
+	python - <<'PY'
+import json
+import urllib.request
+req = urllib.request.Request(
+    url="http://localhost:8000/signals/run",
+    data=json.dumps({"strategy":"sma","params":{"fast":10,"slow":50},"fee_bps":10}).encode(),
+    headers={"Content-Type":"application/json"},
+    method="POST",
+)
+try:
+    with urllib.request.urlopen(req, timeout=5) as r:
+        print("signals:", r.status)
+except Exception as e:
+    print("signals error:", e)
+PY
+
+cursor:  ## Mimari raporu üret (hard-ignore)
+	@echo "🧭 Generating architecture report..."
+	@mkdir -p docs
+	python3 tools/levibot_cursor.py --repo . --out docs/architecture_report.md --edges 60 \
+	  --ignore '(^|/)\.git($$|/)' \
+	  --ignore '(^|/)node_modules($$|/)' \
+	  --ignore '(^|/)\.next($$|/)' \
+	  --ignore '(^|/)\.cursor($$|/)' \
+	  --ignore '(^|/)\.benchmarks($$|/)' \
+	  --ignore '(^|/)dist($$|/)|(^|/)build($$|/)|(^|/)artifacts($$|/)|(^|/)data($$|/)' \
+	  --ignore '(^|/)__pycache__($$|/)|(^|/)\.mypy_cache($$|/)|(^|/)\.pytest_cache($$|/)' \
+	  --ignore '(^|/)venv($$|/)|(^|/)\.venv($$|/)|(^|/)backups($$|/)'
+	@echo "✅ Report: docs/architecture_report.md"
 
 smoke:  ## Smoke test URLs
 	@echo "🔎 Smoke Test URLs:"

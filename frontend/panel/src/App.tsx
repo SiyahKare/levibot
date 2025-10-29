@@ -26,6 +26,7 @@ import Signals from "@/pages/Signals";
 import SignalsTimeline from "@/pages/SignalsTimeline";
 import Strategies from "@/pages/Strategies";
 import Swing from "@/pages/Swing";
+import TechnicalAnalysis from "@/pages/TechnicalAnalysis";
 import TelegramControl from "@/pages/TelegramControl";
 import TelegramInsights from "@/pages/TelegramInsights";
 import TelegramSettings from "@/pages/TelegramSettings";
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/watchlist" element={<Watchlist />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/ai-brain" element={<AIBrain />} />
+              <Route path="/technical" element={<TechnicalAnalysis />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/telegram" element={<TelegramSignals />} />
               <Route path="/telegram/control" element={<TelegramControl />} />

@@ -21,7 +21,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy application code
 COPY backend/src ./src
-COPY backend/config ./config
 
 # Create necessary directories
 RUN mkdir -p ./data/models \

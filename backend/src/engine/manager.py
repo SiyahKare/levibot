@@ -4,7 +4,7 @@ Engine manager orchestrates multiple trading engines.
 
 import asyncio
 import contextlib
-from typing import Any, Optional
+from typing import Any
 
 from ..data.market_feeder import MarketFeeder
 from .engine import TradingEngine
@@ -34,9 +34,9 @@ class EngineManager:
         self.health_monitor = HealthMonitor(self)
 
         # Market data feeder
-        self._feeder: Optional[MarketFeeder] = None
-        self._feeder_task: Optional[asyncio.Task] = None
-        self._monitor_task: Optional[asyncio.Task] = None
+        self._feeder: MarketFeeder | None = None
+        self._feeder_task: asyncio.Task | None = None
+        self._monitor_task: asyncio.Task | None = None
 
     async def start_all(self, symbols: list[str]) -> None:
         """Start engines for all symbols and market data feeder."""
@@ -120,7 +120,7 @@ class EngineManager:
             self._feeder_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._feeder_task
-        
+
         # Close feeder WebSocket connections
         if self._feeder:
             await self._feeder.close()

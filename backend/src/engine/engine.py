@@ -4,16 +4,13 @@ Trading engine for a single symbol.
 
 import asyncio
 import time
-from asyncio import Queue, QueueFull
+from asyncio import Queue
 from enum import Enum
 from typing import Any
 
 from ..metrics.metrics import export_engine_health, export_signal, inference_latency
 from ..ml.features.onchain_fetcher import MockOnchainProvider, OnchainFetcher
-from ..ml.features.sentiment_extractor import (
-    GemmaSentimentProvider,
-    SentimentExtractor,
-)
+from ..ml.features.sentiment_extractor import GemmaSentimentProvider, SentimentExtractor
 from ..ml.models.ensemble_predictor import EnsemblePredictor
 from ..risk.manager import RiskManager
 
@@ -141,12 +138,12 @@ class TradingEngine:
                 try:
                     # Get market data from queue (injected by MarketFeeder)
                     market_data = await self._get_md()
-                    
+
                     # Skip cycle if no data available
                     if market_data.get("price") is None:
                         await asyncio.sleep(self.config.get("cycle_interval", 1.0))
                         continue
-                    
+
                     # Trading cycle
                     signal = await self._generate_signal(market_data)
 
@@ -292,7 +289,12 @@ class TradingEngine:
 
             # 4. Run ensemble predictor (with latency tracking)
             t_start = time.time()
-            prediction = self._ensemble.predict(features, sentiment)
+            prediction = self._ensemble.predict(
+                features=features,
+                sentiment=sentiment,
+                symbol=self.symbol,
+                log_to_analytics=True,
+            )
             inference_time = time.time() - t_start
 
             # Track inference latency

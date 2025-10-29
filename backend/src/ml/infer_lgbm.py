@@ -36,7 +36,7 @@ class LGBMProd:
                 if not resolved_path.exists():
                     # Try data/models (relative to /app)
                     resolved_path = Path("data/models") / Path(path).name
-                
+
                 cls._model = joblib.load(str(resolved_path))
                 cls._model_path = path
         return cls._model
@@ -67,7 +67,12 @@ class LGBMProd:
         ]
 
         # LightGBM predict returns raw score for binary
-        proba = model.predict(x, num_iteration=getattr(model, "best_iteration", None))
+        try:
+            proba = model.predict(
+                x, num_iteration=getattr(model, "best_iteration", None)
+            )
+        except TypeError:
+            # Fallback for models that don't support num_iteration
+            proba = model.predict(x)
 
         return float(proba[0])
-

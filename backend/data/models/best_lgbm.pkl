@@ -1,1 +1,1 @@
-/app/backend/data/models/2025-10-16/BTCUSDT/lgbm.pkl
+2025-10-16/BTCUSDT/lgbm.pkl

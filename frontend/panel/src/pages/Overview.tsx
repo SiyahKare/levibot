@@ -2,7 +2,6 @@
  * Overview Page
  * Main dashboard with equity, PnL, AI signals, and live status
  */
-import { FibonacciCard } from "@/components/FibonacciCard";
 import { ReplayBadge } from "@/components/ReplayBadge";
 import { SSEStatus } from "@/components/SSEStatus";
 import { api } from "@/lib/api";
@@ -348,8 +347,26 @@ export default function Overview() {
       {/* Recent Predictions */}
       <RecentPreds />
 
-      {/* Fibonacci Retracement */}
-      <FibonacciCard symbol="BTC/USDT" timeframe="1m" window={2880} />
+      {/* Technical Analysis Link */}
+      <div className="p-6 rounded-2xl shadow bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              📈 Technical Analysis
+            </h3>
+            <p className="text-blue-700 text-sm">
+              Advanced technical indicators, Fibonacci levels, and AI
+              predictions
+            </p>
+          </div>
+          <a
+            href="/technical"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            Open Analysis →
+          </a>
+        </div>
+      </div>
 
       {/* Last Signals */}
       <div className="p-6 rounded-2xl shadow bg-white border border-zinc-200">
