@@ -555,6 +555,64 @@ frontend/panel/ # React panel
 telegram/       # Telethon user‑bot (auto‑discover + backfill + live)
 ```
 
+## Engine Manager Config (YAML + ENV)
+
+Backend engine defaults, symbols, and AI settings are loaded in this order:
+
+1. Built-in defaults
+2. YAML config (`LEVI_CONFIG_PATH` or the first `configs/*.yml|*.yaml` found)
+3. Environment variable overrides
+
+**Minimal YAML schema** (example):
+
+```yaml
+engine_defaults:
+  cycle_interval: 1.0
+  equity_base: 10000.0
+  vol_ann: 0.6
+  md_queue_max: 256
+symbols_to_trade:
+  - BTC/USDT
+  - ETH/USDT
+symbols:
+  BTCUSDT:
+    cycle_interval: 0.5
+    vol_ann: 0.8
+ai:
+  ensemble:
+    w_lgbm: 0.5
+    w_tft: 0.3
+    w_sent: 0.2
+    threshold: 0.55
+  sentiment:
+    provider: gemma
+    rpm: 60
+    ttl: 900
+  onchain:
+    provider: mock
+    ttl: 300
+```
+
+**ENV overrides** (optional):
+
+```bash
+export LEVI_CONFIG_PATH="configs/levi.yml"
+export LEVI_ENGINE_CYCLE_INTERVAL=0.8
+export LEVI_ENGINE_EQUITY_BASE=15000
+export LEVI_ENGINE_VOL_ANN=0.7
+export LEVI_ENGINE_MD_QUEUE_MAX=512
+export LEVI_SYMBOLS_TO_TRADE="BTC/USDT,ETH/USDT"
+export LEVI_AI_ENSEMBLE_W_LGBM=0.6
+export LEVI_AI_ENSEMBLE_W_TFT=0.25
+export LEVI_AI_ENSEMBLE_W_SENT=0.15
+export LEVI_AI_ENSEMBLE_THRESHOLD=0.6
+export LEVI_AI_SENTIMENT_PROVIDER="gemma"
+export LEVI_AI_SENTIMENT_RPM=120
+export LEVI_AI_SENTIMENT_TTL=600
+export LEVI_AI_ONCHAIN_PROVIDER="mock"
+export LEVI_AI_ONCHAIN_TTL=300
+```
+
 ## Mevcut Durum (Kısa Özet)
 
 - **Logging**: Çalışır (JSONL saatlik shard). `/events` endpoint’i `event_type` filtresi ile hazır.
