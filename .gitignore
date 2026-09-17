@@ -38,11 +38,19 @@ env/
 *~
 .DS_Store
 
-# Environment variables
+# Environment variables and local secrets
 .env
 .env.local
 .env.*.local
 .env.prod
+.env.docker
+.env.docker.bak*
+.admin_key_info.txt
+
+# Keep sanitized templates versioned
+!.env.example
+!.env.docker.example
+!.env.prod.example
 
 # Logs
 *.log
